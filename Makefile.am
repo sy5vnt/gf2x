@@ -68,7 +68,6 @@ DISTCLEANFILES=gf2x/gf2x-thresholds.h	\
 EXTRA_DIST=
 EXTRA_DIST+=version.sh.in
 EXTRA_DIST+=BUGS
-EXTRA_DIST+=patch-wrt-ntl-5.4.2 inject-ntl-5.4.2
 EXTRA_DIST+=already_tuned
 dist-hook:
 	-find $(distdir) \( -name .svn -type d \) -o -name "*~" -o -name ".#*" \

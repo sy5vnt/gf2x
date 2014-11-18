@@ -192,14 +192,6 @@ If for some reason gf2x was installed with custom directories, you may
 also consider the GF2X_INCDIR and GF2X_LIBDIR options ; some setups will
 typically require GF2X_LIBDIR=/path/to/gf2x/lib64, for example.
 
-For version 5.4.2 of ntl, you have the possibility of patching an NTL
-tree with gf2x. For this, do the following.
-
-- untar ntl-5.4.2 in /path/to/ntl-5.4.2
-- build gf2x: cd /path/to/gf2x ; ./configure ; make
-- from the gf2x source tree, run ./inject-ntl-5.4.2 /path/to/ntl-5.4.2
-- cd /path/to/ntl-5.4.2 ; make && make check
-
 Using the library:
 ==================
 
