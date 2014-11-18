@@ -105,12 +105,13 @@ AC_DEFUN([CHECK_SSE2_SUPPORT],[
   if test "x${enable_sse2}" = xno ; then
    echo $ECHO_N "explicitly disabled, "
   else
+   CFLAGS="$ac_save_CFLAGS -msse2"
    AC_RUN_IFELSE([SSE2_EXAMPLE()],[
     gf2x_cv_cc_supports_sse2=yes
    ],[
-    CFLAGS="$ac_save_CFLAGS -msse2"
+    CFLAGS="$ac_save_CFLAGS"
     AC_RUN_IFELSE([SSE2_EXAMPLE()],[
-     gf2x_cv_cc_supports_sse2="requires -msse2"
+     gf2x_cv_cc_supports_sse2="yes, but without -msse2"
     ],[
      gf2x_cv_cc_supports_sse2=no
     ])
@@ -118,16 +119,17 @@ AC_DEFUN([CHECK_SSE2_SUPPORT],[
   fi
  ])
  ac_save_CPPFLAGS=$CPPFLAGS
- if test "$gf2x_cv_cc_supports_sse2" = "requires -msse2" ;then
+ if test "$gf2x_cv_cc_supports_sse2" = "yes" ;then
   # Tweaking CFLAGS is often not enough.
-  AC_CACHE_CHECK([whether -msse2 is also needed by the preprocessor],
-   [gf2x_cv_cpp_requires_msse2_flag],[
+  AC_CACHE_CHECK([whether -msse2 is also understood by the preprocessor],
+   [gf2x_cv_cpp_understands_msse2_flag],[
+   CPPFLAGS="$ac_save_CPPFLAGS -msse2"
    AC_PREPROC_IFELSE([SSE2_EXAMPLE()],[
-    gf2x_cv_cpp_requires_msse2_flag=no
+    gf2x_cv_cpp_understands_msse2_flag=yes
    ],[
-    CPPFLAGS="$ac_save_CPPFLAGS -msse2"
+    CPPFLAGS="$ac_save_CPPFLAGS"
     AC_PREPROC_IFELSE([SSE2_EXAMPLE()],[
-    gf2x_cv_cpp_requires_msse2_flag=yes
+    gf2x_cv_cpp_understands_msse2_flag=no
     ],[
      AC_MSG_ERROR([Sorry, the preprocessor can't parse sse-2!])
     ])
@@ -136,10 +138,10 @@ AC_DEFUN([CHECK_SSE2_SUPPORT],[
  fi
  CFLAGS=$ac_save_CFLAGS
  CPPFLAGS=$ac_save_CPPFLAGS
- if test "$gf2x_cv_cc_supports_sse2" = "requires -msse2" ;then
+ if test "$gf2x_cv_cc_supports_sse2" = "yes" ;then
   CFLAGS="$CFLAGS -msse2"
  fi
- if test "$gf2x_cv_cpp_requires_msse2_flag" = "yes" ; then
+ if test "$gf2x_cv_cpp_understands_msse2_flag" = "yes" ; then
   CPPFLAGS="$CPPFLAGS -msse2"
  fi
  if test "$gf2x_cv_cc_supports_sse2" != "no" ;then
