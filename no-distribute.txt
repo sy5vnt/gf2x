@@ -1,4 +1,4 @@
 no-distribute.txt
 bench.c
 wipeout-autotools
-README.svn-tree
+README.git-tree
