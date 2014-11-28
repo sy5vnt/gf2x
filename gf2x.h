@@ -52,6 +52,8 @@ typedef struct gf2x_mul_pool_s gf2x_mul_pool_t[1];
 extern void gf2x_mul_pool_init(gf2x_mul_pool_t);
 extern void gf2x_mul_pool_clear(gf2x_mul_pool_t);
 
+/* If the gf2x_mul_pool_t arg is passed as NULL, a new pool is created
+ * (and freed) for that multiplication */
 extern void gf2x_mul_r(unsigned long *c,
 		const unsigned long *a, unsigned long an,
 		const unsigned long *b, unsigned long bn, gf2x_mul_pool_t);
