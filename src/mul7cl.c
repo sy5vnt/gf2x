@@ -1,6 +1,6 @@
 /* This file is part of the gf2x library.
 
-   Copyright 2010, 2012
+   Copyright 2010, 2012, 2013, 2015
    Richard Brent, Pierrick Gaudry, Emmanuel Thome', Paul Zimmermann
    Nicolas Estibals (for this file)
 
