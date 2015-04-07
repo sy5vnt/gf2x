@@ -69,6 +69,9 @@ EXTRA_DIST=
 EXTRA_DIST+=version.sh.in
 EXTRA_DIST+=BUGS
 EXTRA_DIST+=already_tuned
+EXTRA_DIST+=config/configfsf.sub
+EXTRA_DIST+=config/configfsf.guess
+
 dist-hook:
 	-find $(distdir) \( -name .svn -type d \) -o -name "*~" -o -name ".#*" \
                 | xargs rm -rf
