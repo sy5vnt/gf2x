@@ -600,6 +600,7 @@ tunetoom_LDADD=libtiming.la ../libgf2x.la
 
 TOOM_TUNING_LIMIT=2048
 
+if GPL_CODE_PRESENT
 tunetoom.res: tunetoom$(EXEEXT)
 	./tunetoom -s 1.05 $(TOOM_TUNING_LIMIT) -o tunetoom.res
 
@@ -612,6 +613,11 @@ tune-toom: tunetoom.res update-thresholds$(EXEEXT)
 	rm -f ../gf2x/gf2x-thresholds.h
 	ln -sf ../already_tuned/tuned/gf2x-thresholds.h ../gf2x/
 	cd $(top_builddir) ; $(MAKE)
+else
+tune-toom:
+	echo "No toom tuning, LGPL-only code"
+	:
+endif
 
 ######################################################################
 EXTRA_PROGRAMS+=tunefft$(EXEEXT)
