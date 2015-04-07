@@ -38,8 +38,10 @@
 
 #include "gf2x/gf2x-config.h"
 
+#if GPL_CODE_PRESENT
 short best_tab[GF2X_TOOM_TUNING_LIMIT] = GF2X_BEST_TOOM_TABLE;
 short best_utab[GF2X_TOOM_TUNING_LIMIT] = GF2X_BEST_UTOOM_TABLE;
+#endif /* GPL_CODE_PRESENT */
 
 /* Returns 0 for KarMul, 1 for Toom3Mul, 2 for Toom3WMul, 3 for Toom4Mul
    depending on which is predicted to be fastest for the given degree n.
@@ -55,6 +57,7 @@ short gf2x_best_toom(unsigned long n)
 // #define GF2X_BEST_TOOM_TABLE {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,1,2,2,1,2}
 // would be reasonable if Toom3Mul was fastest for n = 18, 21, 24.
 
+#if GPL_CODE_PRESENT
     if (n < GF2X_MUL_TOOMW_THRESHOLD)
 	return GF2X_SELECT_KARA;		// KarMul
 
@@ -68,6 +71,9 @@ short gf2x_best_toom(unsigned long n)
     ASSERT (n <= GF2X_TOOM_TUNING_LIMIT);
 
     return best_tab[n - 1];	// Return table entry
+#else /* GPL_CODE_PRESENT */
+    return GF2X_SELECT_KARA;
+#endif /* GPL_CODE_PRESENT */
 }
 
 short gf2x_best_utoom(unsigned long n)
@@ -78,6 +84,7 @@ short gf2x_best_utoom(unsigned long n)
 // input size n.  0 means the obvious splitting algorithm and 1 means
 // Toom3uMul.
 
+#if GPL_CODE_PRESENT
     if (n < GF2X_MUL_TOOMU_THRESHOLD)
 	return GF2X_SELECT_UNB_DFLT;		// Default
 
@@ -88,6 +95,9 @@ short gf2x_best_utoom(unsigned long n)
     ASSERT (n <= GF2X_TOOM_TUNING_LIMIT);
 
     return best_utab[n - 1];	// Return table entry
+#else /* GPL_CODE_PRESENT */
+    return GF2X_SELECT_UNB_DFLT;
+#endif /* GPL_CODE_PRESENT */
 }
 
 /* Returns the worst-case space (in words) needed by the Toom-Cook routines
@@ -162,6 +172,7 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
     assert(c != a);
     assert(c != b);
 
+#if GPL_CODE_PRESENT
     switch (gf2x_best_toom(n)) {
     case 0:
 	gf2x_mul_kara(c, a, b, n, stk);
@@ -177,6 +188,9 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
 	gf2x_mul_tc4(c, a, b, n, stk);
 	break;
     }
+#else /* GPL_CODE_PRESENT */
+    gf2x_mul_kara(c, a, b, n, stk);
+#endif /* GPL_CODE_PRESENT */
 }
 
 /* Version of Karatsuba multiplication with minimal temporary storage

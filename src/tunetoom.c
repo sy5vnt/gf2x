@@ -288,10 +288,12 @@ void tuneutoom(long tabsz)
 	printf("%ld ", sa);
 	fflush(stdout);
 	TIME(TK[0], gf2x_mul21(c, a, sa, b, t));
+#if GPL_CODE_PRESENT
 	if (sa >= MINI_GF2X_MUL_TOOMU_THRESHOLD) {
 	    TIME(T3[0], gf2x_mul_tc3u(d, a, sa, b, t));
 	    checku(c, d, sa + sb);
 	}
+#endif /* GPL_CODE_PRESENT */
 	printf("default:%1.2e TC3U:%1.2e ", TK[0], T3[0]);
 	mint = TK[0];
 	k = GF2X_SELECT_UNB_DFLT;

@@ -35,7 +35,9 @@ AC_SUBST([gf2x_lib_version], [1:2:0])
 
 AM_INIT_AUTOMAKE
 
-LT_INIT
+AM_MAINTAINER_MODE([disable])
+
+LT_INIT()
 
 AC_ARG_ENABLE([ntl-checks],
               [AS_HELP_STRING([--enable-ntl-checks],
@@ -181,8 +183,10 @@ AM_CONDITIONAL([GF2X_PCLMUL_AVAILABLE],[test "x$gf2x_cv_cc_supports_pclmul" != x
 AM_CONDITIONAL([GPL_CODE_PRESENT],[test -f "$srcdir/toom-gpl.c"])
 if test -f "$srcdir/toom-gpl.c" ; then
  echo "File $srcdir/toom-gpl.c is present, using a GPL-licensed gf2x"
+ AC_DEFINE([GPL_CODE_PRESENT],1,[Have GPL code])
 else
  echo "File $srcdir/toom-gpl.c is absent, using an LGPL-licensed gf2x"
+ AC_DEFINE([GPL_CODE_PRESENT],0,[Have LGPL code (no GPL taint)])
 fi
 
 AC_CONFIG_HEADERS([gf2x/gf2x-config.h])
