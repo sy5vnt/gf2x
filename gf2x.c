@@ -79,9 +79,6 @@ int64_t T_FFT_TAB[][2] = GF2X_MUL_FFT_TABLE;
  * storage if necessary.
  */
 
-/* Having this static ensures initialization to zero */
-static gf2x_mul_pool_t global_pool;
-
 void gf2x_mul_pool_init(gf2x_mul_pool_t p)
 {
     memset(p, 0, sizeof(gf2x_mul_pool_t));
@@ -97,7 +94,7 @@ void gf2x_mul(unsigned long * c,
         const unsigned long * a, unsigned long sa,
         const unsigned long * b, unsigned long sb)
 {
-    gf2x_mul_r(c, a, sa, b, sb, global_pool);
+    gf2x_mul_r(c, a, sa, b, sb, NULL);
 }
 
 void gf2x_mul_r(unsigned long * c,
