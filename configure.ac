@@ -172,6 +172,12 @@ AM_CONDITIONAL([GF2X_32BIT_SOURCES],[test "x$tuned_nbits" = x32])
 AM_CONDITIONAL([GF2X_64BIT_SOURCES],[test "x$tuned_nbits" = x64])
 AM_CONDITIONAL([GF2X_SSE2_AVAILABLE],[test "x$gf2x_cv_cc_supports_sse2" != xno])
 AM_CONDITIONAL([GF2X_PCLMUL_AVAILABLE],[test "x$gf2x_cv_cc_supports_pclmul" != xno])
+AM_CONDITIONAL([GPL_CODE_PRESENT],[test -f "$srcdir/toom-gpl.c"])
+if test -f "$srcdir/toom-gpl.c" ; then
+ echo "File $srcdir/toom-gpl.c is present, using a GPL-licensed gf2x"
+else
+ echo "File $srcdir/toom-gpl.c is absent, using an LGPL-licensed gf2x"
+fi
 
 AC_CONFIG_HEADERS([gf2x/gf2x-config.h])
 

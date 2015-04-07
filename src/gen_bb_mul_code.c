@@ -4,19 +4,24 @@
    Richard Brent, Pierrick Gaudry, Emmanuel Thome', Paul Zimmermann
 
    This program is free software; you can redistribute it and/or modify it
-   under the terms of the GNU General Public License as published by the
-   Free Software Foundation; either version 3 of the License, or (at your
-   option) any later version.
-
+   under the terms of either:
+    - If the archive contains a file named toom-gpl.c, the GNU General
+      Public License as published by the Free Software Foundation; either
+      version 3 of the License, or (at your option) any later version.
+    - If the archive contains no file named toom-gpl.c, the GNU Lesser
+      General Public License as published by the Free Software
+      Foundation; either version 2.1 of the License, or (at your option)
+      any later version.
+   
    This program is distributed in the hope that it will be useful, but WITHOUT
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-   more details.
-
-   You should have received a copy of the GNU General Public License along
-   with this program; see the file COPYING.  If not, write to the Free
+   FITNESS FOR A PARTICULAR PURPOSE.  See the license text for more details.
+   
+   You should have received a copy of the GNU General Public License as
+   well as the GNU Lesser General Public License along with this program;
+   see the files COPYING and COPYING.LIB.  If not, write to the Free
    Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-   02111-1307, USA.
+   02110-1301, USA.
 */
 
 /* Generates low-level multiplication routines over GF(2)[x]. */
@@ -46,19 +51,24 @@ int main(int argc, char *argv[])
 "   Richard Brent, Pierrick Gaudry, Emmanuel Thome', Paul Zimmermann\n"
 "\n"
 "   This program is free software; you can redistribute it and/or modify it\n"
-"   under the terms of the GNU General Public License as published by the\n"
-"   Free Software Foundation; either version 3 of the License, or (at your\n"
-"   option) any later version.\n"
+"   under the terms of either:\n"
+"    - If the archive contains a file named toom-gpl.c, the GNU General\n"
+"      Public License as published by the Free Software Foundation; either\n"
+"      version 3 of the License, or (at your option) any later version.\n"
+"    - If the archive contains no file named toom-gpl.c, the GNU Lesser\n"
+"      General Public License as published by the Free Software\n"
+"      Foundation; either version 2.1 of the License, or (at your option)\n"
+"      any later version.\n"
 "\n"
 "   This program is distributed in the hope that it will be useful, but WITHOUT\n"
 "   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or\n"
-"   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for\n"
-"   more details.\n"
+"   FITNESS FOR A PARTICULAR PURPOSE.  See the license text for more details.\n"
 "\n"
-"   You should have received a copy of the GNU General Public License along\n"
-"   with this program; see the file COPYING.  If not, write to the Free\n"
+"   You should have received a copy of the GNU General Public License as\n"
+"   well as the GNU Lesser General Public License along with this program;\n"
+"   see the files COPYING and COPYING.LIB.  If not, write to the Free\n"
 "   Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA\n"
-"   02111-1307, USA.\n"
+"   02110-1301, USA.\n"
 "*/\n"
 "\n");
     printf("#ifndef GF2X_MUL1_H_\n");
