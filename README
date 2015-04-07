@@ -1,6 +1,16 @@
 Authors: Richard Brent, Pierrick Gaudry, Emmanuel Thomé, Paul Zimmermann.
-License:
- GNU general Public License (version 2 or any later version).
+
+License (for the library) is either:
+    - If the archive contains a file named toom-gpl.c, the GNU General
+      Public License, either version 3 of the License, or (at your
+      option) any later version.
+    - If the archive contains no file named toom-gpl.c, the GNU Lesser
+      General Public License, either version 2.1 of the License, or (at
+      your option) any later version.
+   
+License for the apps/ subdir is the GNU General Public License, either
+version 2 of the License, or (at your option) any later version.
+
 
 This package contains routines for fast arithmetic in GF(2)[x]
 (multiplication, squaring, gcd).
@@ -40,6 +50,7 @@ gf2x-impl.h            - internal api
 gf2x.c                 - top-level source for multiplication code
 gf2x-small.h           - small-sized inlined multiplication routines
 toom.c                 - main file for Karatsuba and Toom-Cook multiplication
+toom-gpl.c             - same, for GPL-tainted distribution
 fft.c                  - multiplication using Fast Fourier Transform
 ntl_gf2x_mul_code.h    - file to be hooked in NTL (see below)
 
@@ -196,9 +207,12 @@ Using the library:
 ==================
 
 gf2x exports one public header called gf2x.h . This header exports one
-function gf2x_mul, whose use is documented in gf2x.h . Note that gf2x_mul
-is not reentrant, so if you need a reentrant version, prefer gf2x_mul_r
-which uses an externally allocated storage pool.
+function gf2x_mul, whose use is documented in gf2x.h . Unlike with
+versions of gf2x up to 1.1, the function gf2x_mul is now reentrant as of
+gf2x-1.2, and manages its own allocation needs. The companion function
+gf2x_mul_r is here if you want to control the allocation needs -- within
+a call to gf2x_mul_r, below the FFT threshold, no allocation is
+performed. Above, there is some, and this is an acknowledged bug.
 
 Some ``half-public'' headers are in the gf2x/ subdirectory. Some of these
 headers (gf2x/gf2x-thresholds.h and gf2x/gf2x_mul* are
