@@ -126,6 +126,7 @@ if test x$hwdir = x ; then
    coreisbr) hwdir=x86_64_pclmul ;;
    coreiibr) hwdir=x86_64_pclmul ;;
    coreihwl) hwdir=coreihwl ;;
+   armv7l) hwdir=armv7l ;;
    # TODO: add bobcat, bulldozer.
   esac
  fi
