@@ -3,14 +3,13 @@
 # GMP config.sub wrapper.
 
 
-# Copyright 2000, 2001, 2002, 2003, 2006, 2009, 2010, 2011, 2012, 2013 Free
-# Software Foundation, Inc.
+# Copyright 2000, 2001, 2002, 2003, 2006 Free Software Foundation, Inc.
 #
 # This file is part of the GNU MP Library.
 #
 # The GNU MP Library is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published
-# by the Free Software Foundation; either version 3 of the License, or (at
+# by the Free Software Foundation; either version 2.1 of the License, or (at
 # your option) any later version.
 #
 # The GNU MP Library is distributed in the hope that it will be useful, but
@@ -19,7 +18,9 @@
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+# along with the GNU MP Library; see the file COPYING.LIB.  If not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
 
 
 # Usage: config.sub CPU-VENDOR-OS
@@ -90,10 +91,8 @@ given_full="$given_cpu$given_rest"
 case "$given_cpu" in
 itanium | itanium2)
   test_cpu=ia64 ;;
-pentium | pentiummmx | pentiumpro | pentium[234m] | k[567] | k6[23] | geode | athlon | viac3*)
+pentium | pentiummmx | pentiumpro | pentium[234] | k[56] | k6[23] | athlon | viac3*)
   test_cpu=i386 ;;
-athlon64 | atom | core2 | corei | coreinhm | coreiwsm | coreisbr | coreihwl | coreibwl | opteron | k[89] | k10 | bobcat | bulldozer | nano)
-  test_cpu=x86_64 ;;
 power[2-9] | power2sc)
   test_cpu=power ;;
 powerpc401 | powerpc403 | powerpc405 | \
@@ -107,21 +106,10 @@ powerpc801 | powerpc821 | powerpc823  | powerpc860 | \
 powerpc64)
   test_cpu=powerpc ;;
 sparcv8 | supersparc | microsparc | \
-ultrasparc | ultrasparc2 | ultrasparc2i | ultrasparc3 | ultrasparct[1234])
+ultrasparc | ultrasparc2 | ultrasparc2i | ultrasparc3 | ultrasparct1)
   test_cpu=sparc ;;
 sh2)
   test_cpu=sh ;;
-
-z900 | z990 | z9 | z10 | z196)
-  test_cpu=s390x;;
-z900esa | z990esa | z9esa | z10esa | z196esa)
-  test_cpu=s390;;
-
-armsa1 | armxscale | arm9tdmi | arm9te |				\
-arm10* | arm11mpcore | armsa1 | arm1136 | arm1156 | arm1176 |		\
-armcortexa5 | armcortexa7 | armcortexa8 | armcortexa9 | armcortexa15 |	\
-armcortexr4 | armcortexr5 | armcortexm3)
-  test_cpu="arm";;
 
 *)
   # Don't need or want to change the given name, just run configfsf.sub

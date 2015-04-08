@@ -88,6 +88,10 @@ if test x$ABI != xdefault ; then
  VERIFY_WORDSIZE([$ABI],[whether $CC and ABI=$ABI fit together])
 fi
 
+# Many values for target_cpu in the switch below are dead code, because
+# for licensing reasons we are stuck with gmp's old config.guess from
+# 2006. It's not that bad, since we check for the features we need by
+# ourselves anyway.
 if test x$hwdir = x ; then
  # Our _default_ setting for hwdir is to use 8*sizeof(ulong).
  hwdir=generic$gf2x_wordsize
@@ -134,6 +138,7 @@ if test x$hwdir = x ; then
    coreiibr) hwdir=x86_64_pclmul ;;
    coreihwl) hwdir=coreihwl ;;
    armv7l) hwdir=armv7l ;;
+   neon) hwdir=armv7l ;;
    # TODO: add bobcat, bulldozer.
   esac
  fi
