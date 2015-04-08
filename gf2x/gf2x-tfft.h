@@ -32,23 +32,27 @@
 extern "C" {
 #endif
 
+typedef unsigned long gf2x_tfft_t;
+typedef gf2x_tfft_t * gf2x_tfft_ptr;
+typedef const gf2x_tfft_t * gf2x_tfft_srcptr;
+
 struct gf2x_tfft_info_s {
     size_t bits_a;  // number of bits of operand1
     size_t bits_b;  // number of bits of operand2
     size_t K;       // 0 indicates fallback.
     size_t M;
-    unsigned long * tmp;
-    size_t * perm;
+    unsigned long *tmp, *c1, *c2;
+    size_t *perm;
     int split;  // boolean
+    gf2x_tfft_ptr ta, tb, tc;
+    unsigned long **A;
+    unsigned long *buf;
+    size_t bufsize;
 };
 
 typedef struct gf2x_tfft_info_s gf2x_tfft_info_t[1];
 typedef struct gf2x_tfft_info_s * gf2x_tfft_info_ptr;
 typedef const struct gf2x_tfft_info_s * gf2x_tfft_info_srcptr;
-
-typedef unsigned long gf2x_tfft_t;
-typedef gf2x_tfft_t * gf2x_tfft_ptr;
-typedef const gf2x_tfft_t * gf2x_tfft_srcptr;
 
 extern size_t gf2x_tfft_size(gf2x_tfft_info_srcptr o);
 extern gf2x_tfft_ptr gf2x_tfft_get(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr ptr, size_t k);

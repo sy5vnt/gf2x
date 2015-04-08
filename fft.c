@@ -556,7 +556,7 @@ static void fft(unsigned long **A, uint64_t K, uint64_t j, size_t Np, size_t str
 #undef c
 }
 
-/* allocate A[0]...A[K-1], and put there {a, an} cut into K chunks of M bits;
+/* put in A[0]...A[K-1] the content of {a, an} cut into K chunks of M bits;
    return pointer to block of memory containing A[0]...A[K-1] (to be freed
    by the calling routine) */
 
@@ -813,11 +813,6 @@ gf2x_tfft_ptr gf2x_tfft_alloc(gf2x_tfft_info_srcptr o, size_t n)
     return malloc_or_die(n * gf2x_tfft_size(o) * sizeof(gf2x_tfft_t));
 }
 
-void gf2x_tfft_free(gf2x_tfft_info_srcptr o MAYBE_UNUSED, gf2x_tfft_ptr ptr, size_t n MAYBE_UNUSED)
-{
-    free(ptr);
-}
-
 static void gf2x_tfft_dft_inner(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr, const unsigned long * a, size_t bits_a, size_t M)
 {
     size_t K = o->K;
@@ -825,8 +820,8 @@ static void gf2x_tfft_dft_inner(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr, const
     size_t Np = Mp * (K / 3);	// Np >= M, Np multiple of K/3
     size_t np = W(Np);	       	// Words to store Np bits
 
-    // allocate the array of pointers. It's just temporary stuff.
-    unsigned long ** A = malloc_or_die(K * sizeof(unsigned long *));
+    // use the array of pointers from o
+    unsigned long **A = o->A;
     for (size_t i = 0; i < K; i++) A[i] = tr + 2 * i * np;
     decompose(A, a, W(bits_a), M, K, np);
     unsigned long * tmp1, * tmp2, * tmp3;
@@ -834,10 +829,9 @@ static void gf2x_tfft_dft_inner(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr, const
     tmp2 = o->tmp + 2 * np;
     tmp3 = o->tmp + 4 * np; /* max(2np,gf2x_toomspace(2np)) words */
     fft(A, K, Mp, Np, 1, tmp1, tmp2, tmp3, o->perm);
-    free(A);
 }
 
-static void gf2x_tfft_dft_inner_split(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr, const unsigned long * a, size_t bits_a, size_t M, unsigned long * buf, size_t bufsize)
+static void gf2x_tfft_dft_inner_split(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr, const unsigned long * a, size_t bits_a, size_t M)
 {
     size_t K = o->K;
     size_t N = K * M;
@@ -847,10 +841,10 @@ static void gf2x_tfft_dft_inner_split(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr,
 
     // FIXME: This wrapping, and use of extra buffer space, should be
     // merged into decompose().
-    Copy(buf, a, W(bits_a));
-    Clear(buf, W(bits_a), bufsize);		// Clear upper part of a
-    wrap(buf, bits_a, N);
-    gf2x_tfft_dft_inner(o, tr, buf, MIN(N, bits_a), M);
+    Copy(o->buf, a, W(bits_a));
+    Clear(o->buf, W(bits_a), o->bufsize);	// Clear upper part of a
+    wrap(o->buf, bits_a, N);
+    gf2x_tfft_dft_inner(o, tr, o->buf, MIN(N, bits_a), M);
 }
 
 /* bits_a is a number of BITS */
@@ -870,15 +864,9 @@ void gf2x_tfft_dft(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr, const unsigned lon
         /* there's some work to be done prior to doing the decomposition:
          * wrapping.  We need some temporary space for that.  */
 
-        size_t bufsize = MAX(W(bits_a), W((size_t) m1));
-
-        unsigned long * buf = malloc_or_die(bufsize * sizeof(unsigned long));
-
-        gf2x_tfft_dft_inner_split(o, tr, a, bits_a, m1, buf, bufsize);
+        gf2x_tfft_dft_inner_split(o, tr, a, bits_a, m1);
         tr += 2 * K * compute_np(m1, K);
-        gf2x_tfft_dft_inner_split(o, tr, a, bits_a, m2, buf, bufsize);
-
-        free(buf);
+        gf2x_tfft_dft_inner_split(o, tr, a, bits_a, m2);
     }
 }
 
@@ -927,14 +915,6 @@ void gf2x_tfft_add(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tc, gf2x_tfft_srcptr t
     }
 }
 
-void gf2x_tfft_addcompose(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tc, gf2x_tfft_srcptr ta, gf2x_tfft_srcptr tb)
-{
-    gf2x_tfft_t * t = gf2x_tfft_alloc(o, 1);
-    gf2x_tfft_compose(o, t, ta, tb);
-    gf2x_tfft_add(o, tc, tc, t);
-    gf2x_tfft_free(o, t, 1);
-}
-
 void gf2x_tfft_ift_inner(gf2x_tfft_info_srcptr o, unsigned long * a, size_t bits_a, gf2x_tfft_ptr tr, size_t M)
 {
     size_t K = o->K;
@@ -948,18 +928,19 @@ void gf2x_tfft_ift_inner(gf2x_tfft_info_srcptr o, unsigned long * a, size_t bits
     tmp2 = o->tmp + 2 * np;
     tmp3 = o->tmp + 4 * np; /* max(2np,gf2x_toomspace(2np)) words */
 
-    // allocate the array of pointers. It's just temporary stuff.
-    unsigned long ** A = malloc_or_die(K * sizeof(unsigned long *));
-    for (i = 0; i < K; i++) A[i] = tr + 2 * i * np;
-    unsigned long ** Ap = malloc_or_die(K * sizeof(unsigned long *));
+    // use the array of pointers from o
+    unsigned long ** Ap = o->A;
 
-    for (i = 0; i < K; i++) Ap[i] = A[o->perm[i]];
+    /* A[i] = tr + 2 * i * np and Ap[i] = A[o->perm[i]]
+       thus Ap[i] = tr + 2 * o->perm[i] * np */
+
+    for (i = 0; i < K; i++) Ap[i] = tr + 2 * o->perm[i] * np;
     fft(Ap, K, 3 * Np - Mp, Np, 1, tmp1, tmp2, tmp3, o->perm);
-    for (i = 0; i < K; i++) ASSERT(A[i] == Ap[o->perm[i]]);
 
-    free(Ap);
+    /* reuse the same array of pointers, since Ap is no longer needed */
+    unsigned long ** A = o->A;
+    for (i = 0; i < K; i++) A[i] = tr + 2 * i * np;
     recompose(a, W(bits_a), A, K, M, Np);
-    free(A);
 }
 
 void gf2x_tfft_ift(gf2x_tfft_info_srcptr o, unsigned long * c, size_t bits_c, gf2x_tfft_ptr tr)
@@ -977,7 +958,7 @@ void gf2x_tfft_ift(gf2x_tfft_info_srcptr o, unsigned long * c, size_t bits_c, gf
         ASSERT(cn0 <= cn);
 
         size_t cn1 = W(MIN(K*m1,o->bits_a)) + W(MIN(K*m1,o->bits_b));
-        unsigned long * c1 = malloc_or_die(cn * sizeof(unsigned long));
+        unsigned long * c1 = o->c1;
         Clear(c1, I(K * m1), cn);
         gf2x_tfft_ift_inner(o, c1, cn * WLEN, tr, m1);
         wrap(c1, cn1 * WLEN, K * m1);
@@ -985,14 +966,12 @@ void gf2x_tfft_ift(gf2x_tfft_info_srcptr o, unsigned long * c, size_t bits_c, gf
         tr += 2 * K * compute_np(m1, K);
 
         size_t cn2 = W(MIN(K*m2,o->bits_a)) + W(MIN(K*m2,o->bits_b));
-        unsigned long * c2 = malloc_or_die(cn * sizeof(unsigned long));
+        unsigned long * c2 = o->c2;
         Clear(c2, I(K * m2), cn);
         gf2x_tfft_ift_inner(o, c2, cn * WLEN, tr, m2);
         wrap(c2, cn2 * WLEN, K * m2);
 
         split_reconstruct(c, c1, c2, cn0, K, m1);
-        free(c1);
-        free(c2);
     }
 }
 
@@ -1062,9 +1041,25 @@ void gf2x_tfft_init(gf2x_tfft_info_ptr o, size_t bits_a, size_t bits_b, ...)
     if (i < 2 * np)
 	i = 2 * np;
     size_t ltmp = 4 * np + i;
+    /* space in tmp is at least 6*np, thus at least for 2*K*M bits */
     o->tmp = (unsigned long *) malloc_or_die(ltmp * sizeof(unsigned long));
     o->perm = (size_t *) malloc_or_die(o->K * sizeof(size_t));
     bitrev(0, 0, o->K, 1, o->perm);
+
+    size_t cn = W(2 * o->K * o->M);
+    o->c1 = malloc_or_die(cn * sizeof(unsigned long));
+    o->c2 = malloc_or_die(cn * sizeof(unsigned long));
+
+    o->ta = gf2x_tfft_alloc (o, 1);
+    o->tb = gf2x_tfft_alloc (o, 1);
+    o->tc = gf2x_tfft_alloc (o, 1);
+
+    o->A = malloc_or_die (o->K * sizeof(unsigned long *));
+
+    o->bufsize = MAX(nwa, nwb);
+    o->bufsize = MAX(o->bufsize, W((size_t) o->M));
+    o->buf = malloc_or_die (o->bufsize * sizeof(unsigned long));
+
     va_end(ap);
 }
 
@@ -1082,7 +1077,18 @@ void gf2x_tfft_clear(gf2x_tfft_info_ptr o)
 {
     if (o->K) {
         free(o->tmp);
+        free(o->c1);
+        free(o->c2);
+
         free(o->perm);
+
+        free (o->ta);
+        free (o->tb);
+        free (o->tc);
+
+        free (o->A);
+
+        free (o->buf);
     }
     memset(o, 0, sizeof(gf2x_tfft_info_t));
 }
@@ -1113,20 +1119,13 @@ void gf2x_mul_fft(unsigned long *c, const unsigned long *a, size_t an,
          */
         abort();
     }
-    gf2x_tfft_ptr ta = gf2x_tfft_alloc(o, 1);
-    gf2x_tfft_ptr tb = gf2x_tfft_alloc(o, 1);
-    gf2x_tfft_ptr tc = gf2x_tfft_alloc(o, 1);
 
-    gf2x_tfft_dft(o, ta, a, an * WLEN);
-    gf2x_tfft_dft(o, tb, b, bn * WLEN);
+    gf2x_tfft_dft(o, o->ta, a, an * WLEN);
+    gf2x_tfft_dft(o, o->tb, b, bn * WLEN);
 
-    gf2x_tfft_compose(o, tc, ta, tb);
+    gf2x_tfft_compose(o, o->tc, o->ta, o->tb);
 
-    gf2x_tfft_ift(o, c, (an+bn)*WLEN, tc);
-
-    gf2x_tfft_free(o, ta, 1);
-    gf2x_tfft_free(o, tb, 1);
-    gf2x_tfft_free(o, tc, 1);
+    gf2x_tfft_ift(o, c, (an+bn)*WLEN, o->tc);
 
     gf2x_tfft_clear(o);
 }
