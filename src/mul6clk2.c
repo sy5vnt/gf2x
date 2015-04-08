@@ -51,58 +51,63 @@
  */
 /* This specialized version avoids loads, and relies on the destination
  * being aligned, so that aligned stores are possible */
-static inline void
-GF2X_FUNC(mul6clk2_mul2)(__v2di * t, __v2di ss1, __v2di ss2)
-{
-    typedef union {
-        __v2di s;
-        unsigned long x[2];
-    } __v2di_proxy;
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define PXOR3(op1, op2, op3) PXOR(op1, PXOR(op2, op3))
+#define PXOR4(op1, op2, op3, op4) PXOR(op1, PXOR3(op2, op3, op4))
+#define PZERO    _mm_setzero_si128()
 
-    __v2di_proxy t00, t11, tk;
-    t00.s = _mm_clmulepi64_si128(ss1, ss2, 0);
-    t11.s = _mm_clmulepi64_si128(ss1, ss2, 17);
-    ss1 ^= _mm_shuffle_epi32(ss1, 78);  // 78 == 0b01001110 (swap)
-    ss2 ^= _mm_shuffle_epi32(ss2, 78);  // 78 == 0b01001110 (swap)
-    tk.s = _mm_clmulepi64_si128(ss1, ss2, 0);
-    tk.s ^= t00.s ^ t11.s;
-    t00.x[1] ^= tk.x[0];
-    t11.x[0] ^= tk.x[1];
-    t[0] = t00.s;
-    t[1] = t11.s;
+static inline void
+GF2X_FUNC(mul6clk2_mul2)(__m128i * t, __m128i ss1, __m128i ss2)
+{
+    __m128i t00 = _mm_clmulepi64_si128(ss1, ss2, 0);
+    __m128i t11 = _mm_clmulepi64_si128(ss1, ss2, 0x11);
+    ss1 = PXOR(ss1, _mm_shuffle_epi32(ss1, _MM_SHUFFLE(1,0,3,2)));
+    ss2 = PXOR(ss2, _mm_shuffle_epi32(ss2, _MM_SHUFFLE(1,0,3,2)));
+    __m128i tk = PXOR(PXOR(t00, t11), _mm_clmulepi64_si128(ss1, ss2, 0));
+    t[0] = PXOR(t00, _mm_unpacklo_epi64(PZERO, tk));
+    t[1] = PXOR(t11, _mm_unpackhi_epi64(tk, PZERO));
 }
+
 
 /* variant with 6 calls to mul2, i.e., 18 multiplications */
 GF2X_STORAGE_CLASS_mul6
 void gf2x_mul6 (unsigned long *c, const unsigned long *a, const unsigned long *b)
 {
-    __v2di aa[3], bb[3];
-    __v2di p0[2], p1[2], p2[2];
-    __v2di pp0[2], pp1[2], pp2[2];
-    __v2di a0 = _mm_loadu_si128((__v2di*)(a));
-    __v2di a1 = _mm_loadu_si128((__v2di*)(a+2));
-    __v2di a2 = _mm_loadu_si128((__v2di*)(a+4));
-    __v2di b0 = _mm_loadu_si128((__v2di*)(b));
-    __v2di b1 = _mm_loadu_si128((__v2di*)(b+2));
-    __v2di b2 = _mm_loadu_si128((__v2di*)(b+4));
-    aa[0] = a1^a2;
-    aa[1] = a0^a2;
-    aa[2] = a0^a1;
-    bb[0] = b1^b2;
-    bb[1] = b0^b2;
-    bb[2] = b0^b1;
+    __m128i aa[3], bb[3];
+    __m128i p0[2], p1[2], p2[2];
+    __m128i pp0[2], pp1[2], pp2[2];
+    __m128i a0 = _mm_loadu_si128((__m128i*)(a));
+    __m128i a1 = _mm_loadu_si128((__m128i*)(a+2));
+    __m128i a2 = _mm_loadu_si128((__m128i*)(a+4));
+    __m128i b0 = _mm_loadu_si128((__m128i*)(b));
+    __m128i b1 = _mm_loadu_si128((__m128i*)(b+2));
+    __m128i b2 = _mm_loadu_si128((__m128i*)(b+4));
+    aa[0] = PXOR(a1, a2);
+    aa[1] = PXOR(a0, a2);
+    aa[2] = PXOR(a0, a1);
+    bb[0] = PXOR(b1, b2);
+    bb[1] = PXOR(b0, b2);
+    bb[2] = PXOR(b0, b1);
     GF2X_FUNC(mul6clk2_mul2)(p0, a0, b0);
     GF2X_FUNC(mul6clk2_mul2)(p1, a1, b1);
     GF2X_FUNC(mul6clk2_mul2)(p2, a2, b2);
     GF2X_FUNC(mul6clk2_mul2)(pp0, aa[0], bb[0]);
     GF2X_FUNC(mul6clk2_mul2)(pp1, aa[1], bb[1]);
     GF2X_FUNC(mul6clk2_mul2)(pp2, aa[2], bb[2]);
-    _mm_storeu_si128((__v2di*)(c + 2*0), p0[0]);
-    _mm_storeu_si128((__v2di*)(c + 2*1), p0[0]^p1[0]^pp2[0]       ^ p0[1]);
-    _mm_storeu_si128((__v2di*)(c + 2*2), p0[0]^p1[0]^p2[0]^pp1[0] ^ p0[1]^p1[1]^pp2[1]);
-    _mm_storeu_si128((__v2di*)(c + 2*3), pp0[0]^p1[0]^p2[0]       ^ p0[1]^p1[1]^p2[1]^pp1[1]);
-    _mm_storeu_si128((__v2di*)(c + 2*4), p2[0]                    ^ pp0[1]^p1[1]^p2[1]);
-    _mm_storeu_si128((__v2di*)(c + 2*5),                            p2[1]);
+    _mm_storeu_si128((__m128i*)(c + 0), p0[0]);
+    _mm_storeu_si128((__m128i*)(c + 2),
+            PXOR(PXOR3(p0[0], p1[0], pp2[0])       , p0[1]));
+    _mm_storeu_si128((__m128i*)(c + 4),
+            PXOR(PXOR4(p0[0], p1[0], p2[0], pp1[0]), PXOR3(p0[1], p1[1], pp2[1])));
+    _mm_storeu_si128((__m128i*)(c + 6),
+            PXOR(PXOR3(pp0[0], p1[0], p2[0])       , PXOR4(p0[1], p1[1], p2[1], pp1[1])));
+    _mm_storeu_si128((__m128i*)(c + 8),
+            PXOR(p2[0]                             , PXOR3(pp0[1], p1[1], p2[1])));
+    _mm_storeu_si128((__m128i*)(c + 10),                            p2[1]);
 }
 
+#undef PXOR
+#undef PXOR3
+#undef PXOR4
+#undef PZERO
 #endif  /* GF2X_MUL6_H_ */

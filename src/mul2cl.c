@@ -49,13 +49,16 @@
 #endif
 
 GF2X_STORAGE_CLASS_mul2
-#ifdef CARRY
+#if defined(CARRY) && defined(BORROW)
+#error "internal error, mul2cl.c can't be included with both BORROW and CARRY!"
+#endif
+
+#if defined(CARRY)
 /* {t, 4} <- {s1, 2} * {s2, 2}, and {c, 2} <- {s1+1, 1} * {s2+1, 1} */
 void
 gf2x_mul2c (unsigned long *t, unsigned long const *s1, unsigned long const *s2,
             unsigned long *c)
-#else
-#ifdef BORROW
+#elif defined(BORROW)
 void
 /* {t, 4} <- {s1, 2} * {s2, 2}, knowing {c, 2} = {s1+1, 1} * {s2+1, 1} */
 gf2x_mul2b (unsigned long *t, unsigned long const *s1, unsigned long const *s2,
@@ -64,52 +67,42 @@ gf2x_mul2b (unsigned long *t, unsigned long const *s1, unsigned long const *s2,
 void gf2x_mul2(unsigned long * t, unsigned long const * s1,
         unsigned long const * s2)
 #endif
-#endif
 {
-    typedef union {
-        __v2di s;
-        unsigned long x[2];
-    } __v2di_proxy;
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define PZERO    _mm_setzero_si128()
+    __m128i ss1 = _mm_loadu_si128((__m128i *)s1);
+    __m128i ss2 = _mm_loadu_si128((__m128i *)s2);
 
-    __v2di ss1, ss2, s1s, s2s;
-    __v2di_proxy t00, tk;
+
+    __m128i t00 = _mm_clmulepi64_si128(ss1, ss2, 0);
 #ifndef BORROW
-    __v2di_proxy t11;
-#endif
-    ss1 = _mm_loadu_si128((__v2di *)s1);
-    ss2 = _mm_loadu_si128((__v2di *)s2);
-
-
-    t00.s = _mm_clmulepi64_si128(ss1, ss2, 0);
-#ifndef BORROW
-    t11.s = _mm_clmulepi64_si128(ss1, ss2, 17);
+    __m128i t11 = _mm_clmulepi64_si128(ss1, ss2, 0x11);
 #endif
 
-    s1s = _mm_shuffle_epi32(ss1, 78);
-    ss1 ^= s1s;
-    s2s = _mm_shuffle_epi32(ss2, 78);
-    ss2 ^= s2s;
+    ss1 = PXOR(ss1, _mm_shuffle_epi32(ss1, _MM_SHUFFLE(1,0,3,2)));
+    ss2 = PXOR(ss2, _mm_shuffle_epi32(ss2, _MM_SHUFFLE(1,0,3,2)));
 
-    tk.s = _mm_clmulepi64_si128(ss1, ss2, 0);
+    __m128i tk = _mm_clmulepi64_si128(ss1, ss2, 0);
 
 #ifndef BORROW
-    tk.s ^= t00.s ^ t11.s;
+    tk = PXOR(tk, PXOR(t00, t11));
 #endif
 
     /* store result */
-    t[0] = t00.x[0];
-#ifdef BORROW
-    t[1] = t00.x[1] ^ tk.x[0] ^ t00.x[0] ^ c[0];
-    t[2] = c[0] ^ tk.x[1] ^ t00.x[1] ^ c[1];
-    t[3] = c[1];
+#if defined(BORROW)
+    tk = PXOR(tk, PXOR(t00, _mm_loadu_si128((__m128i*)c)));
+    _mm_storeu_si128((__m128i *)(t),  PXOR(t00, _mm_unpacklo_epi64(PZERO, tk)));
+    _mm_storeu_si128((__m128i *)(t+2),PXOR(c,   _mm_unpackhi_epi64(tk, PZERO)));
+#elif defined(CARRY)
+    _mm_storeu_si128((__m128i *)c, t11);
+    _mm_storeu_si128((__m128i *)(t),  PXOR(t00, _mm_unpacklo_epi64(PZERO, tk)));
+    _mm_storeu_si128((__m128i *)(t+2),PXOR(t11, _mm_unpackhi_epi64(tk, PZERO)));
 #else
-    t[1] = t00.x[1] ^ tk.x[0];
-    t[2] = t11.x[0] ^ tk.x[1];
-    t[3] = t11.x[1];
+    _mm_storeu_si128((__m128i *)(t),  PXOR(t00, _mm_unpacklo_epi64(PZERO, tk)));
+    _mm_storeu_si128((__m128i *)(t+2),PXOR(t11, _mm_unpackhi_epi64(tk, PZERO)));
 #endif
-#ifdef CARRY
-    c[0] = t11.x[0];
-    c[1] = t11.x[1];
-#endif
+
+#undef PZERO
+#undef PXOR
 }
 #endif  /* GF2X_MUL2_H_ */

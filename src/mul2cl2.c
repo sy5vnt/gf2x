@@ -53,23 +53,23 @@ GF2X_STORAGE_CLASS_mul2
 void gf2x_mul2(unsigned long * t, unsigned long const * s1,
         unsigned long const * s2)
 {
-    __v2di ss1, ss2, s1s, s2s;
-    __v2di t00, t11, tk;
-    ss1 = _mm_loadu_si128((__v2di *)s1);
-    ss2 = _mm_loadu_si128((__v2di *)s2);
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+    __m128i ss1 = _mm_loadu_si128((__m128i *)s1);
+    __m128i ss2 = _mm_loadu_si128((__m128i *)s2);
 
 
-    t00 = _mm_clmulepi64_si128(ss1, ss2, 0);
-    t11 = _mm_clmulepi64_si128(ss1, ss2, 17);
+    __m128i t00 = _mm_clmulepi64_si128(ss1, ss2, 0);
+    __m128i t11 = _mm_clmulepi64_si128(ss1, ss2, 0x11);
 
-    s1s = _mm_shuffle_epi32(ss1, 78);
-    ss1 ^= s1s;
-    s2s = _mm_shuffle_epi32(ss2, 78);
-    ss2 ^= s2s;
+    ss1 = PXOR(ss1, _mm_shuffle_epi32(ss1, _MM_SHUFFLE(1,0,3,2)));
+    ss2 = PXOR(ss2, _mm_shuffle_epi32(ss2, _MM_SHUFFLE(1,0,3,2)));
 
-    tk = t00 ^ t11 ^ _mm_clmulepi64_si128(ss1, ss2, 0);
+    __m128i tk = PXOR(t00, PXOR(t11, _mm_clmulepi64_si128(ss1, ss2, 0)));
 
-    _mm_storeu_si128((__v2di *)t, t00 ^ _mm_slli_si128(tk, 8));
-    _mm_storeu_si128((__v2di *)(t+2), t11 ^ _mm_srli_si128(tk, 8));
+    /* mul2cl.c is essentially identical, just replaces srli and srli by
+     * unpacklo and unpackhi */
+    _mm_storeu_si128((__m128i *)t,     PXOR(t00, _mm_slli_si128(tk, 8)));
+    _mm_storeu_si128((__m128i *)(t+2), PXOR(t11, _mm_srli_si128(tk, 8)));
+#undef PXOR
 }
 #endif  /* GF2X_MUL2_H_ */

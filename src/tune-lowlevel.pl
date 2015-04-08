@@ -79,6 +79,7 @@ for my $s (sort { $a <=> $b } keys %sizes) {
         chomp($r);
         print STDERR "$r\n";
         $r =~ /^(.*)\s:\s([\d\.]+)\sns$/;
+        die "$p returned no results" unless defined($1) && defined($2);
         push @results, [$1, $2];
     }
     @results = sort { $a->[1] <=> $b->[1] } @results;

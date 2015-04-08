@@ -47,20 +47,28 @@
 /* TODO: if somebody comes up with a neat way to improve the interface so
  * as to remove the false dependency on pclmul, that would be nice.
  */
-static inline __v2di
+static inline __m128i
 GF2X_FUNC(mul9clk2_mul1) (unsigned long a, unsigned long b)
 {
-    __v2di aa = (__v2di) { a, 0 };
-    __v2di bb = (__v2di) { b, 0 };
+    __m128i aa = _gf2x_mm_setr_epi64(a, 0);
+    __m128i bb = _gf2x_mm_setr_epi64(b, 0);
     return _mm_clmulepi64_si128(aa, bb, 0);
 }
 
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define PXOR3(op1, op2, op3) PXOR(op1, PXOR(op2, op3))
+#define PXOR4(op1, op2, op3, op4) PXOR(op1, PXOR3(op2, op3, op4))
+#define PXOR5(op1, op2, op3, op4, op5) PXOR(op1, PXOR4(op2, op3, op4, op5))
+#define PXOR6(op1, op2, op3, op4, op5, op6) PXOR(op1, PXOR5(op2, op3, op4, op5, op6))
+#define PXOR7(op1, op2, op3, op4, op5, op6, op7) PXOR(op1, PXOR6(op2, op3, op4, op5, op6, op7))
+#define PZERO    _mm_setzero_si128()
+
 /* uses the variant of Karatsuba with 6 multiplications */
-static void GF2X_FUNC(mul9clk2_mul3) (__v2di *ce, __v2di *co, const unsigned long *a, const unsigned long *b)
+static void GF2X_FUNC(mul9clk2_mul3) (__m128i *ce, __m128i *co, const unsigned long *a, const unsigned long *b)
 {
   unsigned long aa[3], bb[3];
-  __v2di p0, p1, p2;
-  __v2di pp0, pp1, pp2;
+  __m128i p0, p1, p2;
+  __m128i pp0, pp1, pp2;
   aa[0] = a[1]^a[2];
   aa[1] = a[0]^a[2];
   aa[2] = a[0]^a[1];
@@ -75,11 +83,11 @@ static void GF2X_FUNC(mul9clk2_mul3) (__v2di *ce, __v2di *co, const unsigned lon
   pp2 = GF2X_FUNC(mul9clk2_mul1)(aa[2], bb[2]);
 
   ce[0] = p0;
-  ce[1] = p0^p1^p2^pp1;
+  ce[1] = PXOR4(p0, p1, p2, pp1);
   ce[2] = p2;
 
-  co[0] = p0^p1^pp2;
-  co[1] = pp0^p1^p2;
+  co[0] = PXOR3(p0, p1, pp2);
+  co[1] = PXOR3(pp0, p1, p2);
 }
 
 /* recursive application of the Karatsuba-3 algorithm with 6 multiplies,
@@ -115,12 +123,12 @@ void gf2x_mul9 (unsigned long *c, const unsigned long *a, const unsigned long *b
   bb[7] = b[1]^b[4];
   bb[8] = b[2]^b[5];
 
-  __v2di p0e[3], p0o[2];
-  __v2di p1e[3], p1o[2];
-  __v2di p2e[3], p2o[2];
-  __v2di q0e[3], q0o[2];
-  __v2di q1e[3], q1o[2];
-  __v2di q2e[3], q2o[2];
+  __m128i p0e[3], p0o[2];
+  __m128i p1e[3], p1o[2];
+  __m128i p2e[3], p2o[2];
+  __m128i q0e[3], q0o[2];
+  __m128i q1e[3], q1o[2];
+  __m128i q2e[3], q2o[2];
   GF2X_FUNC(mul9clk2_mul3) (p0e, p0o, a+0, b+0);
   GF2X_FUNC(mul9clk2_mul3) (p1e, p1o, a+3, b+3);
   GF2X_FUNC(mul9clk2_mul3) (p2e, p2o, a+6, b+6);
@@ -128,34 +136,34 @@ void gf2x_mul9 (unsigned long *c, const unsigned long *a, const unsigned long *b
   GF2X_FUNC(mul9clk2_mul3) (q1e, q1o, aa+3, bb+3);
   GF2X_FUNC(mul9clk2_mul3) (q2e, q2o, aa+6, bb+6);
 
-  __v2di e,h,l;
+  __m128i e,h,l;
   e = p0e[0];
   l = p0o[0];
-  _mm_storeu_si128((__v2di*)(c), e ^ _mm_slli_si128(l, 8));
+  _mm_storeu_si128((__m128i*)(c), PXOR(e, _mm_slli_si128(l, 8)));
 
-  e = p0e[1];                      h=l; l=p0o[1]^p1e[0]^q2e[0]^p0e[0];
-  _mm_storeu_si128((__v2di*)(c+2), e ^ _mm_slli_si128(l, 8) ^ _mm_srli_si128(h, 8));
+  e = p0e[1];                      h=l; l= PXOR4(p0o[1], p1e[0], q2e[0], p0e[0]);
+  _mm_storeu_si128((__m128i*)(c+2), PXOR3(e, _mm_slli_si128(l, 8), _mm_srli_si128(h, 8)));
 
-  e = p0e[2]^p0o[0]^p1o[0]^q2o[0]; h=l; l=p1e[1]^q2e[1]^p0e[1];
-  _mm_storeu_si128((__v2di*)(c+4), e ^ _mm_slli_si128(l, 8) ^ _mm_srli_si128(h, 8));
+  e = PXOR4(p0e[2], p0o[0], p1o[0], q2o[0]); h=l; l= PXOR3(p1e[1], q2e[1], p0e[1]);
+  _mm_storeu_si128((__m128i*)(c+4), PXOR3(e, _mm_slli_si128(l, 8), _mm_srli_si128(h, 8)));
 
-  e = p0e[0]^q1e[0]^p2e[0]^p1e[0]^p0o[1]^p1o[1]^q2o[1]; h=l; l=p0o[0]^q1o[0]^p2o[0]^p1o[0]^p1e[2]^q2e[2]^p0e[2];
-  _mm_storeu_si128((__v2di*)(c+6), e ^ _mm_slli_si128(l, 8) ^ _mm_srli_si128(h, 8));
+  e = PXOR7(p0e[0], q1e[0], p2e[0], p1e[0], p0o[1], p1o[1], q2o[1]); h=l; l= PXOR7(p0o[0], q1o[0], p2o[0], p1o[0], p1e[2], q2e[2], p0e[2]);
+  _mm_storeu_si128((__m128i*)(c+6), PXOR3(e, _mm_slli_si128(l, 8), _mm_srli_si128(h, 8)));
 
-  e = p0e[1]^q1e[1]^p2e[1]^p1e[1]; h=l; l=p0o[1]^q1o[1]^p2o[1]^p1o[1]^q0e[0]^p1e[0]^p2e[0];
-  _mm_storeu_si128((__v2di*)(c+8), e ^ _mm_slli_si128(l, 8) ^ _mm_srli_si128(h, 8));
+  e = PXOR4(p0e[1], q1e[1], p2e[1], p1e[1]); h=l; l= PXOR7(p0o[1], q1o[1], p2o[1], p1o[1], q0e[0], p1e[0], p2e[0]);
+  _mm_storeu_si128((__m128i*)(c+8), PXOR3(e, _mm_slli_si128(l, 8), _mm_srli_si128(h, 8)));
 
-  e = p0e[2]^q1e[2]^p2e[2]^p1e[2]^q0o[0]^p1o[0]^p2o[0]; h=l; l=q0e[1]^p1e[1]^p2e[1];
-  _mm_storeu_si128((__v2di*)(c+10), e ^ _mm_slli_si128(l, 8) ^ _mm_srli_si128(h, 8));
+  e = PXOR7(p0e[2], q1e[2], p2e[2], p1e[2], q0o[0], p1o[0], p2o[0]); h=l; l= PXOR3(q0e[1], p1e[1], p2e[1]);
+  _mm_storeu_si128((__m128i*)(c+10), PXOR3(e, _mm_slli_si128(l, 8), _mm_srli_si128(h, 8)));
 
-  e = p2e[0]^q0o[1]^p1o[1]^p2o[1]; h=l; l=p2o[0]^q0e[2]^p1e[2]^p2e[2];
-  _mm_storeu_si128((__v2di*)(c+12), e ^ _mm_slli_si128(l, 8) ^ _mm_srli_si128(h, 8));
+  e = PXOR4(p2e[0], q0o[1], p1o[1], p2o[1]); h=l; l= PXOR4(p2o[0], q0e[2], p1e[2], p2e[2]);
+  _mm_storeu_si128((__m128i*)(c+12), PXOR3(e, _mm_slli_si128(l, 8), _mm_srli_si128(h, 8)));
 
   e = p2e[1]; h=l; l=p2o[1];
-  _mm_storeu_si128((__v2di*)(c+14), e ^ _mm_slli_si128(l, 8) ^ _mm_srli_si128(h, 8));
+  _mm_storeu_si128((__m128i*)(c+14), PXOR3(e, _mm_slli_si128(l, 8), _mm_srli_si128(h, 8)));
 
   e = p2e[2];
-  _mm_storeu_si128((__v2di*)(c+16), e ^ _mm_srli_si128(h, 8));
+  _mm_storeu_si128((__m128i*)(c+16), PXOR(e, _mm_srli_si128(h, 8)));
 
   /*
   c[0]  =                   p0e[0]                   ^                                           ;
@@ -179,4 +187,11 @@ void gf2x_mul9 (unsigned long *c, const unsigned long *a, const unsigned long *b
   */
 }
 
+#undef PXOR
+#undef PXOR3
+#undef PXOR4
+#undef PXOR5
+#undef PXOR6
+#undef PXOR7
+#undef PZERO
 #endif  /* GF2X_MUL9_H_ */

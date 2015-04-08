@@ -48,13 +48,19 @@
 /* TODO: if somebody comes up with a neat way to improve the interface so
  * as to remove the false dependency on pclmul, that would be nice.
  */
-static inline __v2di
+static inline __m128i
 GF2X_FUNC(mul9k3_mul1) (unsigned long a, unsigned long b)
 {
-    __v2di aa = (__v2di) { a, 0 };
-    __v2di bb = (__v2di) { b, 0 };
+    __m128i aa = _gf2x_mm_setr_epi64(a, 0);
+    __m128i bb = _gf2x_mm_setr_epi64(b, 0);
     return _mm_clmulepi64_si128(aa, bb, 0);
 }
+
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define PXOR3(op1, op2, op3) PXOR(op1, PXOR(op2, op3))
+#define PXOR4(op1, op2, op3, op4) PXOR(op1, PXOR3(op2, op3, op4))
+#define PXOR5(op1, op2, op3, op4, op5) PXOR(op1, PXOR4(op2, op3, op4, op5))
+#define PZERO    _mm_setzero_si128()
 
 /* same as mul5, but stores a[4]*b[4] into {d,2} */
 GF2X_STORAGE_CLASS_mul5
@@ -63,8 +69,8 @@ void GF2X_FUNC(mul9k3_mul5c) (unsigned long *c, const unsigned long *a,
 {
   /* Montgomery formulae with 13 multiplications */
   unsigned long ta[3], tb[3], pa[8], pb[8];
-  __v2di p0, p2, p4, p6, p8, p10, p12, p14, p16, p18, p20, p22, p24;
-  __v2di t0, t2, t4, t6, t8, t10, t12;
+  __m128i p0, p2, p4, p6, p8, p10, p12, p14, p16, p18, p20, p22, p24;
+  __m128i t0, t2, t4, t6, t8, t10, t12;
   ta[0] = a[0]  ^ a[4]         ; tb[0] = b[0]  ^ b[4];
   ta[1] = a[1]  ^ a[2]         ; tb[1] = b[1]  ^ b[2];
   ta[2] = a[3]  ^ ta[0]        ; tb[2] = b[3]  ^ tb[0];
@@ -89,31 +95,31 @@ void GF2X_FUNC(mul9k3_mul5c) (unsigned long *c, const unsigned long *a,
   p20 = GF2X_FUNC(mul9k3_mul1)(a[3],  b[3]);
   p22 = GF2X_FUNC(mul9k3_mul1)(a[1],  b[1]);
   p24 = GF2X_FUNC(mul9k3_mul1)(a[0],  b[0]);
-  t0  = p14 ^ p24;
-  t2  = p12 ^ p18;
-  t4  = p2  ^ p16;
-  t6  = p0  ^ p6;
-  t8  = p4  ^ p16;
-  t10 = p10 ^ t0;
-  t12 = p8  ^ t2;
+  t0  = PXOR(p14, p24);
+  t2  = PXOR(p12, p18);
+  t4  = PXOR(p2, p16);
+  t6  = PXOR(p0, p6);
+  t8  = PXOR(p4, p16);
+  t10 = PXOR(p10, t0);
+  t12 = PXOR(p8, t2);
 
-  __v2di ce0 = p24;
-  __v2di ce2 = p18 ^ t8  ^ t10;
-  __v2di ce4 = p0  ^ p20 ^ p22 ^ t10 ^ t12;
-  __v2di ce6 = p24 ^ t4  ^ t12;
-  __v2di ce8 = p18;
+  __m128i ce0 = p24;
+  __m128i ce2 = PXOR3(p18, t8, t10);
+  __m128i ce4 = PXOR5(p0, p20, p22, t10, t12);
+  __m128i ce6 = PXOR3(p24, t4, t12);
+  __m128i ce8 = p18;
 
-  __v2di co1 = p22 ^ t0;
-  __v2di co3 = t2  ^ t4  ^ t6;
-  __v2di co5 = t0  ^ t6  ^ t8;
-  __v2di co7 = p20 ^ t2;
+  __m128i co1 = PXOR(p22, t0);
+  __m128i co3 = PXOR3(t2, t4, t6);
+  __m128i co5 = PXOR3(t0, t6, t8);
+  __m128i co7 = PXOR(p20, t2);
 
-  _mm_storeu_si128((__v2di*)(d),   p18); /* a[4] * b[4] */
-  _mm_storeu_si128((__v2di*)(c),   ce0 ^ _mm_slli_si128(co1, 8));
-  _mm_storeu_si128((__v2di*)(c+2), ce2 ^ _mm_srli_si128(co1, 8) ^ _mm_slli_si128(co3, 8));
-  _mm_storeu_si128((__v2di*)(c+4), ce4 ^ _mm_srli_si128(co3, 8) ^ _mm_slli_si128(co5, 8));
-  _mm_storeu_si128((__v2di*)(c+6), ce6 ^ _mm_srli_si128(co5, 8) ^ _mm_slli_si128(co7, 8));
-  _mm_storeu_si128((__v2di*)(c+8), ce8 ^ _mm_srli_si128(co7, 8));
+  _mm_storeu_si128((__m128i*)(d),   p18); /* a[4] * b[4] */
+  _mm_storeu_si128((__m128i*)(c),   PXOR(ce0, _mm_slli_si128(co1, 8)));
+  _mm_storeu_si128((__m128i*)(c+2), PXOR3(ce2 ,  _mm_srli_si128(co1, 8) ,  _mm_slli_si128(co3, 8)));
+  _mm_storeu_si128((__m128i*)(c+4), PXOR3(ce4 ,  _mm_srli_si128(co3, 8) ,  _mm_slli_si128(co5, 8)));
+  _mm_storeu_si128((__m128i*)(c+6), PXOR3(ce6 ,  _mm_srli_si128(co5, 8) ,  _mm_slli_si128(co7, 8)));
+  _mm_storeu_si128((__m128i*)(c+8), PXOR(ce8 ,  _mm_srli_si128(co7, 8)));
 }
 
 /* same as mul5, but assumes {d,2} contains a[4]*b[4] */
@@ -123,8 +129,8 @@ void GF2X_FUNC(mul9k3_mul5b) (unsigned long *c, const unsigned long *a,
 {
   /* Montgomery formulae with 13 multiplications */
   unsigned long ta[3], tb[3], pa[8], pb[8];
-  __v2di p0, p2, p4, p6, p8, p10, p12, p14, p16, p18, p20, p22, p24;
-  __v2di t0, t2, t4, t6, t8, t10, t12;
+  __m128i p0, p2, p4, p6, p8, p10, p12, p14, p16, p18, p20, p22, p24;
+  __m128i t0, t2, t4, t6, t8, t10, t12;
 
   ta[0] = a[0]  ^ a[4]         ; tb[0] = b[0]  ^ b[4];
   ta[1] = a[1]  ^ a[2]         ; tb[1] = b[1]  ^ b[2];
@@ -147,34 +153,34 @@ void GF2X_FUNC(mul9k3_mul5b) (unsigned long *c, const unsigned long *a,
   p14 = GF2X_FUNC(mul9k3_mul1)(pa[7], pb[7]);
   p16 = GF2X_FUNC(mul9k3_mul1)(ta[0], tb[0]);
   /* p18 = GF2X_FUNC(mul9k3_mul1)(a[4],  b[4]); */
-  p18 = _mm_loadu_si128((__v2di *) d);
+  p18 = _mm_loadu_si128((__m128i *) d);
   p20 = GF2X_FUNC(mul9k3_mul1)(a[3],  b[3]);
   p22 = GF2X_FUNC(mul9k3_mul1)(a[1],  b[1]);
   p24 = GF2X_FUNC(mul9k3_mul1)(a[0],  b[0]);
-  t0  = p14 ^ p24;
-  t2  = p12 ^ p18;
-  t4  = p2  ^ p16;
-  t6  = p0  ^ p6;
-  t8  = p4  ^ p16;
-  t10 = p10 ^ t0;
-  t12 = p8  ^ t2;
+  t0  = PXOR(p14, p24);
+  t2  = PXOR(p12, p18);
+  t4  = PXOR(p2, p16);
+  t6  = PXOR(p0, p6);
+  t8  = PXOR(p4, p16);
+  t10 = PXOR(p10, t0);
+  t12 = PXOR(p8, t2);
 
-  __v2di ce0 = p24;
-  __v2di ce2 = p18 ^ t8  ^ t10;
-  __v2di ce4 = p0  ^ p20 ^ p22 ^ t10 ^ t12;
-  __v2di ce6 = p24 ^ t4  ^ t12;
-  __v2di ce8 = p18;
+  __m128i ce0 = p24;
+  __m128i ce2 = PXOR3(p18, t8, t10);
+  __m128i ce4 = PXOR5(p0, p20, p22, t10, t12);
+  __m128i ce6 = PXOR3(p24, t4, t12);
+  __m128i ce8 = p18;
 
-  __v2di co1 = p22 ^ t0;
-  __v2di co3 = t2  ^ t4  ^ t6;
-  __v2di co5 = t0  ^ t6  ^ t8;
-  __v2di co7 = p20 ^ t2;
+  __m128i co1 = PXOR(p22, t0);
+  __m128i co3 = PXOR3(t2, t4, t6);
+  __m128i co5 = PXOR3(t0, t6, t8);
+  __m128i co7 = PXOR(p20, t2);
 
-  _mm_storeu_si128((__v2di*)(c),   ce0 ^ _mm_slli_si128(co1, 8));
-  _mm_storeu_si128((__v2di*)(c+2), ce2 ^ _mm_srli_si128(co1, 8) ^ _mm_slli_si128(co3, 8));
-  _mm_storeu_si128((__v2di*)(c+4), ce4 ^ _mm_srli_si128(co3, 8) ^ _mm_slli_si128(co5, 8));
-  _mm_storeu_si128((__v2di*)(c+6), ce6 ^ _mm_srli_si128(co5, 8) ^ _mm_slli_si128(co7, 8));
-  _mm_storeu_si128((__v2di*)(c+8), ce8 ^ _mm_srli_si128(co7, 8));
+  _mm_storeu_si128((__m128i*)(c),   PXOR(ce0, _mm_slli_si128(co1, 8)));
+  _mm_storeu_si128((__m128i*)(c+2), PXOR3(ce2, _mm_srli_si128(co1, 8), _mm_slli_si128(co3, 8)));
+  _mm_storeu_si128((__m128i*)(c+4), PXOR3(ce4, _mm_srli_si128(co3, 8), _mm_slli_si128(co5, 8)));
+  _mm_storeu_si128((__m128i*)(c+6), PXOR3(ce6, _mm_srli_si128(co5, 8), _mm_slli_si128(co7, 8)));
+  _mm_storeu_si128((__m128i*)(c+8), PXOR(ce8, _mm_srli_si128(co7, 8)));
 }
 
 /* (based on mul9k.c)
@@ -215,4 +221,10 @@ void gf2x_mul9 (unsigned long *c, const unsigned long *a, const unsigned long *b
     c[14] ^= ab9;
 }
 
+
+#undef PXOR
+#undef PXOR3
+#undef PXOR4
+#undef PXOR5
+#undef PZERO
 #endif  /* GF2X_MUL9_H_ */
