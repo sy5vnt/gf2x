@@ -47,18 +47,23 @@
 /* TODO: if somebody comes up with a neat way to improve the interface so
  * as to remove the false dependency on pclmul, that would be nice.
  */
-static inline __v2di
+static inline __m128i
 GF2X_FUNC(mul7cl_mul1) (unsigned long a, unsigned long b)
 {
-    __v2di aa = (__v2di) { a, 0 };
-    __v2di bb = (__v2di) { b, 0 };
-    return _mm_clmulepi64_si128(aa, bb, 0);
+    return _mm_clmulepi64_si128(_gf2x_mm_setr_epi64(a,0), _gf2x_mm_setr_epi64(b,0), 0);
 }
+
 
 /* variant with 22 multiplications */
 GF2X_STORAGE_CLASS_mul7
 void gf2x_mul7 (unsigned long *c, const unsigned long *a, const unsigned long *b)
 {
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define PXOR3(op1, op2, op3) PXOR(op1, PXOR(op2, op3))
+#define PXOR4(op1, op2, op3, op4) PXOR(op1, PXOR3(op2, op3, op4))
+#define PXOR5(op1, op2, op3, op4, op5) PXOR(op1, PXOR4(op2, op3, op4, op5))
+#define PXOR6(op1, op2, op3, op4, op5, op6) PXOR(op1, PXOR5(op2, op3, op4, op5, op6))
+#define PZERO    _mm_setzero_si128()
     /* Montgomery formulae with 22 multiplications, see
      Five, Six, and Seven-Term {K}aratsuba-Like Formulae,
      IEEE Transactions on Computers, volume 54, number 3, p. 362-369, 2005 */
@@ -119,7 +124,7 @@ void gf2x_mul7 (unsigned long *c, const unsigned long *a, const unsigned long *b
     pb[20]= tb[1] ^ tb[3];
     pb[21]= tb[3] ^ tb[4];
 
-    __v2di p[22];
+    __m128i p[22];
 
     p[0] = GF2X_FUNC(mul7cl_mul1)(pa[0], pb[0]);
     p[1] = GF2X_FUNC(mul7cl_mul1)(pa[1], pb[1]);
@@ -144,46 +149,52 @@ void gf2x_mul7 (unsigned long *c, const unsigned long *a, const unsigned long *b
     p[20]= GF2X_FUNC(mul7cl_mul1)(pa[20], pb[20]);
     p[21]= GF2X_FUNC(mul7cl_mul1)(pa[21], pb[21]);
 
-    __v2di t[13];
+    __m128i t[13];
 
-    t[0]  = p[0] ^ p[1];
-    t[1]  = p[9] ^ p[13];
-    t[2]  = p[3] ^ p[6];
-    t[3]  = p[7] ^ p[10];
-    t[4]  = p[11] ^ p[18];
-    t[5]  = p[4] ^ t[3];
-    t[6]  = p[15] ^ t[2];
-    t[7]  = p[20] ^ t[5];
-    t[8]  = p[5] ^ p[14];
-    t[9]  = p[2] ^ p[17];
-    t[10] = p[5] ^ p[8];
-    t[11] = p[21] ^ t[6];
-    t[12] = p[16] ^ t[4];
+    t[0]  = PXOR(p[0], p[1]);
+    t[1]  = PXOR(p[9], p[13]);
+    t[2]  = PXOR(p[3], p[6]);
+    t[3]  = PXOR(p[7], p[10]);
+    t[4]  = PXOR(p[11], p[18]);
+    t[5]  = PXOR(p[4], t[3]);
+    t[6]  = PXOR(p[15], t[2]);
+    t[7]  = PXOR(p[20], t[5]);
+    t[8]  = PXOR(p[5], p[14]);
+    t[9]  = PXOR(p[2], p[17]);
+    t[10] = PXOR(p[5], p[8]);
+    t[11] = PXOR(p[21], t[6]);
+    t[12] = PXOR(p[16], t[4]);
 
-    __v2di cc[13];
+    __m128i cc[13];
 
     cc[0]  = p[13];
-    cc[2]  = p[7] ^ p[15] ^ t[1];
-    cc[4]  = p[3] ^ t[1] ^ t[3] ^ t[8];
-    cc[6]  = p[0] ^ p[12] ^ p[13] ^ t[7] ^ t[11];
-    cc[8]  = p[7] ^ t[0] ^ t[2] ^ t[10];
-    cc[10] = p[3] ^ p[4] ^ t[0];
+    cc[2]  = PXOR3(p[7], p[15], t[1]);
+    cc[4]  = PXOR4(p[3], t[1], t[3], t[8]);
+    cc[6]  = PXOR5(p[0], p[12], p[13], t[7], t[11]);
+    cc[8]  = PXOR4(p[7], t[0], t[2], t[10]);
+    cc[10] = PXOR3(p[3], p[4], t[0]);
     cc[12] = p[0];
 
-    cc[1]  = p[18] ^ t[1];
-    cc[3]  = t[7] ^ t[9] ^ t[12];
-    cc[5]  = p[2] ^ p[11] ^ p[19] ^ t[1] ^ t[10] ^ t[11];
-    cc[7]  = p[21] ^ t[0] ^ t[5] ^ t[8] ^ t[12];
-    cc[9]  = p[12] ^ p[19] ^ t[4] ^ t[6] ^ t[9];
-    cc[11] = p[2] ^ t[0];
+    cc[1]  = PXOR(p[18], t[1]);
+    cc[3]  = PXOR3(t[7], t[9], t[12]);
+    cc[5]  = PXOR6(p[2], p[11], p[19], t[1], t[10], t[11]);
+    cc[7]  = PXOR5(p[21], t[0], t[5], t[8], t[12]);
+    cc[9]  = PXOR5(p[12], p[19], t[4], t[6], t[9]);
+    cc[11] = PXOR(p[2], t[0]);
 
-    _mm_storeu_si128((__v2di*)(c),    cc[0]                           ^ _mm_slli_si128(cc[1], 8));
-    _mm_storeu_si128((__v2di*)(c+2),  cc[2]  ^ _mm_srli_si128(cc[1], 8) ^ _mm_slli_si128(cc[3], 8));
-    _mm_storeu_si128((__v2di*)(c+4),  cc[4]  ^ _mm_srli_si128(cc[3], 8) ^ _mm_slli_si128(cc[5], 8));
-    _mm_storeu_si128((__v2di*)(c+6),  cc[6]  ^ _mm_srli_si128(cc[5], 8) ^ _mm_slli_si128(cc[7], 8));
-    _mm_storeu_si128((__v2di*)(c+8),  cc[8]  ^ _mm_srli_si128(cc[7], 8) ^ _mm_slli_si128(cc[9], 8));
-    _mm_storeu_si128((__v2di*)(c+10), cc[10] ^ _mm_srli_si128(cc[9], 8) ^ _mm_slli_si128(cc[11], 8));
-    _mm_storeu_si128((__v2di*)(c+12), cc[12] ^ _mm_srli_si128(cc[11], 8));
+    _mm_storeu_si128((__m128i*)(c),    PXOR(cc[0] ,                           _mm_slli_si128(cc[1], 8)));
+    _mm_storeu_si128((__m128i*)(c+2),  PXOR(cc[2] , PXOR(_mm_srli_si128(cc[1], 8), _mm_slli_si128(cc[3], 8))));
+    _mm_storeu_si128((__m128i*)(c+4),  PXOR(cc[4] , PXOR(_mm_srli_si128(cc[3], 8), _mm_slli_si128(cc[5], 8))));
+    _mm_storeu_si128((__m128i*)(c+6),  PXOR(cc[6] , PXOR(_mm_srli_si128(cc[5], 8), _mm_slli_si128(cc[7], 8))));
+    _mm_storeu_si128((__m128i*)(c+8),  PXOR(cc[8] , PXOR(_mm_srli_si128(cc[7], 8), _mm_slli_si128(cc[9], 8))));
+    _mm_storeu_si128((__m128i*)(c+10), PXOR(cc[10], PXOR(_mm_srli_si128(cc[9], 8), _mm_slli_si128(cc[11], 8))));
+    _mm_storeu_si128((__m128i*)(c+12), PXOR(cc[12],  _mm_srli_si128(cc[11], 8)));
+#undef PXOR
+#undef PXOR3
+#undef PXOR4
+#undef PXOR5
+#undef PXOR6
+#undef PZERO
 }
 
 #endif  /* GF2X_MUL7_H_ */

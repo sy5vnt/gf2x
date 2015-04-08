@@ -48,44 +48,39 @@
 /* TODO: if somebody comes up with a neat way to improve the interface so
  * as to remove the false dependency on pclmul, that would be nice.
  */
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define PZERO    _mm_setzero_si128()
 static inline void
-GF2X_FUNC(mul4clk_mul2)(__v2di * t, __v2di ss1, __v2di ss2)
+GF2X_FUNC(mul4clk_mul2)(__m128i * t, __m128i ss1, __m128i ss2)
 {
-    typedef union {
-        __v2di s;
-        unsigned long x[2];
-    } __v2di_proxy;
-
-    __v2di_proxy t00, t11, tk;
-    t00.s = _mm_clmulepi64_si128(ss1, ss2, 0);
-    t11.s = _mm_clmulepi64_si128(ss1, ss2, 17);
-    ss1 ^= _mm_shuffle_epi32(ss1, 78);  // 78 == 0b01001110 (swap)
-    ss2 ^= _mm_shuffle_epi32(ss2, 78);  // 78 == 0b01001110 (swap)
-    tk.s = _mm_clmulepi64_si128(ss1, ss2, 0);
-    tk.s ^= t00.s ^ t11.s;
-    t00.x[1] ^= tk.x[0];
-    t11.x[0] ^= tk.x[1];
-    t[0] = t00.s;
-    t[1] = t11.s;
+    __m128i t00 = _mm_clmulepi64_si128(ss1, ss2, 0);
+    __m128i t11 = _mm_clmulepi64_si128(ss1, ss2, 0x11);
+    ss1 = PXOR(ss1, _mm_shuffle_epi32(ss1, _MM_SHUFFLE(1,0,3,2)));
+    ss2 = PXOR(ss2, _mm_shuffle_epi32(ss2, _MM_SHUFFLE(1,0,3,2)));
+    __m128i tk = PXOR(PXOR(t00, t11), _mm_clmulepi64_si128(ss1, ss2, 0));
+    t[0] = PXOR(t00, _mm_unpacklo_epi64(PZERO, tk));
+    t[1] = PXOR(t11, _mm_unpackhi_epi64(tk, PZERO));
 }
 /* specialized Karatsuba with 3 calls to mul2, i.e., 9 multiplications */
 GF2X_STORAGE_CLASS_mul4
 void gf2x_mul4 (unsigned long *c, const unsigned long *a, const unsigned long *b)
 {
-  __v2di ab[2];
-  __v2di lo[2], hi[2];
-  __v2di a0 = _mm_loadu_si128((__v2di*)a);
-  __v2di a2 = _mm_loadu_si128((__v2di*)(a+2));
-  __v2di b0 = _mm_loadu_si128((__v2di*)b);
-  __v2di b2 = _mm_loadu_si128((__v2di*)(b+2));
+  __m128i ab[2];
+  __m128i lo[2], hi[2];
+  __m128i a0 = _mm_loadu_si128((__m128i*)a);
+  __m128i a2 = _mm_loadu_si128((__m128i*)(a+2));
+  __m128i b0 = _mm_loadu_si128((__m128i*)b);
+  __m128i b2 = _mm_loadu_si128((__m128i*)(b+2));
   GF2X_FUNC(mul4clk_mul2)(lo, a0, b0);
   GF2X_FUNC(mul4clk_mul2)(hi, a2, b2);
-  __v2di middle = lo[1] ^ hi[0];
-  GF2X_FUNC(mul4clk_mul2)(ab, a0 ^ a2, b0 ^ b2);
-  _mm_storeu_si128((__v2di*)(c + 0), lo[0]);
-  _mm_storeu_si128((__v2di*)(c + 2), ab[0] ^ lo[0] ^ middle);
-  _mm_storeu_si128((__v2di*)(c + 4), ab[1] ^ hi[1] ^ middle);
-  _mm_storeu_si128((__v2di*)(c + 6), hi[1]);
+  __m128i middle = PXOR(lo[1], hi[0]);
+  GF2X_FUNC(mul4clk_mul2)(ab, PXOR(a0, a2), PXOR(b0, b2));
+  _mm_storeu_si128((__m128i*)(c + 0), lo[0]);
+  _mm_storeu_si128((__m128i*)(c + 2), PXOR(ab[0], PXOR(lo[0], middle)));
+  _mm_storeu_si128((__m128i*)(c + 4), PXOR(ab[1], PXOR(hi[1], middle)));
+  _mm_storeu_si128((__m128i*)(c + 6), hi[1]);
 }
+#undef PXOR
+#undef PZERO
 
 #endif  /* GF2X_MUL4_H_ */

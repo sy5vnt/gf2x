@@ -48,18 +48,28 @@
 /* TODO: if somebody comes up with a neat way to improve the interface so
  * as to remove the false dependency on pclmul, that would be nice.
  */
-static inline __v2di
+static inline __m128i
 GF2X_FUNC(mul4cl1_mul1) (unsigned long a, unsigned long b)
 {
-    __v2di aa = (__v2di) { a, 0 };
-    __v2di bb = (__v2di) { b, 0 };
+    __m128i aa = _gf2x_mm_setr_epi64(a, 0);
+    __m128i bb = _gf2x_mm_setr_epi64(b, 0);
     return _mm_clmulepi64_si128(aa, bb, 0);
 }
+
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define PXOR3(op1, op2, op3) PXOR(op1, PXOR(op2, op3))
+#define PXOR4(op1, op2, op3, op4) PXOR(op1, PXOR3(op2, op3, op4))
+#define PXOR5(op1, op2, op3, op4, op5) PXOR(op1, PXOR4(op2, op3, op4, op5))
+#define PXOR6(op1, op2, op3, op4, op5, op6) PXOR(op1, PXOR5(op2, op3, op4, op5, op6))
+#define PXOR7(op1, op2, op3, op4, op5, op6, op7) PXOR(op1, PXOR6(op2, op3, op4, op5, op6, op7))
+#define PZERO    _mm_setzero_si128()
+
+
 GF2X_STORAGE_CLASS_mul4
 void gf2x_mul4 (unsigned long *c, const unsigned long *a, const unsigned long *b)
 {
   // <http://eprint.iacr.org/2011/540>
-  __v2di m0, m1, m2, m3, m4, m5, m6, m7, m8, t0, t1;
+  __m128i m0, m1, m2, m3, m4, m5, m6, m7, m8, t0, t1;
   unsigned long aa4, aa5, aa6, aa7, aa8;
   unsigned long bb4, bb5, bb6, bb7, bb8;
 
@@ -79,22 +89,29 @@ void gf2x_mul4 (unsigned long *c, const unsigned long *a, const unsigned long *b
   m7 = GF2X_FUNC(mul4cl1_mul1)(aa7, bb7);
   m8 = GF2X_FUNC(mul4cl1_mul1)(aa8, bb8);
 
-  t0 = m0 ^ m1;
-  t1 = m2 ^ m3;
+  t0 = PXOR(m0, m1);
+  t1 = PXOR(m2, m3);
 
-  __v2di ce0 = m0;
-  __v2di ce2 = t0 ^ m2 ^ m6;
-  __v2di ce4 = t1 ^ m1 ^ m7;
-  __v2di ce6 = m3;
+  __m128i ce0 = m0;
+  __m128i ce2 = PXOR3(t0, m2, m6);
+  __m128i ce4 = PXOR3(t1, m1, m7);
+  __m128i ce6 = m3;
 
-  __v2di co1 = t0 ^ m4;
-  __v2di co5 = t1 ^ m5;
-  __v2di co3 = co1 ^ co5 ^ m6 ^ m7 ^ m8;
+  __m128i co1 = PXOR(t0, m4);
+  __m128i co5 = PXOR(t1, m5);
+  __m128i co3 = PXOR5(co1, co5, m6, m7, m8);
 
-  _mm_storeu_si128((__v2di*)(c),   ce0 ^ _mm_slli_si128(co1, 8));
-  _mm_storeu_si128((__v2di*)(c+2), ce2 ^ _mm_srli_si128(co1, 8) ^ _mm_slli_si128(co3, 8));
-  _mm_storeu_si128((__v2di*)(c+4), ce4 ^ _mm_srli_si128(co3, 8) ^ _mm_slli_si128(co5, 8));
-  _mm_storeu_si128((__v2di*)(c+6), ce6 ^ _mm_srli_si128(co5, 8));
+  _mm_storeu_si128((__m128i*)(c),   PXOR(ce0, _mm_slli_si128(co1, 8)));
+  _mm_storeu_si128((__m128i*)(c+2), PXOR3(ce2, _mm_srli_si128(co1, 8), _mm_slli_si128(co3, 8)));
+  _mm_storeu_si128((__m128i*)(c+4), PXOR3(ce4, _mm_srli_si128(co3, 8), _mm_slli_si128(co5, 8)));
+  _mm_storeu_si128((__m128i*)(c+6), PXOR(ce6, _mm_srli_si128(co5, 8)));
 }
 
+#undef PXOR
+#undef PXOR3
+#undef PXOR4
+#undef PXOR5
+#undef PXOR6
+#undef PXOR7
+#undef PZERO
 #endif  /* GF2X_MUL4_H_ */

@@ -48,11 +48,11 @@
 /* TODO: if somebody comes up with a neat way to improve the interface so
  * as to remove the false dependency on pclmul, that would be nice.
  */
-static inline __v2di
+static inline __m128i
 GF2X_FUNC(mul3cl_mul1) (unsigned long a, unsigned long b)
 {
-    __v2di aa = (__v2di) { a, 0 };
-    __v2di bb = (__v2di) { b, 0 };
+    __m128i aa = _gf2x_mm_setr_epi64(a, 0);
+    __m128i bb = _gf2x_mm_setr_epi64(b, 0);
     return _mm_clmulepi64_si128(aa, bb, 0);
 }
 
@@ -61,34 +61,32 @@ GF2X_STORAGE_CLASS_mul3
 void gf2x_mul3 (unsigned long *c, const unsigned long *a, const unsigned long *b)
 {
   unsigned long aa[3], bb[3];
-  __v2di p0, p1, p2;
-  __v2di pp0, pp1, pp2;
   aa[0] = a[1]^a[2];
   aa[1] = a[0]^a[2];
   aa[2] = a[0]^a[1];
   bb[0] = b[1]^b[2];
   bb[1] = b[0]^b[2];
   bb[2] = b[0]^b[1];
-  p0  = GF2X_FUNC(mul3cl_mul1)(a[0], b[0]);
-  p1  = GF2X_FUNC(mul3cl_mul1)(a[1], b[1]);
-  p2  = GF2X_FUNC(mul3cl_mul1)(a[2], b[2]);
-  pp0 = GF2X_FUNC(mul3cl_mul1)(aa[0], bb[0]);
-  pp1 = GF2X_FUNC(mul3cl_mul1)(aa[1], bb[1]);
-  pp2 = GF2X_FUNC(mul3cl_mul1)(aa[2], bb[2]);
+  __m128i p0  = GF2X_FUNC(mul3cl_mul1)(a[0], b[0]);
+  __m128i p1  = GF2X_FUNC(mul3cl_mul1)(a[1], b[1]);
+  __m128i p2  = GF2X_FUNC(mul3cl_mul1)(a[2], b[2]);
+  __m128i pp0 = GF2X_FUNC(mul3cl_mul1)(aa[0], bb[0]);
+  __m128i pp1 = GF2X_FUNC(mul3cl_mul1)(aa[1], bb[1]);
+  __m128i pp2 = GF2X_FUNC(mul3cl_mul1)(aa[2], bb[2]);
 
-  __v2di ce0, ce2, ce4;
-  __v2di co1, co3;
+#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
 
-  ce0 = p0;
-  ce2 = p0^p1^p2^pp1;
-  ce4 = p2;
+  __m128i ce0 = p0;
+  __m128i ce2 = PXOR(p0, PXOR(p1, PXOR(p2, pp1)));
+  __m128i ce4 = p2;
 
-  co1 = p0^p1^pp2;
-  co3 = pp0^p1^p2;
+  __m128i co1 = PXOR(p0, PXOR(p1, pp2));
+  __m128i co3 = PXOR(pp0, PXOR(p1, p2));
 
-  _mm_storeu_si128((__v2di*)(c),   ce0 ^ _mm_slli_si128(co1, 8));
-  _mm_storeu_si128((__v2di*)(c+2), ce2 ^ _mm_srli_si128(co1, 8) ^ _mm_slli_si128(co3, 8));
-  _mm_storeu_si128((__v2di*)(c+4), ce4 ^ _mm_srli_si128(co3, 8));
+  _mm_storeu_si128((__m128i*)(c),   PXOR(ce0, _mm_slli_si128(co1, 8)));
+  _mm_storeu_si128((__m128i*)(c+2), PXOR(ce2, PXOR(_mm_srli_si128(co1, 8), _mm_slli_si128(co3, 8))));
+  _mm_storeu_si128((__m128i*)(c+4), PXOR(ce4, _mm_srli_si128(co3, 8)));
+#undef PXOR
 }
 
 #endif  /* GF2X_MUL3_H_ */

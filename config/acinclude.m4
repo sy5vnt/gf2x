@@ -84,7 +84,6 @@ AC_DEFUN([VERIFY_WORDSIZE],[
 # includes a subset of sse-2, but do not support the full sse-2 insn set.
 AC_DEFUN([SSE2_EXAMPLE],[AC_LANG_SOURCE([
 #include <emmintrin.h>
-__v2di x;       /* Our code currently uses these, but it should not */
 int main(int argc, char * argv[]) {
      __m128i foo = _mm_setr_epi32(argc, argc + 1, argc + 2, argc + 3);
      __m128i bar = _mm_setr_epi32(argc + 3, argc + 2, argc + 1, argc);
@@ -161,13 +160,24 @@ AC_DEFUN([PCLMUL_EXAMPLE],[AC_LANG_SOURCE([
 #include <assert.h>
 int main() {
 assert(sizeof(unsigned long) == 8); /* assume 64-bit */
-typedef union { __v2di s; unsigned long x[[2]]; } __v2di_proxy;
-__v2di xx, yy;
-__v2di_proxy zz;
-xx = (__v2di) { 23, 0 };
-yy = (__v2di) { 47, 0 };
-zz.s = _mm_clmulepi64_si128(xx, yy, 0);
-return zz.x[[0]] - 61;
+#if defined(__GNUC__) && __GNUC__ == 4 &&__GNUC_MINOR__ == 1
+#define _gf2x_mm_cvtsi64_m64(u) _mm_cvtsi64x_m64((u))
+#else
+#define _gf2x_mm_cvtsi64_m64(u) _mm_cvtsi64_m64((u))
+#endif
+/* _m128i from 2 int64_t's */
+#define _gf2x_mm_setr_epi64(lo, hi)                      		\
+    _mm_setr_epi64(                                      		\
+            _gf2x_mm_cvtsi64_m64((int64_t) (lo)),       		\
+            _gf2x_mm_cvtsi64_m64((int64_t) (hi))        		\
+        )
+/* _m128i from 1 int64_t's */
+#define _gf2x_mm_set1_epi64(u) _mm_set1_epi64( _gf2x_mm_cvtsi64_m64((int64_t) (u)))
+__m128i a = _gf2x_mm_set1_epi64(17);
+__m128i b = _gf2x_mm_set1_epi64(42);
+union { __m128i s; unsigned long x[[2]]; } proxy;
+proxy.s = _mm_clmulepi64_si128(a, b, 0);
+return proxy.x[[0]] - 650;
 }
 ])])
 

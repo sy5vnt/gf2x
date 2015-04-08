@@ -93,11 +93,7 @@ void gf2x_mul2(unsigned long * t, unsigned long const * s1,
     __m128i g[16];
     __m128i w;
     // __m128i m = _mm_set1_epi32(0xeeeeeeee);
-#if defined(__GNUC__) && __GNUC__ == 4 &&__GNUC_MINOR__ == 1
-    __m128i m = _mm_set1_epi64(_mm_cvtsi64x_si64(0xeeeeeeeeeeeeeeeeL));
-#else
-    __m128i m = _mm_set1_epi64(_mm_cvtsi64_m64(0xeeeeeeeeeeeeeeeeL));
-#endif
+    __m128i m = _gf2x_mm_set1_epi64_c(0xeeeeeeeeeeeeeeee);
     /* sequence update walk */
     __m128i b0 = _mm_loadu_si128((__m128i*) s2);
     g[ 0] = _mm_setzero_si128();
@@ -163,6 +159,14 @@ void gf2x_mul2(unsigned long * t, unsigned long const * s1,
     /* store result */
     _mm_storeu_si128((__m128i*)t, PXOR(t0, SHLD(t1, 64)));
     _mm_storeu_si128((__m128i*)(t+2), PXOR(t2, SHRD(t1, 64)));
+
+#undef SHL
+#undef SHR
+#undef SHLD
+#undef SHRD
+#undef XOREQ
+#undef PXOR
+#undef PAND
 }
 
 #endif  /* GF2X_MUL2_H_ */
