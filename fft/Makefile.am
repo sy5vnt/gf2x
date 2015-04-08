@@ -9,6 +9,7 @@ COMMON_cantor64_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=64
 COMMON_cantor128_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=128
 COMMON_cantor64cl_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=64 -DHAVE_PCLMUL
 COMMON_cantor128cl_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=128 -DHAVE_PCLMUL
+COMMON_cantor128clnt_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=128 -DHAVE_PCLMUL -DWITHOUT_CANTOR_TRUNCATION
 COMMON_cantor64gm_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=64 -DCANTOR_GM
 COMMON_cantor128gm_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=128 -DCANTOR_GM
 COMMON_cantor64clgm_CFLAGS=-DCANTOR_BASE_FIELD_SIZE=64 -DHAVE_PCLMUL -DCANTOR_GM
@@ -43,6 +44,11 @@ check_PROGRAMS += gf2x_tfftbench
 gf2x_tfftbench_SOURCES=bench.c
 gf2x_tfftbench_CFLAGS= $(AM_CFLAGS) -DENGINE_GF2X_TFFT
 gf2x_tfftbench_LDADD=-lgf2x -lgmp
+
+check_PROGRAMS += gf2x_tfftansbench
+gf2x_tfftansbench_SOURCES=bench.c
+gf2x_tfftansbench_CFLAGS= $(AM_CFLAGS) -DENGINE_GF2X_TFFT -DARTIFICIAL_NON_SPLIT_VERSION
+gf2x_tfftansbench_LDADD=-lgf2x -lgmp
 endif
 
 check_LTLIBRARIES += libcantor64.la
@@ -122,6 +128,13 @@ check_PROGRAMS += cantor128clbench
 cantor128clbench_SOURCES=bench.c
 cantor128clbench_CFLAGS= $(AM_CFLAGS) $(COMMON_cantor128cl_CFLAGS) -DENGINE_CANTOR
 cantor128clbench_LDADD=libcantor128cl.la -lgmp
+check_LTLIBRARIES += libcantor128clnt.la
+libcantor128clnt_la_SOURCES = cantor.c
+libcantor128clnt_la_CFLAGS = $(AM_CFLAGS) $(COMMON_cantor128clnt_CFLAGS)
+check_PROGRAMS += cantor128clntbench
+cantor128clntbench_SOURCES=bench.c
+cantor128clntbench_CFLAGS= $(AM_CFLAGS) $(COMMON_cantor128clnt_CFLAGS) -DENGINE_CANTOR
+cantor128clntbench_LDADD=libcantor128clnt.la -lgmp
 check_LTLIBRARIES += libcantor128clgm.la
 libcantor128clgm_la_SOURCES = cantor.c
 libcantor128clgm_la_CFLAGS = $(AM_CFLAGS) $(COMMON_cantor128clgm_CFLAGS)

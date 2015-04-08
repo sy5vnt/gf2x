@@ -628,6 +628,32 @@ void gm_trick(unsigned int two_t, Kelt * f, size_t j)
     }
 }
 
+void multievaluateKrec(Kelt * f, unsigned int i, size_t rep_beta);
+
+/* This is the same gao-mateer trick. It reduces a length 2^two_t
+ * polynomial to 2^t polynomials of length 2^t. Recursive work for the
+ * inner evaluation is handled
+ * by multievaluateKrec (which in turn may call us). The outer
+ * evaluations are also processed the same way, and also handed over to
+ * multievaluateKrec
+ */
+void multievaluateKrecGM(Kelt * f, unsigned int two_t, size_t j)
+{
+    assert((two_t & (two_t-1)) == 0);
+    unsigned int t = two_t >> 1;
+    size_t tau = 1UL << t;
+    expand(f,2*t,t);
+    transpose_inplace(f,t);
+    // evaluate ; we can use f as a buffer, now.
+    for(size_t l = 0 ; l < tau ; l++) {
+        multievaluateKrec(f + (l << t), t, j);
+    }
+    transpose_inplace(f,t);
+    // evaluate again
+    for(size_t i = 0 ; i < tau ; i++) {
+        multievaluateKrec(f + (i << t), t, (j << t) + i);
+    }
+}
 #endif
 
 #ifdef  CANTOR_GM_TRUNCATE
@@ -684,7 +710,7 @@ void gm_trick_trunc(unsigned int two_t, Kelt * f, Kelt * buf, size_t j, unsigned
     }
     transpose_outofplace(f,buf,t,k-t);
 
-    // evaluate again. Here we cannot truncate.
+    // evaluate again. Here we can8t truncate.
     for(size_t i = 0 ; i < cn ; i++) {
         gm_trick(t, f + (i << t), (j << t) + i);
     }
@@ -812,10 +838,30 @@ static inline void interpolateSiNobeta(unsigned int k, Kelt * f)
     }
 }
 
-
+// f has length 2^i
 void multievaluateKrec(Kelt * f, unsigned int i, size_t rep_beta)
 {
     Kelt beta;
+
+#if 0
+#ifdef  CANTOR_GM
+    assert(i < 32);
+    if ((i&-i)==i) {
+        static int n[17]={0,};
+        n[i]++;
+        if ((n[i]&-n[i])==n[i]) {
+            fprintf(stderr, "call for i==%d (%d-th)\n",i,n[i]);
+        }
+        if (i==4) {
+            gm_trick4(f, rep_beta);
+        } else {
+            multievaluateKrecGM(f, i, rep_beta);
+        }
+        return;
+    }
+#endif
+#endif
+
     rep_beta <<= 1;
     allBetai(beta, rep_beta);
     reduceSi(i - 1, f, beta);
@@ -827,8 +873,7 @@ void multievaluateKrec(Kelt * f, unsigned int i, size_t rep_beta)
         Kadd(beta, beta, Betai[1]);
         reduceSi(0, f + 2, beta);
         return;
-    }
-    if (i == 3) {
+    } else if (i == 3) {
         rep_beta <<= 1;
         allBetai(beta, rep_beta);
         reduceSi(1, f, beta);
@@ -872,6 +917,7 @@ void multievaluateGM(Kelt * f, unsigned int k, size_t length MAYBE_UNUSED)
     size_t tau = 1UL << t;
     size_t j = 0;
     for(size_t u = 0 ; u < K1 ; u += tau) {
+        // treat coeffs [u..u+tau[ = [u..u+2^t[
         gm_trick(t, f + u, j);
         j++;
     }
@@ -1267,11 +1313,18 @@ void cantor_dft(const cantor_info_t p, Kelt * x, unsigned long * F, size_t nF)
          */
         assert((F[Fl-1] & ~((1UL << (nF % GF2X_WORDSIZE)) - 1)) == 0);
     }
+#ifdef WITHOUT_CANTOR_TRUNCATION
+    memset(x, 0, sizeof(Kelt) << p->k);
+#endif
     decomposeK(x,F,Fl,p->k);
 #ifdef  CANTOR_GM
     multievaluateGM(x, p->k, p->n);
 #else
+#ifdef WITHOUT_CANTOR_TRUNCATION
+    multievaluateKrec(x, p->k, 0);
+#else
     multievaluateKnew_trunc(x, p->k, p->n);
+#endif
 #endif
 }
 
@@ -1326,12 +1379,16 @@ void cantor_ift(
 
     // fill in with zeros to facilitate interpolation
     memset(h + p->n, 0, ((1UL << p->k) - p->n) * sizeof(Kelt));
+#ifdef WITHOUT_CANTOR_TRUNCATION
+    interpolateK(h, p->k);
+#else
     if (p->n & (p->n - 1)) {
         /* n is not a power of 2 */
         interpolateK_trunc(h, p->k, p->n);
     } else {
         interpolateK(h, p->k);
     }
+#endif
     recomposeK(H, h, Hl, p->k);
 }
 

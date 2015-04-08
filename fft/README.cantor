@@ -69,6 +69,3 @@ Magma (assuming it is installed).
 Examples:
 
 ./bench 64 1000 -f 1.1
-
-
-

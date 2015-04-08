@@ -280,7 +280,17 @@ int main(int argc, char **argv)
 
 #ifdef ENGINE_GF2X_TFFT
         if (automatic_tuning) {
+#ifdef ARTIFICIAL_NON_SPLIT_VERSION
+            int64_t T_FFT_TAB[][2] = {
+                { 1, 1 },
+                { 7572, 243 },
+                { 29064, 729 },
+                { 82703, 2187 },
+                { 275719, 6561 },
+                { 806528, 19683 }, };
+#else
             int64_t T_FFT_TAB[][2] = GF2X_MUL_FFT_TABLE;
+#endif
             long ix, K;
             long max_ix = sizeof(T_FFT_TAB)/sizeof(T_FFT_TAB[0]);
             for (ix = 0; T_FFT_TAB[ix + 1][0] <= n && ix + 1 < max_ix; ix++);

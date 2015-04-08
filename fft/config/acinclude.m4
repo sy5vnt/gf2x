@@ -245,10 +245,14 @@ AC_MSG_CHECKING([warning verbosity option])
 
 AC_DEFUN([GF2X_PROG_CC_TRY_MORE_CFLAGS],[
     AC_REQUIRE([AC_PROG_CC])
-    for i in "-march=native" "-mtune=native" ; do
-        GF2X_PROG_CC_FOR_BUILD_WORKS([$CC_FOR_BUILD $CFLAGS $i],[
-            CFLAGS="$CFLAGS $i"
+    for i in "march" "mtune" ; do
+        flag="-$i=native"
+        # Do not add another march/mtune flag if one is already present !
+        if ! echo $CFLAGS | grep -q $i ; then
+        GF2X_PROG_CC_FOR_BUILD_WORKS([$CC_FOR_BUILD $CFLAGS $flag],[
+            CFLAGS="$CFLAGS $flag"
         ])
+        fi
     done
 ])
 
