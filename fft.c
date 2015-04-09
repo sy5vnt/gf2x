@@ -1127,7 +1127,9 @@ void gf2x_mul_fft(unsigned long *c, const unsigned long *a, size_t an,
 	    const unsigned long *b, size_t bn, long K)
 {
     gf2x_tfft_info_t o;
-    gf2x_tfft_init(o, an * WLEN, bn * WLEN, K);
+
+    if (gf2x_tfft_init(o, an * WLEN, bn * WLEN, K) == 0)
+      abort (); /* not enough memory? */
 
     if (o->K == 0) {
 	printf("gf2x_mul_fft: arguments (%zu, %zu) too small\n", an, bn);
