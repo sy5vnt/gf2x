@@ -123,14 +123,6 @@ static inline void XORBIT(unsigned long *a, size_t i, unsigned long x)
 #define ABS(h) ((h) < 0 ? -(h) : (h))
 #endif
 
-static void *malloc_or_die(size_t size)
-{
-    void *res = malloc(size);
-    if (res == NULL)
-	abort();
-    return res;
-}
-
 static inline void Copy(unsigned long *a, const unsigned long *b, size_t n)
 {
     memcpy(a, b, n * sizeof(unsigned long));
@@ -808,9 +800,10 @@ gf2x_tfft_ptr gf2x_tfft_get(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr ptr, size_t k
     return ptr + k * gf2x_tfft_size(o);
 }
 
-gf2x_tfft_ptr gf2x_tfft_alloc(gf2x_tfft_info_srcptr o, size_t n)
+static size_t
+gf2x_tfft_alloc_size(gf2x_tfft_info_srcptr o, size_t n)
 {
-    return malloc_or_die(n * gf2x_tfft_size(o) * sizeof(gf2x_tfft_t));
+  return n * gf2x_tfft_size(o) * sizeof(gf2x_tfft_t);
 }
 
 static void gf2x_tfft_dft_inner(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr tr, const unsigned long * a, size_t bits_a, size_t M)
@@ -978,7 +971,9 @@ void gf2x_tfft_ift(gf2x_tfft_info_srcptr o, unsigned long * c, size_t bits_c, gf
 
 /* multiplies {a, an} by {b, bn} using an FFT of length K,
    and stores the result into {c, an+bn}. If an+bn is too small
-   then Toom-Cook is used.  */
+   then Toom-Cook is used.
+   Return zero iff an error occurred (for example not enough memory).
+*/
 
 // arrange so that we multiply polynomials having respectively n1 and n2
 // _BITS_ ; which means degree+1 (thus can be unsigned).
@@ -986,7 +981,8 @@ void gf2x_tfft_ift(gf2x_tfft_info_srcptr o, unsigned long * c, size_t bits_c, gf
 // because this algorithm needs to know about the K value, which in turns
 // depends on proper tuning, we ask for it to be provided by the caller.
 // Negative values of K mean to use FFT2.
-void gf2x_tfft_init(gf2x_tfft_info_ptr o, size_t bits_a, size_t bits_b, ...)
+int
+gf2x_tfft_init(gf2x_tfft_info_ptr o, size_t bits_a, size_t bits_b, ...)
 {
     o->bits_a = bits_a;
     o->bits_b = bits_b;
@@ -1031,7 +1027,7 @@ void gf2x_tfft_init(gf2x_tfft_info_ptr o, size_t bits_a, size_t bits_b, ...)
         o->M = 0;
         o->tmp = NULL;
         o->perm = NULL;
-        return;
+        return 1;
     }
 
     /* We also have to allocate the temporary space used by this FFT */
@@ -1041,26 +1037,49 @@ void gf2x_tfft_init(gf2x_tfft_info_ptr o, size_t bits_a, size_t bits_b, ...)
     if (i < 2 * np)
 	i = 2 * np;
     size_t ltmp = 4 * np + i;
-    /* space in tmp is at least 6*np, thus at least for 2*K*M bits */
-    o->tmp = (unsigned long *) malloc_or_die(ltmp * sizeof(unsigned long));
-    o->perm = (size_t *) malloc_or_die(o->K * sizeof(size_t));
-    bitrev(0, 0, o->K, 1, o->perm);
-
     size_t cn = W(2 * o->K * o->M);
-    o->c1 = malloc_or_die(cn * sizeof(unsigned long));
-    o->c2 = malloc_or_die(cn * sizeof(unsigned long));
-
-    o->ta = gf2x_tfft_alloc (o, 1);
-    o->tb = gf2x_tfft_alloc (o, 1);
-    o->tc = gf2x_tfft_alloc (o, 1);
-
-    o->A = malloc_or_die (o->K * sizeof(unsigned long *));
-
     o->bufsize = MAX(nwa, nwb);
     o->bufsize = MAX(o->bufsize, W((size_t) o->M));
-    o->buf = malloc_or_die (o->bufsize * sizeof(unsigned long));
+
+    size_t tot_alloc;
+    unsigned char *tot;
+    tot_alloc = ltmp * sizeof(unsigned long) /* o->tmp */
+      + o->K * sizeof(size_t)                /* o->perm */
+      + 2 * cn * sizeof(unsigned long)       /* o->c1, o->c2 */
+      + 3 * gf2x_tfft_alloc_size (o, 1)      /* o->ta, o->tb, o->tc */
+      + o->K * sizeof(unsigned long*)        /* o->A */
+      + o->bufsize * sizeof(unsigned long);  /* o->buf */
+
+    tot = malloc (tot_alloc);
+    if (tot == NULL)
+      return 0; /* not enough memory */
+
+    o->tmp = (unsigned long*) tot;
+    tot += ltmp * sizeof(unsigned long);
+
+    o->perm = (size_t *) tot;
+    tot += o->K * sizeof(size_t);
+    bitrev(0, 0, o->K, 1, o->perm);
+
+    o->c1 = (unsigned long*) tot;
+    tot += cn * sizeof(unsigned long);
+    o->c2 = (unsigned long*) tot;
+    tot += cn * sizeof(unsigned long);
+
+    o->ta = (gf2x_tfft_ptr) tot;
+    tot += gf2x_tfft_alloc_size (o, 1);
+    o->tb = (gf2x_tfft_ptr) tot;
+    tot += gf2x_tfft_alloc_size (o, 1);
+    o->tc = (gf2x_tfft_ptr) tot;
+    tot += gf2x_tfft_alloc_size (o, 1);
+
+    o->A = (unsigned long**) tot;
+    tot += o->K * sizeof(unsigned long*);
+
+    o->buf = (unsigned long*) tot;
 
     va_end(ap);
+    return 1;
 }
 
 void gf2x_tfft_init_similar(gf2x_tfft_info_ptr o, size_t bits_a, size_t bits_b, gf2x_tfft_info_srcptr other)
