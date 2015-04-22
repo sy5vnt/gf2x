@@ -1179,57 +1179,25 @@ void mpfq_2_128_sqr_ur(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt_u
 static inline
 void mpfq_2_128_reduce(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r, mpfq_2_128_dst_elt_ur t)
 {
-    {
-        mp_limb_t s[3];
-        /* 127 excess bits */
-        {
-            unsigned long z;
-            z = t[0];
-            s[0] = z;
-            z = t[1];
-            s[1] = z;
-        }
-        memset(s + 2, 0, 1 * sizeof(mp_limb_t));
-        {
-            unsigned long z;
-            z = t[2];
-            s[0]^= z <<  7;
-            s[0]^= z <<  2;
-            s[0]^= z <<  1;
-            s[0]^= z;
-            z >>= 57;
-            z^= t[3] <<  7;
-            s[1]^= z;
-            z >>= 5;
-            z^= t[3] >> 57 << 59;
-            s[1]^= z;
-            z >>= 1;
-            z^= t[3] >> 62 << 63;
-            s[1]^= z;
-            z >>= 1;
-            s[1]^= z;
-            z >>= 57;
-            s[2]^= z;
-            z >>= 5;
-            s[2]^= z;
-        }
-        /* 6 excess bits */
-        {
-            unsigned long z;
-            z = s[0];
-            r[0] = z;
-            z = s[1];
-            r[1] = z;
-        }
-        {
-            unsigned long z;
-            z = s[2];
-            r[0]^= z <<  7;
-            r[0]^= z <<  2;
-            r[0]^= z <<  1;
-            r[0]^= z;
-        }
-    }
+    unsigned long z;
+    z = t[3];
+#if 1
+    /* t[2],t[1] += z * X^128 = z * (X^7 + X^2 + X + 1) */
+    t[1] ^= (z << 7) ^ (z << 2) ^ (z << 1) ^ z;
+    t[2] ^= (z >> 57) ^ (z >> 62) ^ (z >> 63);
+    /* t[1],t[0] += z * X^128 = z * (X^7 + X^2 + X + 1) */
+    z = t[2];
+    r[0] = t[0] ^ (z << 7) ^ (z << 2) ^ (z << 1) ^ z;
+    r[1] = t[1] ^ (z >> 57) ^ (z >> 62) ^ (z >> 63);
+#else
+    /* Using x^128 + x^64 + x^13 + x^11 + 1 instead.
+       If you use this, you must change the coefficients beta_i too! */
+    t[1] ^= (z << 13) ^ (z << 11) ^ z;
+    t[2] ^= z ^ (z >> 51) ^ (z >> 53);
+    z = t[2];
+    r[0] = t[0] ^ (z << 13) ^ (z << 11) ^ z;
+    r[1] = t[1] ^ z ^ (z >> 51) ^ (z >> 53);
+#endif
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_cmp */
