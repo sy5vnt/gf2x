@@ -26,12 +26,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "gf2xfft-config.h"
-
-#if !defined(GF2X_WORDSIZE) || (GF2X_WORDSIZE != 32 && GF2X_WORDSIZE != 64)
-#error  "define GF2X_WORDSIZE to either 32 or 64"
-#endif
-
 #include "macros.h"
 
 
