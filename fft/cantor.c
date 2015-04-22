@@ -1,8 +1,7 @@
 /* An implementation of Cantor's algorithm for multiplication of
    polynomials over GF(2).
    
-   Copyright 2007 Pierrick Gaudry.
-   Copyright 2008,2009,2010,2012 Emmanuel Thomé.
+   Copyright 2007-2014 Pierrick Gaudry, Emmanuel Thomé.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Lesser General Public License as published by
@@ -1235,7 +1234,7 @@ void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k MAYBE_UNUSED)
 void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
 {
     size_t i;
-    assert(Fl <= (1UL << (k-1)));
+    assert(Fl <= (1UL << (k+1)));
     for (i = 0; i < Fl / 2 ; ++i) {
         f[i][0] = F[2*i];
         f[i][1] = F[2*i + 1];
@@ -1256,7 +1255,7 @@ void recomposeK(unsigned long * F, Kelt * f, size_t Fl, unsigned int k MAYBE_UNU
 {
     size_t i;
 
-    assert(Fl <= (1UL << (k-1)));
+    assert(Fl <= (1UL << (k+1)));
     F[0] = f[0][0];
     F[1] = f[0][1];
     for (i = 2; i < Fl; i += 2) {
@@ -1286,7 +1285,7 @@ void cantor_init(cantor_info_t p, size_t nF, size_t nG, ...)
     size_t Fl = (nF + keep_bits_per_coeff - 1) / keep_bits_per_coeff;
     size_t Gl = (nG + keep_bits_per_coeff - 1) / keep_bits_per_coeff;
 
-    n = Hl = Fl + Gl;               // nb of Kelt of the result.
+    n = Hl = Fl + Gl;               // nb of Kelt of the result, with padding.
     for(k = 1; (1UL << k) < n ; k++) ;
     /* We used to refuse k < 2 here. Now we've got sufficient provision
      * in here to accomodate for the case where k==1, so a safe fallback
@@ -1397,7 +1396,8 @@ void cantor_ift(
 // Takes two arrays of 64 bit limbs and compute their
 // product as polynomials over GF(2). 
 // H must have room for the result (Fl+Gl limbs)
-void mulCantor(unsigned long * H, unsigned long * F, size_t Fl, unsigned long * G, size_t Gl)
+void mulCantor(unsigned long * H, unsigned long * F, size_t Fl,
+        unsigned long * G, size_t Gl)
 {
     cantor_info_t order;
     Kelt * f, * g;
