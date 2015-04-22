@@ -151,3 +151,11 @@ cantor128clgmtbench_CFLAGS= $(AM_CFLAGS) $(COMMON_cantor128clgmt_CFLAGS) -DENGIN
 cantor128clgmtbench_LDADD=libcantor128clgmt.la -lgmp
 
 endif
+
+AM_TESTS_ENVIRONMENT = \
+    all_programs="$(check_PROGRAMS)"; export all_programs;	\
+    all_sizes="10 100 1000 10000 100000"; export all_sizes;	\
+    tests_location="$(builddir)"; export tests_location;
+
+TESTS=./debug/check_cantor.sh
+EXTRA_DIST=$(TESTS)

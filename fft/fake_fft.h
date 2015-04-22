@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "macros.h"
-#include "alloc_proxy.h"
 
 /* This file is a placeholder for the typical requirements of an FFT
  * interface. Of course, there is nothing interesting being done here.
@@ -45,13 +44,13 @@ typedef const fake_t * fake_srcptr;
 extern void fake_init(fake_info_ptr p, size_t nF, size_t nG, ...); 
 static inline void fake_clear(fake_info_ptr p MAYBE_UNUSED) {}
 static inline fake_ptr fake_alloc(fake_info_srcptr p, size_t n) {
-    return (fake_ptr) mymalloc(n * p->size * sizeof(unsigned long));
+    return (fake_ptr) malloc(n * p->size * sizeof(unsigned long));
 }
 static inline void fake_free(fake_info_srcptr p MAYBE_UNUSED,
         fake_ptr x,
         size_t n MAYBE_UNUSED)
 {
-    myfree(x, n * p->size * sizeof(unsigned long));
+    free(x, n * p->size * sizeof(unsigned long));
 }
 static inline fake_ptr fake_get(fake_info_srcptr p, fake_ptr x, size_t k) {
     return x + (k * p->size);
