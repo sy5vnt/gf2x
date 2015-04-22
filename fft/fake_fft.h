@@ -50,7 +50,7 @@ static inline void fake_free(fake_info_srcptr p MAYBE_UNUSED,
         fake_ptr x,
         size_t n MAYBE_UNUSED)
 {
-    free(x, n * p->size * sizeof(unsigned long));
+    free(x);
 }
 static inline fake_ptr fake_get(fake_info_srcptr p, fake_ptr x, size_t k) {
     return x + (k * p->size);
