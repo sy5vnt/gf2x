@@ -72,7 +72,7 @@ int docheck(size_t nf, size_t ng, int nrep)
     // doing f1g1+f2g2
     unsigned long * f1, * f2, * g1, * g2;
     unsigned long * fake_h;
-    unsigned long * c128_h;
+    unsigned long * cantor_h;
     unsigned long * gf2x_tfft_h;
 
     unsigned int nf1 = nf;
@@ -95,7 +95,7 @@ int docheck(size_t nf, size_t ng, int nrep)
     g2 = malloc(nwg2 * sizeof(unsigned long));
 
     fake_h = malloc(nwh * sizeof(unsigned long));
-    c128_h = malloc(nwh * sizeof(unsigned long));
+    cantor_h = malloc(nwh * sizeof(unsigned long));
     gf2x_tfft_h = malloc(nwh * sizeof(unsigned long));
 
     assert(sizeof(unsigned long) == sizeof(mp_limb_t));
@@ -155,7 +155,7 @@ int docheck(size_t nf, size_t ng, int nrep)
     unsigned int seed = random();
     srandom(seed);
     SETUP(fake, nf, ng)
-    SETUP(c128, nf, ng)
+    SETUP(cantor, nf, ng)
     SETUP3(gf2x_tfft, nf, ng, 81)
     for(int i = 0 ; i < nrep ; i++) {
         for(size_t i = 0 ; i < nwf1 ; i++) f1[i] = rand2_ulong();
@@ -176,14 +176,14 @@ int docheck(size_t nf, size_t ng, int nrep)
         DO_comp2(fake);
         DO_ift_h(fake);
 
-        DO_dft_f1(c128);
-        DO_dft_g1(c128);
-        DO_dft_f2(c128);
-        DO_dft_g2(c128);
-        DO_zero_th(c128);
-        DO_comp1(c128);
-        DO_comp2(c128);
-        DO_ift_h(c128);
+        DO_dft_f1(cantor);
+        DO_dft_g1(cantor);
+        DO_dft_f2(cantor);
+        DO_dft_g2(cantor);
+        DO_zero_th(cantor);
+        DO_comp1(cantor);
+        DO_comp2(cantor);
+        DO_ift_h(cantor);
 
         DO_dft_f1(gf2x_tfft);
         DO_dft_g1(gf2x_tfft);
@@ -194,8 +194,8 @@ int docheck(size_t nf, size_t ng, int nrep)
         DO_comp2(gf2x_tfft);
         DO_ift_h(gf2x_tfft);
 
-        if (memcmp(fake_h, c128_h, nwh * sizeof(unsigned long)) != 0) {
-            fprintf(stderr, "fake != c128 for %zu*%zu ; seed=%u\n",
+        if (memcmp(fake_h, cantor_h, nwh * sizeof(unsigned long)) != 0) {
+            fprintf(stderr, "fake != cantor for %zu*%zu ; seed=%u\n",
                     nf,ng,seed);
             printf("w:=%d;\n", (int) ULONG_BITS);
             display("f1",f1,nwf1);
@@ -203,9 +203,9 @@ int docheck(size_t nf, size_t ng, int nrep)
             display("f2",f2,nwf2);
             display("g2",g2,nwg2);
             display("fake_h",fake_h,nwh);
-            display("c128_h",c128_h,nwh);
+            display("cantor_h",cantor_h,nwh);
             EXTRA_DISPLAY(fake)
-            EXTRA_DISPLAY(c128)
+            EXTRA_DISPLAY(cantor)
             abort();
         }
 
@@ -225,11 +225,11 @@ int docheck(size_t nf, size_t ng, int nrep)
         }
     }
     LEAVE(fake)
-    LEAVE(c128)
+    LEAVE(cantor)
     LEAVE(gf2x_tfft)
 
     free(fake_h);
-    free(c128_h);
+    free(cantor_h);
     free(gf2x_tfft_h);
     free(g2);
     free(f2);
