@@ -6,8 +6,8 @@
 #error "Please arrange so that GMP_LIMB_BITS is defined before including this file"
 #endif
 
-#if !(GMP_LIMB_BITS == 64)
-#error "Constraints not met for this file: GMP_LIMB_BITS == 64"
+#if !(GMP_LIMB_BITS == 32)
+#error "Constraints not met for this file: GMP_LIMB_BITS == 32"
 #endif
 /* Active handler: Mpfq::defaults */
 /* Active handler: Mpfq::defaults::vec */
@@ -25,11 +25,11 @@
    coeffs=[ 64, 4, 3, 1, 0, ],
    helper=/tmp/mpfq-cado/gf2n/helper/helper,
    n=64,
-   output_path=x86_64,
+   output_path=i386,
    slice=4,
    table=/tmp/mpfq-cado/gf2x/wizard.table,
    tag=2_64,
-   w=64,
+   w=32,
    } */
 
 
@@ -86,12 +86,12 @@ int mpfq_2_64_asprint(mpfq_2_64_dst_field k, char * * pstr, mpfq_2_64_src_elt x)
         // allocate enough room for base 2 conversion.
         *pstr = (char *)mpfq_malloc_check((64+1)*sizeof(char));
     
-        mp_limb_t tmp[1 + 1];
-        for (i = 0; i < 1; ++i)
+        mp_limb_t tmp[2 + 1];
+        for (i = 0; i < 2; ++i)
             tmp[i] = x[i];
     
         // mpn_get_str() needs a non-zero most significant limb
-        int msl = 1 - 1;
+        int msl = 2 - 1;
         while ((msl > 0) && (tmp[msl] == 0))
             msl--;
         msl++;
@@ -137,7 +137,7 @@ int mpfq_2_64_asprint(mpfq_2_64_dst_field k, char * * pstr, mpfq_2_64_src_elt x)
             int sth = 0;
             char *ptr = *pstr;
             for(j = 0 ; j < 64 ; j++) {
-                if (x[j/64] >> (j % 64) & 1UL) {
+                if (x[j/32] >> (j % 32) & 1UL) {
                 	if (sth) {
                         *ptr++ = ' ';
                         *ptr++ = '+';
@@ -202,12 +202,12 @@ int mpfq_2_64_sscan(mpfq_2_64_dst_field k, mpfq_2_64_dst_elt z, const char * str
         zz = (mp_limb_t *)mpfq_malloc_check(len*sizeof(mp_limb_t));
         int ret = mpn_set_str(zz, tmp, len, k->io_type);
         free(tmp);
-        if (ret > 1) {
+        if (ret > 2) {
             free(zz);
             return 0;
         }
         mpfq_copy(z, zz, ret);
-        mpfq_zero(z + ret, 1 - ret);
+        mpfq_zero(z + ret, 2 - ret);
         free(zz);
         return len;
     } else {

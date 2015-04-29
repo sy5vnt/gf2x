@@ -24,8 +24,8 @@
 #error "Please arrange so that GMP_LIMB_BITS is defined before including this file"
 #endif
 
-#if !(GMP_LIMB_BITS == 64)
-#error "Constraints not met for this file: GMP_LIMB_BITS == 64"
+#if !(GMP_LIMB_BITS == 32)
+#error "Constraints not met for this file: GMP_LIMB_BITS == 32"
 #endif
 /* Active handler: Mpfq::defaults */
 /* Active handler: Mpfq::defaults::vec */
@@ -43,21 +43,21 @@
    coeffs=[ 128, 7, 2, 1, 0, ],
    helper=/tmp/mpfq-cado/gf2n/helper/helper,
    n=128,
-   output_path=x86_64,
+   output_path=i386,
    slice=4,
    table=/tmp/mpfq-cado/gf2x/wizard.table,
    tag=2_128,
-   w=64,
+   w=32,
    } */
 
 typedef mpfq_2_field mpfq_2_128_field;
 typedef mpfq_2_dst_field mpfq_2_128_dst_field;
 
-typedef unsigned long mpfq_2_128_elt[2];
+typedef unsigned long mpfq_2_128_elt[4];
 typedef unsigned long * mpfq_2_128_dst_elt;
 typedef const unsigned long * mpfq_2_128_src_elt;
 
-typedef unsigned long mpfq_2_128_elt_ur[4];
+typedef unsigned long mpfq_2_128_elt_ur[8];
 typedef unsigned long * mpfq_2_128_dst_elt_ur;
 typedef const unsigned long * mpfq_2_128_src_elt_ur;
 
@@ -447,7 +447,7 @@ static inline
 void mpfq_2_128_get_mpn(mpfq_2_128_dst_field K MAYBE_UNUSED, mp_limb_t * p, mpfq_2_128_src_elt r)
 {
     p[0] = r[0] & 1UL;
-    memset(p + 1, 0, (2 - 1) * sizeof(mp_limb_t));
+    memset(p + 1, 0, (4 - 1) * sizeof(mp_limb_t));
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_get_mpz */
@@ -470,7 +470,7 @@ static inline
 void mpfq_2_128_set_uipoly_wide(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r, const unsigned long * x, unsigned int n)
 {
     unsigned int i;
-    for (i = 0 ; i < n && i < 2 ; i++)
+    for (i = 0 ; i < n && i < 4 ; i++)
         r[i] = x[i];
 }
 
@@ -486,7 +486,7 @@ static inline
 void mpfq_2_128_get_uipoly_wide(mpfq_2_128_dst_field K MAYBE_UNUSED, unsigned long * r, mpfq_2_128_src_elt x)
 {
     unsigned int i;
-    for(i = 0 ; i < 2 ; i++) r[i] = x[i];
+    for(i = 0 ; i < 4 ; i++) r[i] = x[i];
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_random */
@@ -495,6 +495,8 @@ void mpfq_2_128_random(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r
 {
     r[0] = gmp_urandomb_ui(state, GMP_LIMB_BITS);
     r[1] = gmp_urandomb_ui(state, GMP_LIMB_BITS);
+    r[2] = gmp_urandomb_ui(state, GMP_LIMB_BITS);
+    r[3] = gmp_urandomb_ui(state, GMP_LIMB_BITS);
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_random2 */
@@ -504,8 +506,8 @@ void mpfq_2_128_random2(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt 
     int i;
     mpz_t tmp;
     mpz_init(tmp);
-    mpz_rrandomb(tmp, state, GMP_LIMB_BITS*2);
-    for(i=0;i<2;++i)
+    mpz_rrandomb(tmp, state, GMP_LIMB_BITS*4);
+    for(i=0;i<4;++i)
      r[i]=tmp->_mp_d[i];
     mpz_clear(tmp);
 }
@@ -515,7 +517,7 @@ static inline
 void mpfq_2_128_add(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r, mpfq_2_128_src_elt s1, mpfq_2_128_src_elt s2)
 {
     int i;
-    for(i = 0 ; i < 2 ; i++)
+    for(i = 0 ; i < 4 ; i++)
         r[i] = s1[i] ^ s2[i];
 }
 
@@ -576,7 +578,7 @@ int mpfq_2_128_sqrt(mpfq_2_128_dst_field K, mpfq_2_128_dst_elt r, mpfq_2_128_src
         236, 237, 252, 253, 238, 239, 254, 255,
     };
     
-    mpfq_2_128_elt sqrt_t ={ 0x6db6db6db6db6da4UL, 0x2492492492492492UL, }
+    mpfq_2_128_elt sqrt_t ={ 0xb6db6da4UL, 0x6db6db6dUL, 0x92492492UL, 0x24924924UL, }
     ;
     
     mpfq_2_128_elt odd, even;
@@ -585,40 +587,32 @@ int mpfq_2_128_sqrt(mpfq_2_128_dst_field K, mpfq_2_128_dst_elt r, mpfq_2_128_src
 #define	EVEN_MASK	(((mp_limb_t)-1)/3UL)
 #define	ODD_MASK	((EVEN_MASK)<<1)
     unsigned int i;
-    for(i = 0 ; i < 2 ; i++) {
+    for(i = 0 ; i < 4 ; i++) {
         even[i] = s[i] & EVEN_MASK;
     }
-    for(i = 0 ; i < 1 ; i++) {
+    for(i = 0 ; i < 2 ; i++) {
         t = even[2*i];   t |= t >> 7;
               even[i]  = shuffle_table[t & 255];
         t >>= 16; even[i] |= shuffle_table[t & 255] << 8;
-        t >>= 16; even[i] |= shuffle_table[t & 255] << 16;
-        t >>= 16; even[i] |= shuffle_table[t & 255] << 24;
         t = even[2*i+1]; t |= t >> 7;
-              even[i] |= shuffle_table[t & 255] << 32;
-        t >>= 16; even[i] |= shuffle_table[t & 255] << 40;
-        t >>= 16; even[i] |= shuffle_table[t & 255] << 48;
-        t >>= 16; even[i] |= shuffle_table[t & 255] << 56;
+              even[i] |= shuffle_table[t & 255] << 16;
+        t >>= 16; even[i] |= shuffle_table[t & 255] << 24;
     }
-    memset(even + 1, 0, 1 * sizeof(mp_limb_t));
-    for(i = 0 ; i < 2 ; i++) {
+    memset(even + 2, 0, 2 * sizeof(mp_limb_t));
+    for(i = 0 ; i < 4 ; i++) {
         odd[i] = (s[i] & ODD_MASK) >> 1;
     }
-    for(i = 0 ; i < 1 ; i++) {
+    for(i = 0 ; i < 2 ; i++) {
         t = odd[2*i];   t |= t >> 7;
               odd[i]  = shuffle_table[t & 255];
         t >>= 16; odd[i] |= shuffle_table[t & 255] << 8;
-        t >>= 16; odd[i] |= shuffle_table[t & 255] << 16;
-        t >>= 16; odd[i] |= shuffle_table[t & 255] << 24;
         t = odd[2*i+1]; t |= t >> 7;
-              odd[i] |= shuffle_table[t & 255] << 32;
-        t >>= 16; odd[i] |= shuffle_table[t & 255] << 40;
-        t >>= 16; odd[i] |= shuffle_table[t & 255] << 48;
-        t >>= 16; odd[i] |= shuffle_table[t & 255] << 56;
+              odd[i] |= shuffle_table[t & 255] << 16;
+        t >>= 16; odd[i] |= shuffle_table[t & 255] << 24;
     }
-    memset(odd + 1, 0, 1 * sizeof(mp_limb_t));
+    memset(odd + 2, 0, 2 * sizeof(mp_limb_t));
     mpfq_2_128_mul_ur(K, odd_t, odd, sqrt_t);
-    for(i = 0 ; i < (2+1)/2 ; i++) {
+    for(i = 0 ; i < (4+1)/2 ; i++) {
         odd_t[i] ^= even[i];
     }
     /* mpfq_2_128_print(K, stdout, odd_t); */
@@ -645,11 +639,11 @@ void mpfq_2_128_pow(mpfq_2_128_dst_field k, mpfq_2_128_dst_elt res, mpfq_2_128_s
         mpfq_2_128_set_ui(k, res, 1);
         return;
     }
-    j = 64 - 1;
+    j = 32 - 1;
     mask = (1UL<<j);
     for( ; (x[i]&mask)==0 ;j--, mask>>=1)
         ;
-    lead = i*64+j;      /* Ensured. */
+    lead = i*32+j;      /* Ensured. */
     
     mpfq_2_128_init(k, &u);
     mpfq_2_128_init(k, &a);
@@ -657,7 +651,7 @@ void mpfq_2_128_pow(mpfq_2_128_dst_field k, mpfq_2_128_dst_elt res, mpfq_2_128_s
     for( ; lead > 0; lead--) {
         if (j-- == 0) {
             i--;
-            j = 64-1;
+            j = 32-1;
             mask = (1UL<<j);
         } else {
             mask >>= 1;
@@ -717,12 +711,12 @@ void mpfq_2_128_mul_uipoly(mpfq_2_128_dst_field k, mpfq_2_128_dst_elt r, mpfq_2_
 static inline
 void mpfq_2_128_longshift_left(unsigned long * dst, const unsigned long * src, int n, int s)
 {
-    int m = s / 64;
+    int m = s / 32;
     int i;
-    s %= 64;
+    s %= 32;
     if (s > 0) {
         for(i = n-m-1 ; i > 0 ; i--) {
-            dst[m+i] = src[i] << s ^ src[i-1] >> (64-s);
+            dst[m+i] = src[i] << s ^ src[i-1] >> (32-s);
         }
         dst[m] = src[0] << s;
     } else {
@@ -742,12 +736,12 @@ void mpfq_2_128_longshift_left(unsigned long * dst, const unsigned long * src, i
 static inline
 void mpfq_2_128_longaddshift_left(unsigned long * dst, const unsigned long * src, int n, int s)
 {
-    int m = s / 64;
+    int m = s / 32;
     int i;
-    s %= 64;
+    s %= 32;
     if (s>0) {
         for(i = n-m-1 ; i > 0 ; i--) {
-            dst[m+i] ^= src[i] << s ^ src[i-1] >> (64-s);
+            dst[m+i] ^= src[i] << s ^ src[i-1] >> (32-s);
         }
         dst[m] ^= src[0] << s;
     } else {
@@ -762,10 +756,10 @@ void mpfq_2_128_longaddshift_left(unsigned long * dst, const unsigned long * src
 static inline
 int mpfq_2_128_inv(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r, mpfq_2_128_src_elt s)
 {
-    mp_limb_t a[3] = { 0x8000000000000000UL, 0x43UL, 0x8000000000000000UL, };
-    mp_limb_t b[3];
-    mp_limb_t u[3] = { 0, };
-    mp_limb_t v[3] = { 1, 0, };
+    mp_limb_t a[5] = { 0x80000000UL, 0x43UL, 0x0UL, 0x0UL, 0x80000000UL, };
+    mp_limb_t b[5];
+    mp_limb_t u[5] = { 0, };
+    mp_limb_t v[5] = { 1, 0, };
     mp_limb_t x;
     mp_size_t ia, ib;
     int i,d;
@@ -774,62 +768,74 @@ int mpfq_2_128_inv(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r, mp
         return 0;
     {
         unsigned long z;
-        z = s[0] << 63;
+        z = s[0] << 31;
         b[0] = z;
-        z = s[0] >>  1 ^ s[1] << 63;
+        z = s[0] >>  1 ^ s[1] << 31;
         b[1] = z;
-        z = s[1] >>  1;
+        z = s[1] >>  1 ^ s[2] << 31;
         b[2] = z;
+        z = s[2] >>  1 ^ s[3] << 31;
+        b[3] = z;
+        z = s[3] >>  1;
+        b[4] = z;
     }
-    ib = clzlx(b, 3);
+    ib = clzlx(b, 5);
     ia = 0;
     
-    mpfq_2_128_longshift_left(b,b,3,ib);
+    mpfq_2_128_longshift_left(b,b,5,ib);
     
     for(d = ib - ia ; ; ) {
             if (d == 0) {
-                    for(i = 0 ; i < 3 ; i++) v[i] ^= u[i];
+                    for(i = 0 ; i < 5 ; i++) v[i] ^= u[i];
             b[0] ^= a[0]; x = b[0];
             b[1] ^= a[1]; x |= b[1];
             b[2] ^= a[2]; x |= b[2];
-                    if (!x) { memcpy(r,u,2 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(b,3);
+            b[3] ^= a[3]; x |= b[3];
+            b[4] ^= a[4]; x |= b[4];
+                    if (!x) { memcpy(r,u,4 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(b,5);
                     ib += t;
                     d += t;
-                    mpfq_2_128_longshift_left(b,b,3,t);
+                    mpfq_2_128_longshift_left(b,b,5,t);
             }
             for(;d > 0;) {
-                    mpfq_2_128_longaddshift_left(u,v,3,d);
+                    mpfq_2_128_longaddshift_left(u,v,5,d);
             a[0] ^= b[0]; x = a[0];
             a[1] ^= b[1]; x |= a[1];
             a[2] ^= b[2]; x |= a[2];
-                    if (!x) { memcpy(r,v,2 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(a,3);
+            a[3] ^= b[3]; x |= a[3];
+            a[4] ^= b[4]; x |= a[4];
+                    if (!x) { memcpy(r,v,4 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(a,5);
                     ia += t;
                     d -= t;
-                    mpfq_2_128_longshift_left(a,a,3,t);
+                    mpfq_2_128_longshift_left(a,a,5,t);
             } 
             if (d == 0) {
-                    for(i = 0 ; i < 3 ; i++) u[i] ^= v[i];
+                    for(i = 0 ; i < 5 ; i++) u[i] ^= v[i];
             a[0] ^= b[0]; x = a[0];
             a[1] ^= b[1]; x |= a[1];
             a[2] ^= b[2]; x |= a[2];
-                    if (!x) { memcpy(r,v,2 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(a,3);
+            a[3] ^= b[3]; x |= a[3];
+            a[4] ^= b[4]; x |= a[4];
+                    if (!x) { memcpy(r,v,4 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(a,5);
                     ia += t;
                     d -= t;
-                    mpfq_2_128_longshift_left(a,a,3,t);
+                    mpfq_2_128_longshift_left(a,a,5,t);
             }
             for(;d < 0;) {
-                    mpfq_2_128_longaddshift_left(v,u,3,-d);
+                    mpfq_2_128_longaddshift_left(v,u,5,-d);
             b[0] ^= a[0]; x = b[0];
             b[1] ^= a[1]; x |= b[1];
             b[2] ^= a[2]; x |= b[2];
-                    if (!x) { memcpy(r,u,2 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(b,3);
+            b[3] ^= a[3]; x |= b[3];
+            b[4] ^= a[4]; x |= b[4];
+                    if (!x) { memcpy(r,u,4 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(b,5);
                     ib += t;
                     d += t;
-                    mpfq_2_128_longshift_left(b,b,3,t);
+                    mpfq_2_128_longshift_left(b,b,5,t);
             }
     }
 }
@@ -839,141 +845,141 @@ static inline
 void mpfq_2_128_as_solve(mpfq_2_128_dst_field K, mpfq_2_128_dst_elt r, mpfq_2_128_src_elt s)
 {
     static const mpfq_2_128_elt t[128] = {
-        { 0x676aac9fa4b20b08UL, 0x295ac0b1f4731af9UL, },
-        { 0x929959af766af404UL, 0xe5da5595ee970b89UL, },
-        { 0x929959af766af406UL, 0xe5da5595ee970b89UL, },
-        { 0x7783f7333404a20cUL, 0x4e9826c74350bfe6UL, },
-        { 0x929959af766af402UL, 0xe5da5595ee970b89UL, },
-        { 0x7dc714cb83074e6aUL, 0x2aaea79ad7da34b0UL, },
-        { 0x7783f7333404a204UL, 0x4e9826c74350bfe6UL, },
-        { 0xf5f3f531d2d9fe18UL, 0xcc8095241ae41171UL, },
-        { 0x929959af766af412UL, 0xe5da5595ee970b89UL, },
-        { 0x77cb862e8ac85b44UL, 0x4e983687d159ce96UL, },
-        { 0x7dc714cb83074e4aUL, 0x2aaea79ad7da34b0UL, },
-        { 0xf73fcb3c06aaff56UL, 0xaae2ab6aaf144aafUL, },
-        { 0x7783f7333404a244UL, 0x4e9826c74350bfe6UL, },
-        { 0x893fe9ca40603f62UL, 0xe62f327ccd5792ddUL, },
-        { 0xf5f3f531d2d9fe98UL, 0xcc8095241ae41171UL, },
-        { 0xe1336bc7d453b626UL, 0xab52f0323f47c90bUL, },
-        { 0x929959af766af512UL, 0xe5da5595ee970b89UL, },
-        { 0x79a6a089abf4573aUL, 0x2abe34bad75338b4UL, },
-        { 0x77cb862e8ac85944UL, 0x4e983687d159ce96UL, },
-        { 0x1a9cbef8232562fcUL, 0x1e8ccb9dcc72f2eUL, },
-        { 0x7dc714cb83074a4aUL, 0x2aaea79ad7da34b0UL, },
-        { 0xce869b24a80e48cUL, 0x2442c3221f3dc1aUL, },
-        { 0xf73fcb3c06aaf756UL, 0xaae2ab6aaf144aafUL, },
-        { 0xeb3ff936dd9aa228UL, 0xcf64612f39c4323dUL, },
-        { 0x7783f7333404b244UL, 0x4e9826c74350bfe6UL, },
-        { 0xf0d5382a57572458UL, 0xcc911696880d4909UL, },
-        { 0x893fe9ca40601f62UL, 0xe62f327ccd5792ddUL, },
-        { 0x697f6478e5db2834UL, 0x4d7cd7cc29d28cf2UL, },
-        { 0xf5f3f531d2d9be98UL, 0xcc8095241ae41171UL, },
-        { 0xfc0956ca1a5b86a4UL, 0xccc99127569146a7UL, },
-        { 0xe1336bc7d4533626UL, 0xab52f0323f47c90bUL, },
-        { 0x14f5986b001eeb82UL, 0x65cece94dacd5b1cUL, },
-        { 0x929959af766bf512UL, 0xe5da5595ee970b89UL, },
-        { 0x6fe27169c7c3e73aUL, 0x2b0e7fa2d509ca74UL, },
-        { 0x79a6a089abf6573aUL, 0x2abe34bad75338b4UL, },
-        { 0x11d3553885980142UL, 0x65df4d2648241324UL, },
-        { 0x77cb862e8acc5944UL, 0x4e983687d159ce96UL, },
-        { 0xef6fd21d2af671a4UL, 0xcf74f70e70ef2af7UL, },
-        { 0x1a9cbef8232d62fcUL, 0x1e8ccb9dcc72f2eUL, },
-        { 0xf91a9d8499490f58UL, 0xcec4b9173b16cdf9UL, },
-        { 0x7dc714cb83174a4aUL, 0x2aaea79ad7da34b0UL, },
-        { 0x99a6cf206b513bdcUL, 0x83f16f99175f6247UL, },
-        { 0xce869b24aa0e48cUL, 0x2442c3221f3dc1aUL, },
-        { 0x1b9e27ebe84671c0UL, 0x3f562a96a2aa908UL, },
-        { 0xf73fcb3c06eaf756UL, 0xaae2ab6aaf144aafUL, },
-        { 0xfcd6d526cddeebd4UL, 0xccc9c07ae11bcce3UL, },
-        { 0xeb3ff936dd1aa228UL, 0xcf64612f39c4323dUL, },
-        { 0xe461dfebe8467196UL, 0xa95fc803c09556f7UL, },
-        { 0x7783f7333504b244UL, 0x4e9826c74350bfe6UL, },
-        { 0x7b20ee03c15c7384UL, 0x4cdc1ab0f0ab5b2eUL, },
-        { 0xf0d5382a55572458UL, 0xcc911696880d4909UL, },
-        { 0xfb48c8c7fe68cf6aUL, 0xaaba68961da11d79UL, },
-        { 0x893fe9ca44601f62UL, 0xe62f327ccd5792ddUL, },
-        { 0x938b5c70638d3beeUL, 0xe5db5416ee209847UL, },
-        { 0x697f6478eddb2834UL, 0x4d7cd7cc29d28cf2UL, },
-        { 0xb49fa26a7e512ceUL, 0x6437818b95e2e76eUL, },
-        { 0xf5f3f531c2d9be98UL, 0xcc8095241ae41171UL, },
-        { 0x7868a299022ddf34UL, 0x4cd9020746184ba2UL, },
-        { 0xfc0956ca3a5b86a4UL, 0xccc99127569146a7UL, },
-        { 0x8f1d24e407e8e76cUL, 0x824171dcefbe4a8bUL, },
-        { 0xe1336bc794533626UL, 0xab52f0323f47c90bUL, },
-        { 0x88711e202cdc3b5eUL, 0xe62e22af1f6bf32bUL, },
-        { 0x14f5986b801eeb82UL, 0x65cece94dacd5b1cUL, },
-        { 0x9aadb85427b54520UL, 0x83f4672b23a92e49UL, },
-        { 0x929959ae766bf512UL, 0xe5da5595ee970b89UL, },
-        { 0x48711dbeccf94cUL, 0x104092097172UL, },
-        { 0x6fe2716bc7c3e73aUL, 0x2b0e7fa2d509ca74UL, },
-        { 0x99d6b267d0d7976cUL, 0x81edd40a7a7437cbUL, },
-        { 0x79a6a08dabf6573aUL, 0x2abe34bad75338b4UL, },
-        { 0x84dd884d1a5d4462UL, 0xe46a1e8deccdf96dUL, },
-        { 0x11d3553085980142UL, 0x65df4d2648241324UL, },
-        { 0x8ab1aeeb3a605920UL, 0x804c1cb1eac70f69UL, },
-        { 0x77cb863e8acc5944UL, 0x4e983687d159ce96UL, },
-        { 0xe04514377dbd55aaUL, 0xa94f4b3252499e01UL, },
-        { 0xef6fd23d2af671a4UL, 0xcf74f70e70ef2af7UL, },
-        { 0x978a93f3f56f619eUL, 0xe7d77da5831189d3UL, },
-        { 0x1a9cbeb8232d62fcUL, 0x1e8ccb9dcc72f2eUL, },
-        { 0x7a5109eab0a16ef4UL, 0x4cdd0f362b68e52aUL, },
-        { 0xf91a9d0499490f58UL, 0xcec4b9173b16cdf9UL, },
-        { 0x8830781e88d05912UL, 0xe4329c3d7bf23369UL, },
-        { 0x7dc715cb83174a4aUL, 0x2aaea79ad7da34b0UL, },
-        { 0x8618bcbfcff334e0UL, 0x8208208259738741UL, },
-        { 0x99a6cd206b513bdcUL, 0x83f16f99175f6247UL, },
-        { 0x6297e291f4adcc3aUL, 0x294b124ed1181a84UL, },
-        { 0xce86db24aa0e48cUL, 0x2442c3221f3dc1aUL, },
-        { 0x9b696b666550119eUL, 0xe78fff4114466493UL, },
-        { 0x1b9e2febe84671c0UL, 0x3f562a96a2aa908UL, },
-        { 0xeb568d9e63d55a14UL, 0xcd78dbfd54a1436bUL, },
-        { 0xf73fdb3c06eaf756UL, 0xaae2ab6aaf144aafUL, },
-        { 0xfacabbbeed722b64UL, 0xccdd4e7b1ce38d0fUL, },
-        { 0xfcd6f526cddeebd4UL, 0xccc9c07ae11bcce3UL, },
-        { 0x1fb4754fa43bbf3cUL, 0x3e5e1ccb1bf89c6UL, },
-        { 0xeb3fb936dd1aa228UL, 0xcf64612f39c4323dUL, },
-        { 0x926f68f4172caea2UL, 0xe5da00893461b455UL, },
-        { 0xe4615febe8467196UL, 0xa95fc803c09556f7UL, },
-        { 0x981cf1dccb9d1fd2UL, 0xe78ae2a77b3e87b1UL, },
-        { 0x7782f7333504b244UL, 0x4e9826c74350bfe6UL, },
-        { 0x6fd777b6c15f72c6UL, 0x2912d4222a675b0aUL, },
-        { 0x7b22ee03c15c7384UL, 0x4cdc1ab0f0ab5b2eUL, },
-        { 0x96f8740f85956fd2UL, 0xe7d6682e58d237f1UL, },
-        { 0xf0d1382a55572458UL, 0xcc911696880d4909UL, },
-        { 0xe46143c933474626UL, 0xab4366b0764a0b4bUL, },
-        { 0xfb40c8c7fe68cf6aUL, 0xaaba68961da11d79UL, },
-        { 0x97849bb7f7de0d9eUL, 0xe7d77d718378aeb3UL, },
-        { 0x892fe9ca44601f62UL, 0xe62f327ccd5792ddUL, },
-        { 0xd13f9bd382e380eUL, 0x64231d9efb5729d6UL, },
-        { 0x93ab5c70638d3beeUL, 0xe5db5416ee209847UL, },
-        { 0x959811bd9a557220UL, 0x81b51ab7a5fe1499UL, },
-        { 0x693f6478eddb2834UL, 0x4d7cd7cc29d28cf2UL, },
-        { 0x678a4ee975a08406UL, 0x295ab4bb43072c12UL, },
-        { 0xbc9fa26a7e512ceUL, 0x6437818b95e2e76eUL, },
-        { 0xef9e1acd25989a26UL, 0xab0eead38eb165ebUL, },
-        { 0xf4f3f531c2d9be98UL, 0xcc8095241ae41171UL, },
-        { 0x10185b9b29b00000UL, 0x3ba7996db230c00UL, },
-        { 0x7a68a299022ddf34UL, 0x4cd9020746184ba2UL, },
-        { 0x8261f45338765990UL, 0x8210932010890d05UL, },
-        { 0xf80956ca3a5b86a4UL, 0xccc99127569146a7UL, },
-        { 0x7f14722e3db361faUL, 0x2a88e0fbb92f0c2cUL, },
-        { 0x871d24e407e8e76cUL, 0x824171dcefbe4a8bUL, },
-        { 0x6fb067f47d17578aUL, 0x29b11e87b8989fd8UL, },
-        { 0xf1336bc794533626UL, 0xab52f0323f47c90bUL, },
-        { 0xdb7ed8c3891e6faUL, 0x38b21c09fae1613cUL, },
-        { 0xa8711e202cdc3b5eUL, 0xe62e22af1f6bf32bUL, },
-        { 0xa8711e202cdc3b6cUL, 0x862e22af1f6bf32bUL, },
-        { 0x54f5986b801eeb82UL, 0x65cece94dacd5b1cUL, },
-        { 0xb1ef36f7c270bdacUL, 0x8e8cbdc6770aef73UL, },
-        { 0x1aadb85427b54520UL, 0x83f4672b23a92e49UL, },
-        { 0x0UL, 0x0UL, },
+        { 0xa4b20b08UL, 0x676aac9fUL, 0xf4731af9UL, 0x295ac0b1UL, },
+        { 0x766af404UL, 0x929959afUL, 0xee970b89UL, 0xe5da5595UL, },
+        { 0x766af406UL, 0x929959afUL, 0xee970b89UL, 0xe5da5595UL, },
+        { 0x3404a20cUL, 0x7783f733UL, 0x4350bfe6UL, 0x4e9826c7UL, },
+        { 0x766af402UL, 0x929959afUL, 0xee970b89UL, 0xe5da5595UL, },
+        { 0x83074e6aUL, 0x7dc714cbUL, 0xd7da34b0UL, 0x2aaea79aUL, },
+        { 0x3404a204UL, 0x7783f733UL, 0x4350bfe6UL, 0x4e9826c7UL, },
+        { 0xd2d9fe18UL, 0xf5f3f531UL, 0x1ae41171UL, 0xcc809524UL, },
+        { 0x766af412UL, 0x929959afUL, 0xee970b89UL, 0xe5da5595UL, },
+        { 0x8ac85b44UL, 0x77cb862eUL, 0xd159ce96UL, 0x4e983687UL, },
+        { 0x83074e4aUL, 0x7dc714cbUL, 0xd7da34b0UL, 0x2aaea79aUL, },
+        { 0x6aaff56UL, 0xf73fcb3cUL, 0xaf144aafUL, 0xaae2ab6aUL, },
+        { 0x3404a244UL, 0x7783f733UL, 0x4350bfe6UL, 0x4e9826c7UL, },
+        { 0x40603f62UL, 0x893fe9caUL, 0xcd5792ddUL, 0xe62f327cUL, },
+        { 0xd2d9fe98UL, 0xf5f3f531UL, 0x1ae41171UL, 0xcc809524UL, },
+        { 0xd453b626UL, 0xe1336bc7UL, 0x3f47c90bUL, 0xab52f032UL, },
+        { 0x766af512UL, 0x929959afUL, 0xee970b89UL, 0xe5da5595UL, },
+        { 0xabf4573aUL, 0x79a6a089UL, 0xd75338b4UL, 0x2abe34baUL, },
+        { 0x8ac85944UL, 0x77cb862eUL, 0xd159ce96UL, 0x4e983687UL, },
+        { 0x232562fcUL, 0x1a9cbef8UL, 0xdcc72f2eUL, 0x1e8ccb9UL, },
+        { 0x83074a4aUL, 0x7dc714cbUL, 0xd7da34b0UL, 0x2aaea79aUL, },
+        { 0x4a80e48cUL, 0xce869b2UL, 0x21f3dc1aUL, 0x2442c32UL, },
+        { 0x6aaf756UL, 0xf73fcb3cUL, 0xaf144aafUL, 0xaae2ab6aUL, },
+        { 0xdd9aa228UL, 0xeb3ff936UL, 0x39c4323dUL, 0xcf64612fUL, },
+        { 0x3404b244UL, 0x7783f733UL, 0x4350bfe6UL, 0x4e9826c7UL, },
+        { 0x57572458UL, 0xf0d5382aUL, 0x880d4909UL, 0xcc911696UL, },
+        { 0x40601f62UL, 0x893fe9caUL, 0xcd5792ddUL, 0xe62f327cUL, },
+        { 0xe5db2834UL, 0x697f6478UL, 0x29d28cf2UL, 0x4d7cd7ccUL, },
+        { 0xd2d9be98UL, 0xf5f3f531UL, 0x1ae41171UL, 0xcc809524UL, },
+        { 0x1a5b86a4UL, 0xfc0956caUL, 0x569146a7UL, 0xccc99127UL, },
+        { 0xd4533626UL, 0xe1336bc7UL, 0x3f47c90bUL, 0xab52f032UL, },
+        { 0x1eeb82UL, 0x14f5986bUL, 0xdacd5b1cUL, 0x65cece94UL, },
+        { 0x766bf512UL, 0x929959afUL, 0xee970b89UL, 0xe5da5595UL, },
+        { 0xc7c3e73aUL, 0x6fe27169UL, 0xd509ca74UL, 0x2b0e7fa2UL, },
+        { 0xabf6573aUL, 0x79a6a089UL, 0xd75338b4UL, 0x2abe34baUL, },
+        { 0x85980142UL, 0x11d35538UL, 0x48241324UL, 0x65df4d26UL, },
+        { 0x8acc5944UL, 0x77cb862eUL, 0xd159ce96UL, 0x4e983687UL, },
+        { 0x2af671a4UL, 0xef6fd21dUL, 0x70ef2af7UL, 0xcf74f70eUL, },
+        { 0x232d62fcUL, 0x1a9cbef8UL, 0xdcc72f2eUL, 0x1e8ccb9UL, },
+        { 0x99490f58UL, 0xf91a9d84UL, 0x3b16cdf9UL, 0xcec4b917UL, },
+        { 0x83174a4aUL, 0x7dc714cbUL, 0xd7da34b0UL, 0x2aaea79aUL, },
+        { 0x6b513bdcUL, 0x99a6cf20UL, 0x175f6247UL, 0x83f16f99UL, },
+        { 0x4aa0e48cUL, 0xce869b2UL, 0x21f3dc1aUL, 0x2442c32UL, },
+        { 0xe84671c0UL, 0x1b9e27ebUL, 0x6a2aa908UL, 0x3f562a9UL, },
+        { 0x6eaf756UL, 0xf73fcb3cUL, 0xaf144aafUL, 0xaae2ab6aUL, },
+        { 0xcddeebd4UL, 0xfcd6d526UL, 0xe11bcce3UL, 0xccc9c07aUL, },
+        { 0xdd1aa228UL, 0xeb3ff936UL, 0x39c4323dUL, 0xcf64612fUL, },
+        { 0xe8467196UL, 0xe461dfebUL, 0xc09556f7UL, 0xa95fc803UL, },
+        { 0x3504b244UL, 0x7783f733UL, 0x4350bfe6UL, 0x4e9826c7UL, },
+        { 0xc15c7384UL, 0x7b20ee03UL, 0xf0ab5b2eUL, 0x4cdc1ab0UL, },
+        { 0x55572458UL, 0xf0d5382aUL, 0x880d4909UL, 0xcc911696UL, },
+        { 0xfe68cf6aUL, 0xfb48c8c7UL, 0x1da11d79UL, 0xaaba6896UL, },
+        { 0x44601f62UL, 0x893fe9caUL, 0xcd5792ddUL, 0xe62f327cUL, },
+        { 0x638d3beeUL, 0x938b5c70UL, 0xee209847UL, 0xe5db5416UL, },
+        { 0xeddb2834UL, 0x697f6478UL, 0x29d28cf2UL, 0x4d7cd7ccUL, },
+        { 0xa7e512ceUL, 0xb49fa26UL, 0x95e2e76eUL, 0x6437818bUL, },
+        { 0xc2d9be98UL, 0xf5f3f531UL, 0x1ae41171UL, 0xcc809524UL, },
+        { 0x22ddf34UL, 0x7868a299UL, 0x46184ba2UL, 0x4cd90207UL, },
+        { 0x3a5b86a4UL, 0xfc0956caUL, 0x569146a7UL, 0xccc99127UL, },
+        { 0x7e8e76cUL, 0x8f1d24e4UL, 0xefbe4a8bUL, 0x824171dcUL, },
+        { 0x94533626UL, 0xe1336bc7UL, 0x3f47c90bUL, 0xab52f032UL, },
+        { 0x2cdc3b5eUL, 0x88711e20UL, 0x1f6bf32bUL, 0xe62e22afUL, },
+        { 0x801eeb82UL, 0x14f5986bUL, 0xdacd5b1cUL, 0x65cece94UL, },
+        { 0x27b54520UL, 0x9aadb854UL, 0x23a92e49UL, 0x83f4672bUL, },
+        { 0x766bf512UL, 0x929959aeUL, 0xee970b89UL, 0xe5da5595UL, },
+        { 0xbeccf94cUL, 0x48711dUL, 0x92097172UL, 0x1040UL, },
+        { 0xc7c3e73aUL, 0x6fe2716bUL, 0xd509ca74UL, 0x2b0e7fa2UL, },
+        { 0xd0d7976cUL, 0x99d6b267UL, 0x7a7437cbUL, 0x81edd40aUL, },
+        { 0xabf6573aUL, 0x79a6a08dUL, 0xd75338b4UL, 0x2abe34baUL, },
+        { 0x1a5d4462UL, 0x84dd884dUL, 0xeccdf96dUL, 0xe46a1e8dUL, },
+        { 0x85980142UL, 0x11d35530UL, 0x48241324UL, 0x65df4d26UL, },
+        { 0x3a605920UL, 0x8ab1aeebUL, 0xeac70f69UL, 0x804c1cb1UL, },
+        { 0x8acc5944UL, 0x77cb863eUL, 0xd159ce96UL, 0x4e983687UL, },
+        { 0x7dbd55aaUL, 0xe0451437UL, 0x52499e01UL, 0xa94f4b32UL, },
+        { 0x2af671a4UL, 0xef6fd23dUL, 0x70ef2af7UL, 0xcf74f70eUL, },
+        { 0xf56f619eUL, 0x978a93f3UL, 0x831189d3UL, 0xe7d77da5UL, },
+        { 0x232d62fcUL, 0x1a9cbeb8UL, 0xdcc72f2eUL, 0x1e8ccb9UL, },
+        { 0xb0a16ef4UL, 0x7a5109eaUL, 0x2b68e52aUL, 0x4cdd0f36UL, },
+        { 0x99490f58UL, 0xf91a9d04UL, 0x3b16cdf9UL, 0xcec4b917UL, },
+        { 0x88d05912UL, 0x8830781eUL, 0x7bf23369UL, 0xe4329c3dUL, },
+        { 0x83174a4aUL, 0x7dc715cbUL, 0xd7da34b0UL, 0x2aaea79aUL, },
+        { 0xcff334e0UL, 0x8618bcbfUL, 0x59738741UL, 0x82082082UL, },
+        { 0x6b513bdcUL, 0x99a6cd20UL, 0x175f6247UL, 0x83f16f99UL, },
+        { 0xf4adcc3aUL, 0x6297e291UL, 0xd1181a84UL, 0x294b124eUL, },
+        { 0x4aa0e48cUL, 0xce86db2UL, 0x21f3dc1aUL, 0x2442c32UL, },
+        { 0x6550119eUL, 0x9b696b66UL, 0x14466493UL, 0xe78fff41UL, },
+        { 0xe84671c0UL, 0x1b9e2febUL, 0x6a2aa908UL, 0x3f562a9UL, },
+        { 0x63d55a14UL, 0xeb568d9eUL, 0x54a1436bUL, 0xcd78dbfdUL, },
+        { 0x6eaf756UL, 0xf73fdb3cUL, 0xaf144aafUL, 0xaae2ab6aUL, },
+        { 0xed722b64UL, 0xfacabbbeUL, 0x1ce38d0fUL, 0xccdd4e7bUL, },
+        { 0xcddeebd4UL, 0xfcd6f526UL, 0xe11bcce3UL, 0xccc9c07aUL, },
+        { 0xa43bbf3cUL, 0x1fb4754fUL, 0xb1bf89c6UL, 0x3e5e1ccUL, },
+        { 0xdd1aa228UL, 0xeb3fb936UL, 0x39c4323dUL, 0xcf64612fUL, },
+        { 0x172caea2UL, 0x926f68f4UL, 0x3461b455UL, 0xe5da0089UL, },
+        { 0xe8467196UL, 0xe4615febUL, 0xc09556f7UL, 0xa95fc803UL, },
+        { 0xcb9d1fd2UL, 0x981cf1dcUL, 0x7b3e87b1UL, 0xe78ae2a7UL, },
+        { 0x3504b244UL, 0x7782f733UL, 0x4350bfe6UL, 0x4e9826c7UL, },
+        { 0xc15f72c6UL, 0x6fd777b6UL, 0x2a675b0aUL, 0x2912d422UL, },
+        { 0xc15c7384UL, 0x7b22ee03UL, 0xf0ab5b2eUL, 0x4cdc1ab0UL, },
+        { 0x85956fd2UL, 0x96f8740fUL, 0x58d237f1UL, 0xe7d6682eUL, },
+        { 0x55572458UL, 0xf0d1382aUL, 0x880d4909UL, 0xcc911696UL, },
+        { 0x33474626UL, 0xe46143c9UL, 0x764a0b4bUL, 0xab4366b0UL, },
+        { 0xfe68cf6aUL, 0xfb40c8c7UL, 0x1da11d79UL, 0xaaba6896UL, },
+        { 0xf7de0d9eUL, 0x97849bb7UL, 0x8378aeb3UL, 0xe7d77d71UL, },
+        { 0x44601f62UL, 0x892fe9caUL, 0xcd5792ddUL, 0xe62f327cUL, },
+        { 0x382e380eUL, 0xd13f9bdUL, 0xfb5729d6UL, 0x64231d9eUL, },
+        { 0x638d3beeUL, 0x93ab5c70UL, 0xee209847UL, 0xe5db5416UL, },
+        { 0x9a557220UL, 0x959811bdUL, 0xa5fe1499UL, 0x81b51ab7UL, },
+        { 0xeddb2834UL, 0x693f6478UL, 0x29d28cf2UL, 0x4d7cd7ccUL, },
+        { 0x75a08406UL, 0x678a4ee9UL, 0x43072c12UL, 0x295ab4bbUL, },
+        { 0xa7e512ceUL, 0xbc9fa26UL, 0x95e2e76eUL, 0x6437818bUL, },
+        { 0x25989a26UL, 0xef9e1acdUL, 0x8eb165ebUL, 0xab0eead3UL, },
+        { 0xc2d9be98UL, 0xf4f3f531UL, 0x1ae41171UL, 0xcc809524UL, },
+        { 0x29b00000UL, 0x10185b9bUL, 0xdb230c00UL, 0x3ba7996UL, },
+        { 0x22ddf34UL, 0x7a68a299UL, 0x46184ba2UL, 0x4cd90207UL, },
+        { 0x38765990UL, 0x8261f453UL, 0x10890d05UL, 0x82109320UL, },
+        { 0x3a5b86a4UL, 0xf80956caUL, 0x569146a7UL, 0xccc99127UL, },
+        { 0x3db361faUL, 0x7f14722eUL, 0xb92f0c2cUL, 0x2a88e0fbUL, },
+        { 0x7e8e76cUL, 0x871d24e4UL, 0xefbe4a8bUL, 0x824171dcUL, },
+        { 0x7d17578aUL, 0x6fb067f4UL, 0xb8989fd8UL, 0x29b11e87UL, },
+        { 0x94533626UL, 0xf1336bc7UL, 0x3f47c90bUL, 0xab52f032UL, },
+        { 0x3891e6faUL, 0xdb7ed8cUL, 0xfae1613cUL, 0x38b21c09UL, },
+        { 0x2cdc3b5eUL, 0xa8711e20UL, 0x1f6bf32bUL, 0xe62e22afUL, },
+        { 0x2cdc3b6cUL, 0xa8711e20UL, 0x1f6bf32bUL, 0x862e22afUL, },
+        { 0x801eeb82UL, 0x54f5986bUL, 0xdacd5b1cUL, 0x65cece94UL, },
+        { 0xc270bdacUL, 0xb1ef36f7UL, 0x770aef73UL, 0x8e8cbdc6UL, },
+        { 0x27b54520UL, 0x1aadb854UL, 0x23a92e49UL, 0x83f4672bUL, },
+        { 0x0UL, 0x0UL, 0x0UL, 0x0UL, },
     };
     const mpfq_2_128_elt * ptr = t;
     unsigned int i,j;
     memset(r, 0, sizeof(mpfq_2_128_elt));
-    for(i = 0 ; i < 2 ; i++) {
+    for(i = 0 ; i < 4 ; i++) {
         mp_limb_t a = s[i];
-        for(j = 0 ; j < 64 && ptr != &t[128]; j++, ptr++) {
+        for(j = 0 ; j < 32 && ptr != &t[128]; j++, ptr++) {
             if (a & 1UL) {
                 mpfq_2_128_add(K, r, r, *ptr);
             }
@@ -986,7 +992,7 @@ void mpfq_2_128_as_solve(mpfq_2_128_dst_field K, mpfq_2_128_dst_elt r, mpfq_2_12
 static inline
 unsigned long mpfq_2_128_trace(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_src_elt s)
 {
-    return ((s[1]>>63) ^ (s[1]>>57)) & 1;
+    return ((s[3]>>31) ^ (s[3]>>25)) & 1;
 }
 
 /* *Mpfq::defaults::flatdata::code_for_elt_ur_set, Mpfq::gf2n::trivialities */
@@ -1023,122 +1029,78 @@ static inline
 void mpfq_2_128_elt_ur_add(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt_ur r, mpfq_2_128_src_elt_ur s1, mpfq_2_128_src_elt_ur s2)
 {
     int i;
-    for(i = 0 ; i < 4 ; i++)
+    for(i = 0 ; i < 8 ; i++)
         r[i] = s1[i] ^ s2[i];
 }
 
 /* *Mpfq::gf2n::mul::code_for_mul_ur */
+#ifndef HAVE_GF2X
+static inline void
+gf2x_mul1 (unsigned long *c, unsigned long a, unsigned long b)
+{
+   unsigned long hi, lo, tmp, A[16];
+   A[0]  = 0;         A[1]  = a;         A[2]  = A[1] << 1; A[3]  = A[2] ^ a;
+   A[4]  = A[2] << 1; A[5]  = A[4] ^ a;  A[6]  = A[3] << 1; A[7]  = A[6] ^ a;
+   A[8]  = A[4] << 1; A[9]  = A[8] ^ a;  A[10] = A[5] << 1; A[11] = A[10] ^ a;
+   A[12] = A[6] << 1; A[13] = A[12] ^ a; A[14] = A[7] << 1; A[15] = A[14] ^ a;
+   lo = (A[b >> 28] << 4) ^ A[(b >> 24) & 15];
+   hi = lo >> 24;
+   lo = (lo << 8) ^ (A[(b >> 20) & 15] << 4) ^ A[(b >> 16) & 15];
+   hi = (hi << 8) | (lo >> 24);
+   lo = (lo << 8) ^ (A[(b >> 12) & 15] << 4) ^ A[(b >> 8) & 15];
+   hi = (hi << 8) | (lo >> 24);
+   lo = (lo << 8) ^ (A[(b >> 4) & 15] << 4) ^ A[b & 15];
+   tmp = -((a >> 31) & 1); tmp &= ((b & 0xfefefefe) >> 1); hi = hi ^ tmp;
+   tmp = -((a >> 30) & 1); tmp &= ((b & 0xfcfcfcfc) >> 2); hi = hi ^ tmp;
+   tmp = -((a >> 29) & 1); tmp &= ((b & 0xf8f8f8f8) >> 3); hi = hi ^ tmp;
+   tmp = -((a >> 28) & 1); tmp &= ((b & 0xf0f0f0f0) >> 4); hi = hi ^ tmp;
+   tmp = -((a >> 27) & 1); tmp &= ((b & 0xe0e0e0e0) >> 5); hi = hi ^ tmp;
+   tmp = -((a >> 26) & 1); tmp &= ((b & 0xc0c0c0c0) >> 6); hi = hi ^ tmp;
+   tmp = -((a >> 25) & 1); tmp &= ((b & 0x80808080) >> 7); hi = hi ^ tmp;
+   c[0] = lo; c[1] = hi;
+}
+static inline void gf2x_mul2(unsigned long *c, const unsigned long *a,
+			     const unsigned long *b)
+{
+    unsigned long t;
+    unsigned long u[2];
+
+    gf2x_mul1(c, a[0], b[0]);
+    gf2x_mul1(c + 2, a[1], b[1]);
+    t = c[1] ^ c[2];
+    gf2x_mul1(u, a[0] ^ a[1], b[0] ^ b[1]);
+    c[1] = c[0] ^ u[0] ^ t;
+    c[2] = c[3] ^ u[1] ^ t;
+}
+static inline void gf2x_mul4(unsigned long *c, const unsigned long *a,
+		   const unsigned long *b)
+{
+    unsigned long aa[2], bb[2], ab[4];
+    unsigned long lo[4], hi[4];
+    gf2x_mul2(lo, a, b);
+    gf2x_mul2(hi, a + 2, b + 2);
+    aa[0] = a[0] ^ a[2];
+    aa[1] = a[1] ^ a[3];
+    bb[0] = b[0] ^ b[2];
+    bb[1] = b[1] ^ b[3];
+    unsigned long c24 = lo[2] ^ hi[0];
+    unsigned long c35 = lo[3] ^ hi[1];
+    gf2x_mul2(ab, aa, bb);
+    c[0] = lo[0];
+    c[1] = lo[1];
+    c[2] = ab[0] ^ lo[0] ^ c24;
+    c[3] = ab[1] ^ lo[1] ^ c35;
+    c[4] = ab[2] ^ hi[2] ^ c24;
+    c[5] = ab[3] ^ hi[3] ^ c35;
+    c[6] = hi[2];
+    c[7] = hi[3];
+}
+#endif
+
 static inline
 void mpfq_2_128_mul_ur(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt_ur t, mpfq_2_128_src_elt s1, mpfq_2_128_src_elt s2)
 {
-#ifdef  HAVE_GF2X
-    gf2x_mul2(t, s1, s2);
-#elif defined(HAVE_PCLMUL)      /* !HAVE_GF2X */
-#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
-#define PZERO    _mm_setzero_si128()
-    __m128i ss1 = _mm_loadu_si128((__m128i *)s1);
-    __m128i ss2 = _mm_loadu_si128((__m128i *)s2);
-    __m128i t00 = _mm_clmulepi64_si128(ss1, ss2, 0);
-    __m128i t11 = _mm_clmulepi64_si128(ss1, ss2, 0x11);
-    ss1 = PXOR(ss1, _mm_shuffle_epi32(ss1, _MM_SHUFFLE(1,0,3,2)));
-    ss2 = PXOR(ss2, _mm_shuffle_epi32(ss2, _MM_SHUFFLE(1,0,3,2)));
-    __m128i tk = _mm_clmulepi64_si128(ss1, ss2, 0);
-    tk = PXOR(tk, PXOR(t00, t11));
-    /* store result */
-    _mm_storeu_si128((__m128i *)(t),  PXOR(t00, _mm_unpacklo_epi64(PZERO, tk)));
-    _mm_storeu_si128((__m128i *)(t+2),PXOR(t11, _mm_unpackhi_epi64(tk, PZERO)));
-#undef PZERO
-#undef PXOR
-#else   /* !HAVE_GF2X && !HAVE_PCLMUL */
-#define SHL(x, r) _mm_slli_epi64((x), (r))
-#define SHR(x, r) _mm_srli_epi64((x), (r))
-#define SHLD(x, r) _mm_slli_si128((x), (r) >> 3)
-#define SHRD(x, r) _mm_srli_si128((x), (r) >> 3)
-#define XOREQ(lop, rop) lop = _mm_xor_si128((lop), (rop))
-#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
-#define PAND(lop, rop) _mm_and_si128((lop), (rop))
-    
-        __m128i u;
-        __m128i t0;
-        __m128i t1;
-        __m128i t2;
-    
-        __m128i g[16];
-        __m128i w;
-        // __m128i m = _mm_set1_epi32(0xeeeeeeee);
-        __m128i m = _gf2x_mm_set1_epi64_c(0xeeeeeeeeeeeeeeee);
-        /* sequence update walk */
-        __m128i b0 = _mm_loadu_si128((__m128i*) s2);
-        g[ 0] = _mm_setzero_si128();
-        g[ 1] = b0;
-        __m128i v1 = _mm_loadu_si128((__m128i*) s1);
-        w = _mm_sub_epi64(_mm_setzero_si128(), SHR(b0,63));
-        __m128i v2 = _mm_unpackhi_epi64(v1, v1);
-        v1 = _mm_unpacklo_epi64(v1, v1);
-        v1 = SHR(PAND(v1, m), 1); t1 = PAND(v1, w);
-        g[ 2] = SHL(b0, 1); g[ 3] = PXOR(g[ 2], b0);
-        v2 = SHR(PAND(v2, m), 1); t2 = PAND(v2, w);
-        g[ 4] = SHL(g[ 2], 1); g[ 5] = PXOR(g[ 4], b0);
-        w = _mm_sub_epi64(_mm_setzero_si128(), SHR(g[ 2],63));
-        g[ 6] = SHL(g[ 3], 1); g[ 7] = PXOR(g[ 6], b0);
-        v1 = SHR(PAND(v1, m), 1); XOREQ(t1, PAND(v1, w));
-        g[ 8] = SHL(g[ 4], 1); g[ 9] = PXOR(g[ 8], b0);
-        v2 = SHR(PAND(v2, m), 1); XOREQ(t2, PAND(v2, w));
-        g[10] = SHL(g[ 5], 1); g[11] = PXOR(g[10], b0);
-        w = _mm_sub_epi64(_mm_setzero_si128(), SHR(g[4],63));
-        g[12] = SHL(g[ 6], 1); g[13] = PXOR(g[12], b0);
-        v1 = SHR(PAND(v1, m), 1); XOREQ(t1, PAND(v1, w));
-        g[14] = SHL(g[ 7], 1); g[15] = PXOR(g[14], b0);
-        v2 = SHR(PAND(v2, m), 1); XOREQ(t2, PAND(v2, w));
-    
-    
-        /* round 0 */
-        u = g[s1[0]       & 15]; t0  = u;
-        u = g[s1[0] >>  4 & 15]; XOREQ(t0, SHL(u,  4)); XOREQ(t1, SHR(u, 60));
-        u = g[s1[0] >>  8 & 15]; XOREQ(t0, SHL(u,  8)); XOREQ(t1, SHR(u, 56));
-        u = g[s1[0] >> 12 & 15]; XOREQ(t0, SHL(u, 12)); XOREQ(t1, SHR(u, 52));
-        u = g[s1[0] >> 16 & 15]; XOREQ(t0, SHL(u, 16)); XOREQ(t1, SHR(u, 48));
-        u = g[s1[0] >> 20 & 15]; XOREQ(t0, SHL(u, 20)); XOREQ(t1, SHR(u, 44));
-        u = g[s1[0] >> 24 & 15]; XOREQ(t0, SHL(u, 24)); XOREQ(t1, SHR(u, 40));
-        u = g[s1[0] >> 28 & 15]; XOREQ(t0, SHL(u, 28)); XOREQ(t1, SHR(u, 36));
-        u = g[s1[0] >> 32 & 15]; XOREQ(t0, SHL(u, 32)); XOREQ(t1, SHR(u, 32));
-        u = g[s1[0] >> 36 & 15]; XOREQ(t0, SHL(u, 36)); XOREQ(t1, SHR(u, 28));
-        u = g[s1[0] >> 40 & 15]; XOREQ(t0, SHL(u, 40)); XOREQ(t1, SHR(u, 24));
-        u = g[s1[0] >> 44 & 15]; XOREQ(t0, SHL(u, 44)); XOREQ(t1, SHR(u, 20));
-        u = g[s1[0] >> 48 & 15]; XOREQ(t0, SHL(u, 48)); XOREQ(t1, SHR(u, 16));
-        u = g[s1[0] >> 52 & 15]; XOREQ(t0, SHL(u, 52)); XOREQ(t1, SHR(u, 12));
-        u = g[s1[0] >> 56 & 15]; XOREQ(t0, SHL(u, 56)); XOREQ(t1, SHR(u,  8));
-        u = g[s1[0] >> 60 & 15]; XOREQ(t0, SHL(u, 60)); XOREQ(t1, SHR(u,  4));
-    
-        /* round 1 */
-        u = g[s1[1]       & 15]; XOREQ(t1, u);
-        u = g[s1[1] >>  4 & 15]; XOREQ(t1, SHL(u,  4)); XOREQ(t2, SHR(u, 60));
-        u = g[s1[1] >>  8 & 15]; XOREQ(t1, SHL(u,  8)); XOREQ(t2, SHR(u, 56));
-        u = g[s1[1] >> 12 & 15]; XOREQ(t1, SHL(u, 12)); XOREQ(t2, SHR(u, 52));
-        u = g[s1[1] >> 16 & 15]; XOREQ(t1, SHL(u, 16)); XOREQ(t2, SHR(u, 48));
-        u = g[s1[1] >> 20 & 15]; XOREQ(t1, SHL(u, 20)); XOREQ(t2, SHR(u, 44));
-        u = g[s1[1] >> 24 & 15]; XOREQ(t1, SHL(u, 24)); XOREQ(t2, SHR(u, 40));
-        u = g[s1[1] >> 28 & 15]; XOREQ(t1, SHL(u, 28)); XOREQ(t2, SHR(u, 36));
-        u = g[s1[1] >> 32 & 15]; XOREQ(t1, SHL(u, 32)); XOREQ(t2, SHR(u, 32));
-        u = g[s1[1] >> 36 & 15]; XOREQ(t1, SHL(u, 36)); XOREQ(t2, SHR(u, 28));
-        u = g[s1[1] >> 40 & 15]; XOREQ(t1, SHL(u, 40)); XOREQ(t2, SHR(u, 24));
-        u = g[s1[1] >> 44 & 15]; XOREQ(t1, SHL(u, 44)); XOREQ(t2, SHR(u, 20));
-        u = g[s1[1] >> 48 & 15]; XOREQ(t1, SHL(u, 48)); XOREQ(t2, SHR(u, 16));
-        u = g[s1[1] >> 52 & 15]; XOREQ(t1, SHL(u, 52)); XOREQ(t2, SHR(u, 12));
-        u = g[s1[1] >> 56 & 15]; XOREQ(t1, SHL(u, 56)); XOREQ(t2, SHR(u,  8));
-        u = g[s1[1] >> 60 & 15]; XOREQ(t1, SHL(u, 60)); XOREQ(t2, SHR(u,  4));
-        /* end */
-        /* store result */
-        _mm_storeu_si128((__m128i*)t, PXOR(t0, SHLD(t1, 64)));
-        _mm_storeu_si128((__m128i*)(t+2), PXOR(t2, SHRD(t1, 64)));
-#undef SHL
-#undef SHR
-#undef SHLD
-#undef SHRD
-#undef XOREQ
-#undef PXOR
-#undef PAND
-#endif   /* !HAVE_GF2X && !HAVE_PCLMUL */
+    gf2x_mul4(t, s1, s2);
 }
 
 /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
@@ -1160,29 +1122,13 @@ void mpfq_2_128_sqr_ur(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt_u
         u = g[s[0] >> 12 & 15];
     t[0] ^= u << 24;
         u = g[s[0] >> 16 & 15];
-    t[0] ^= u << 32;
-        u = g[s[0] >> 20 & 15];
-    t[0] ^= u << 40;
-        u = g[s[0] >> 24 & 15];
-    t[0] ^= u << 48;
-        u = g[s[0] >> 28 & 15];
-    t[0] ^= u << 56;
-        u = g[s[0] >> 32 & 15];
     t[1]  = u;
-        u = g[s[0] >> 36 & 15];
+        u = g[s[0] >> 20 & 15];
     t[1] ^= u <<  8;
-        u = g[s[0] >> 40 & 15];
+        u = g[s[0] >> 24 & 15];
     t[1] ^= u << 16;
-        u = g[s[0] >> 44 & 15];
+        u = g[s[0] >> 28 & 15];
     t[1] ^= u << 24;
-        u = g[s[0] >> 48 & 15];
-    t[1] ^= u << 32;
-        u = g[s[0] >> 52 & 15];
-    t[1] ^= u << 40;
-        u = g[s[0] >> 56 & 15];
-    t[1] ^= u << 48;
-        u = g[s[0] >> 60 & 15];
-    t[1] ^= u << 56;
         u = g[s[1]       & 15];
     t[2]  = u;
         u = g[s[1] >>  4 & 15];
@@ -1192,29 +1138,45 @@ void mpfq_2_128_sqr_ur(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt_u
         u = g[s[1] >> 12 & 15];
     t[2] ^= u << 24;
         u = g[s[1] >> 16 & 15];
-    t[2] ^= u << 32;
-        u = g[s[1] >> 20 & 15];
-    t[2] ^= u << 40;
-        u = g[s[1] >> 24 & 15];
-    t[2] ^= u << 48;
-        u = g[s[1] >> 28 & 15];
-    t[2] ^= u << 56;
-        u = g[s[1] >> 32 & 15];
     t[3]  = u;
-        u = g[s[1] >> 36 & 15];
+        u = g[s[1] >> 20 & 15];
     t[3] ^= u <<  8;
-        u = g[s[1] >> 40 & 15];
+        u = g[s[1] >> 24 & 15];
     t[3] ^= u << 16;
-        u = g[s[1] >> 44 & 15];
+        u = g[s[1] >> 28 & 15];
     t[3] ^= u << 24;
-        u = g[s[1] >> 48 & 15];
-    t[3] ^= u << 32;
-        u = g[s[1] >> 52 & 15];
-    t[3] ^= u << 40;
-        u = g[s[1] >> 56 & 15];
-    t[3] ^= u << 48;
-        u = g[s[1] >> 60 & 15];
-    t[3] ^= u << 56;
+        u = g[s[2]       & 15];
+    t[4]  = u;
+        u = g[s[2] >>  4 & 15];
+    t[4] ^= u <<  8;
+        u = g[s[2] >>  8 & 15];
+    t[4] ^= u << 16;
+        u = g[s[2] >> 12 & 15];
+    t[4] ^= u << 24;
+        u = g[s[2] >> 16 & 15];
+    t[5]  = u;
+        u = g[s[2] >> 20 & 15];
+    t[5] ^= u <<  8;
+        u = g[s[2] >> 24 & 15];
+    t[5] ^= u << 16;
+        u = g[s[2] >> 28 & 15];
+    t[5] ^= u << 24;
+        u = g[s[3]       & 15];
+    t[6]  = u;
+        u = g[s[3] >>  4 & 15];
+    t[6] ^= u <<  8;
+        u = g[s[3] >>  8 & 15];
+    t[6] ^= u << 16;
+        u = g[s[3] >> 12 & 15];
+    t[6] ^= u << 24;
+        u = g[s[3] >> 16 & 15];
+    t[7]  = u;
+        u = g[s[3] >> 20 & 15];
+    t[7] ^= u <<  8;
+        u = g[s[3] >> 24 & 15];
+    t[7] ^= u << 16;
+        u = g[s[3] >> 28 & 15];
+    t[7] ^= u << 24;
     }
 }
 
@@ -1223,15 +1185,87 @@ static inline
 void mpfq_2_128_reduce(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r, mpfq_2_128_dst_elt_ur t)
 {
     {
-                unsigned long z;
-                z = t[3];
-                /* t[2],t[1] += z * X^128 = z * (X^7 + X^2 + X + 1) */
-                t[1] ^= (z << 7) ^ (z << 2) ^ (z << 1) ^ z;
-                t[2] ^= (z >> 57) ^ (z >> 62) ^ (z >> 63);
-                /* t[1],t[0] += z * X^128 = z * (X^7 + X^2 + X + 1) */
-                z = t[2];
-                r[0] = t[0] ^ (z << 7) ^ (z << 2) ^ (z << 1) ^ z;
-                r[1] = t[1] ^ (z >> 57) ^ (z >> 62) ^ (z >> 63);
+        mp_limb_t s[5];
+        /* 127 excess bits */
+        {
+            unsigned long z;
+            z = t[0];
+            s[0] = z;
+            z = t[1];
+            s[1] = z;
+            z = t[2];
+            s[2] = z;
+            z = t[3];
+            s[3] = z;
+        }
+        memset(s + 4, 0, 1 * sizeof(mp_limb_t));
+        {
+            unsigned long z;
+            z = t[4];
+            s[0]^= z <<  7;
+            s[0]^= z <<  2;
+            s[0]^= z <<  1;
+            s[0]^= z;
+            z >>= 25;
+            z^= t[5] <<  7;
+            s[1]^= z;
+            z >>= 5;
+            z^= t[5] >> 25 << 27;
+            s[1]^= z;
+            z >>= 1;
+            z^= t[5] >> 30 << 31;
+            s[1]^= z;
+            z >>= 1;
+            z^= (t[5] & ~0x7fffffffUL);
+            s[1]^= z;
+            z >>= 25;
+            z^= t[6] <<  7;
+            s[2]^= z;
+            z >>= 5;
+            z^= t[6] >> 25 << 27;
+            s[2]^= z;
+            z >>= 1;
+            z^= t[6] >> 30 << 31;
+            s[2]^= z;
+            z >>= 1;
+            z^= (t[6] & ~0x7fffffffUL);
+            s[2]^= z;
+            z >>= 25;
+            z^= t[7] <<  7;
+            s[3]^= z;
+            z >>= 5;
+            z^= t[7] >> 25 << 27;
+            s[3]^= z;
+            z >>= 1;
+            z^= t[7] >> 30 << 31;
+            s[3]^= z;
+            z >>= 1;
+            s[3]^= z;
+            z >>= 25;
+            s[4]^= z;
+            z >>= 5;
+            s[4]^= z;
+        }
+        /* 6 excess bits */
+        {
+            unsigned long z;
+            z = s[0];
+            r[0] = z;
+            z = s[1];
+            r[1] = z;
+            z = s[2];
+            r[2] = z;
+            z = s[3];
+            r[3] = z;
+        }
+        {
+            unsigned long z;
+            z = s[4];
+            r[0]^= z <<  7;
+            r[0]^= z <<  2;
+            r[0]^= z <<  1;
+            r[0]^= z;
+        }
     }
 }
 
@@ -1239,7 +1273,7 @@ void mpfq_2_128_reduce(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt r
 static inline
 int mpfq_2_128_cmp(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_src_elt a, mpfq_2_128_src_elt b)
 {
-    return mpn_cmp(a, b, 2);
+    return mpn_cmp(a, b, 4);
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_cmp_ui */
@@ -1249,7 +1283,7 @@ int mpfq_2_128_cmp_ui(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_src_elt r,
     int i;
     if (r[0] < (x & 1UL)) return -1;
     if (r[0] > (x & 1UL)) return 1;
-    for(i = 1 ; i < 2 ; i++) {
+    for(i = 1 ; i < 4 ; i++) {
         if (r[i]) return 1;
     }
     return 0;

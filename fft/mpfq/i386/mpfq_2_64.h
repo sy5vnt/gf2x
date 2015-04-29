@@ -24,8 +24,8 @@
 #error "Please arrange so that GMP_LIMB_BITS is defined before including this file"
 #endif
 
-#if !(GMP_LIMB_BITS == 64)
-#error "Constraints not met for this file: GMP_LIMB_BITS == 64"
+#if !(GMP_LIMB_BITS == 32)
+#error "Constraints not met for this file: GMP_LIMB_BITS == 32"
 #endif
 /* Active handler: Mpfq::defaults */
 /* Active handler: Mpfq::defaults::vec */
@@ -43,21 +43,21 @@
    coeffs=[ 64, 4, 3, 1, 0, ],
    helper=/tmp/mpfq-cado/gf2n/helper/helper,
    n=64,
-   output_path=x86_64,
+   output_path=i386,
    slice=4,
    table=/tmp/mpfq-cado/gf2x/wizard.table,
    tag=2_64,
-   w=64,
+   w=32,
    } */
 
 typedef mpfq_2_field mpfq_2_64_field;
 typedef mpfq_2_dst_field mpfq_2_64_dst_field;
 
-typedef unsigned long mpfq_2_64_elt[1];
+typedef unsigned long mpfq_2_64_elt[2];
 typedef unsigned long * mpfq_2_64_dst_elt;
 typedef const unsigned long * mpfq_2_64_src_elt;
 
-typedef unsigned long mpfq_2_64_elt_ur[2];
+typedef unsigned long mpfq_2_64_elt_ur[4];
 typedef unsigned long * mpfq_2_64_dst_elt_ur;
 typedef const unsigned long * mpfq_2_64_src_elt_ur;
 
@@ -409,6 +409,7 @@ static inline
 void mpfq_2_64_set_ui(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, unsigned long x)
 {
     r[0] = x & 1UL;
+    memset(r + 1, 0, sizeof(mpfq_2_64_elt) - sizeof(unsigned long));
 }
 
 /* *Mpfq::defaults::flatdata::code_for_set_zero, Mpfq::gf2n::trivialities */
@@ -430,6 +431,7 @@ static inline
 void mpfq_2_64_set_mpn(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, mp_limb_t * x, size_t n)
 {
     r[0] = MPFQ_LIKELY(n > 0) ? (x[0] & 1UL) : 0;
+    memset(r + 1, 0, sizeof(mpfq_2_64_elt) - sizeof(unsigned long));
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_set_mpz */
@@ -437,6 +439,7 @@ static inline
 void mpfq_2_64_set_mpz(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, mpz_t z)
 {
     r[0] = mpz_getlimbn(z,0) & 1UL;
+    memset(r + 1, 0, sizeof(mpfq_2_64_elt) - sizeof(unsigned long));
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_get_mpn */
@@ -444,6 +447,7 @@ static inline
 void mpfq_2_64_get_mpn(mpfq_2_64_dst_field K MAYBE_UNUSED, mp_limb_t * p, mpfq_2_64_src_elt r)
 {
     p[0] = r[0] & 1UL;
+    memset(p + 1, 0, (2 - 1) * sizeof(mp_limb_t));
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_get_mpz */
@@ -458,13 +462,16 @@ static inline
 void mpfq_2_64_set_uipoly(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, unsigned long x)
 {
     r[0] = x;
+    memset(r + 1, 0, sizeof(mpfq_2_64_elt) - sizeof(unsigned long));
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_set_uipoly_wide */
 static inline
 void mpfq_2_64_set_uipoly_wide(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, const unsigned long * x, unsigned int n)
 {
-    r[0] = MPFQ_LIKELY(n > 0) ? (x[0]) : 0;
+    unsigned int i;
+    for (i = 0 ; i < n && i < 2 ; i++)
+        r[i] = x[i];
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_get_uipoly */
@@ -479,7 +486,7 @@ static inline
 void mpfq_2_64_get_uipoly_wide(mpfq_2_64_dst_field K MAYBE_UNUSED, unsigned long * r, mpfq_2_64_src_elt x)
 {
     unsigned int i;
-    for(i = 0 ; i < 1 ; i++) r[i] = x[i];
+    for(i = 0 ; i < 2 ; i++) r[i] = x[i];
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_random */
@@ -487,6 +494,7 @@ static inline
 void mpfq_2_64_random(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, gmp_randstate_t state)
 {
     r[0] = gmp_urandomb_ui(state, GMP_LIMB_BITS);
+    r[1] = gmp_urandomb_ui(state, GMP_LIMB_BITS);
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_random2 */
@@ -496,8 +504,8 @@ void mpfq_2_64_random2(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, 
     int i;
     mpz_t tmp;
     mpz_init(tmp);
-    mpz_rrandomb(tmp, state, GMP_LIMB_BITS*1);
-    for(i=0;i<1;++i)
+    mpz_rrandomb(tmp, state, GMP_LIMB_BITS*2);
+    for(i=0;i<2;++i)
      r[i]=tmp->_mp_d[i];
     mpz_clear(tmp);
 }
@@ -506,7 +514,9 @@ void mpfq_2_64_random2(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, 
 static inline
 void mpfq_2_64_add(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, mpfq_2_64_src_elt s1, mpfq_2_64_src_elt s2)
 {
-    r[0] = s1[0] ^ s2[0];
+    int i;
+    for(i = 0 ; i < 2 ; i++)
+        r[i] = s1[i] ^ s2[i];
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_mul */
@@ -566,7 +576,7 @@ int mpfq_2_64_sqrt(mpfq_2_64_dst_field K, mpfq_2_64_dst_elt r, mpfq_2_64_src_elt
         236, 237, 252, 253, 238, 239, 254, 255,
     };
     
-    mpfq_2_64_elt sqrt_t ={ 0xffffffff0000000aUL, }
+    mpfq_2_64_elt sqrt_t ={ 0xaUL, 0xffffffffUL, }
     ;
     
     mpfq_2_64_elt odd, even;
@@ -575,24 +585,32 @@ int mpfq_2_64_sqrt(mpfq_2_64_dst_field K, mpfq_2_64_dst_elt r, mpfq_2_64_src_elt
 #define	EVEN_MASK	(((mp_limb_t)-1)/3UL)
 #define	ODD_MASK	((EVEN_MASK)<<1)
     unsigned int i;
-    for(i = 0 ; i < 1 ; i++) {
+    for(i = 0 ; i < 2 ; i++) {
         even[i] = s[i] & EVEN_MASK;
     }
-    t = even[0];   t |= t >> 7;
-    even[0]  = shuffle_table[t & 255];
-    t >>= 16; even[0] |= shuffle_table[t & 255] << 8;
-    t >>= 16; even[0] |= shuffle_table[t & 255] << 16;
-    t >>= 16; even[0] |= shuffle_table[t & 255] << 24;
     for(i = 0 ; i < 1 ; i++) {
+        t = even[2*i];   t |= t >> 7;
+              even[i]  = shuffle_table[t & 255];
+        t >>= 16; even[i] |= shuffle_table[t & 255] << 8;
+        t = even[2*i+1]; t |= t >> 7;
+              even[i] |= shuffle_table[t & 255] << 16;
+        t >>= 16; even[i] |= shuffle_table[t & 255] << 24;
+    }
+    memset(even + 1, 0, 1 * sizeof(mp_limb_t));
+    for(i = 0 ; i < 2 ; i++) {
         odd[i] = (s[i] & ODD_MASK) >> 1;
     }
-    t = odd[0];   t |= t >> 7;
-    odd[0]  = shuffle_table[t & 255];
-    t >>= 16; odd[0] |= shuffle_table[t & 255] << 8;
-    t >>= 16; odd[0] |= shuffle_table[t & 255] << 16;
-    t >>= 16; odd[0] |= shuffle_table[t & 255] << 24;
+    for(i = 0 ; i < 1 ; i++) {
+        t = odd[2*i];   t |= t >> 7;
+              odd[i]  = shuffle_table[t & 255];
+        t >>= 16; odd[i] |= shuffle_table[t & 255] << 8;
+        t = odd[2*i+1]; t |= t >> 7;
+              odd[i] |= shuffle_table[t & 255] << 16;
+        t >>= 16; odd[i] |= shuffle_table[t & 255] << 24;
+    }
+    memset(odd + 1, 0, 1 * sizeof(mp_limb_t));
     mpfq_2_64_mul_ur(K, odd_t, odd, sqrt_t);
-    for(i = 0 ; i < (1+1)/2 ; i++) {
+    for(i = 0 ; i < (2+1)/2 ; i++) {
         odd_t[i] ^= even[i];
     }
     /* mpfq_2_64_print(K, stdout, odd_t); */
@@ -619,11 +637,11 @@ void mpfq_2_64_pow(mpfq_2_64_dst_field k, mpfq_2_64_dst_elt res, mpfq_2_64_src_e
         mpfq_2_64_set_ui(k, res, 1);
         return;
     }
-    j = 64 - 1;
+    j = 32 - 1;
     mask = (1UL<<j);
     for( ; (x[i]&mask)==0 ;j--, mask>>=1)
         ;
-    lead = i*64+j;      /* Ensured. */
+    lead = i*32+j;      /* Ensured. */
     
     mpfq_2_64_init(k, &u);
     mpfq_2_64_init(k, &a);
@@ -631,7 +649,7 @@ void mpfq_2_64_pow(mpfq_2_64_dst_field k, mpfq_2_64_dst_elt res, mpfq_2_64_src_e
     for( ; lead > 0; lead--) {
         if (j-- == 0) {
             i--;
-            j = 64-1;
+            j = 32-1;
             mask = (1UL<<j);
         } else {
             mask >>= 1;
@@ -691,12 +709,12 @@ void mpfq_2_64_mul_uipoly(mpfq_2_64_dst_field k, mpfq_2_64_dst_elt r, mpfq_2_64_
 static inline
 void mpfq_2_64_longshift_left(unsigned long * dst, const unsigned long * src, int n, int s)
 {
-    int m = s / 64;
+    int m = s / 32;
     int i;
-    s %= 64;
+    s %= 32;
     if (s > 0) {
         for(i = n-m-1 ; i > 0 ; i--) {
-            dst[m+i] = src[i] << s ^ src[i-1] >> (64-s);
+            dst[m+i] = src[i] << s ^ src[i-1] >> (32-s);
         }
         dst[m] = src[0] << s;
     } else {
@@ -716,12 +734,12 @@ void mpfq_2_64_longshift_left(unsigned long * dst, const unsigned long * src, in
 static inline
 void mpfq_2_64_longaddshift_left(unsigned long * dst, const unsigned long * src, int n, int s)
 {
-    int m = s / 64;
+    int m = s / 32;
     int i;
-    s %= 64;
+    s %= 32;
     if (s>0) {
         for(i = n-m-1 ; i > 0 ; i--) {
-            dst[m+i] ^= src[i] << s ^ src[i-1] >> (64-s);
+            dst[m+i] ^= src[i] << s ^ src[i-1] >> (32-s);
         }
         dst[m] ^= src[0] << s;
     } else {
@@ -736,10 +754,10 @@ void mpfq_2_64_longaddshift_left(unsigned long * dst, const unsigned long * src,
 static inline
 int mpfq_2_64_inv(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, mpfq_2_64_src_elt s)
 {
-    mp_limb_t a[2] = { 0x8000000000000000UL, 0x800000000000000dUL, };
-    mp_limb_t b[2];
-    mp_limb_t u[2] = { 0, };
-    mp_limb_t v[2] = { 1, 0, };
+    mp_limb_t a[3] = { 0x80000000UL, 0xdUL, 0x80000000UL, };
+    mp_limb_t b[3];
+    mp_limb_t u[3] = { 0, };
+    mp_limb_t v[3] = { 1, 0, };
     mp_limb_t x;
     mp_size_t ia, ib;
     int i,d;
@@ -748,56 +766,62 @@ int mpfq_2_64_inv(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, mpfq_
         return 0;
     {
         unsigned long z;
-        z = s[0] << 63;
+        z = s[0] << 31;
         b[0] = z;
-        z = s[0] >>  1;
+        z = s[0] >>  1 ^ s[1] << 31;
         b[1] = z;
+        z = s[1] >>  1;
+        b[2] = z;
     }
-    ib = clzlx(b, 2);
+    ib = clzlx(b, 3);
     ia = 0;
     
-    mpfq_2_64_longshift_left(b,b,2,ib);
+    mpfq_2_64_longshift_left(b,b,3,ib);
     
     for(d = ib - ia ; ; ) {
             if (d == 0) {
-                    for(i = 0 ; i < 2 ; i++) v[i] ^= u[i];
+                    for(i = 0 ; i < 3 ; i++) v[i] ^= u[i];
             b[0] ^= a[0]; x = b[0];
             b[1] ^= a[1]; x |= b[1];
-                    if (!x) { memcpy(r,u,1 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(b,2);
+            b[2] ^= a[2]; x |= b[2];
+                    if (!x) { memcpy(r,u,2 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(b,3);
                     ib += t;
                     d += t;
-                    mpfq_2_64_longshift_left(b,b,2,t);
+                    mpfq_2_64_longshift_left(b,b,3,t);
             }
             for(;d > 0;) {
-                    mpfq_2_64_longaddshift_left(u,v,2,d);
+                    mpfq_2_64_longaddshift_left(u,v,3,d);
             a[0] ^= b[0]; x = a[0];
             a[1] ^= b[1]; x |= a[1];
-                    if (!x) { memcpy(r,v,1 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(a,2);
+            a[2] ^= b[2]; x |= a[2];
+                    if (!x) { memcpy(r,v,2 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(a,3);
                     ia += t;
                     d -= t;
-                    mpfq_2_64_longshift_left(a,a,2,t);
+                    mpfq_2_64_longshift_left(a,a,3,t);
             } 
             if (d == 0) {
-                    for(i = 0 ; i < 2 ; i++) u[i] ^= v[i];
+                    for(i = 0 ; i < 3 ; i++) u[i] ^= v[i];
             a[0] ^= b[0]; x = a[0];
             a[1] ^= b[1]; x |= a[1];
-                    if (!x) { memcpy(r,v,1 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(a,2);
+            a[2] ^= b[2]; x |= a[2];
+                    if (!x) { memcpy(r,v,2 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(a,3);
                     ia += t;
                     d -= t;
-                    mpfq_2_64_longshift_left(a,a,2,t);
+                    mpfq_2_64_longshift_left(a,a,3,t);
             }
             for(;d < 0;) {
-                    mpfq_2_64_longaddshift_left(v,u,2,-d);
+                    mpfq_2_64_longaddshift_left(v,u,3,-d);
             b[0] ^= a[0]; x = b[0];
             b[1] ^= a[1]; x |= b[1];
-                    if (!x) { memcpy(r,u,1 * sizeof(mp_limb_t)); return 1; }
-                    mp_limb_t t = clzlx(b,2);
+            b[2] ^= a[2]; x |= b[2];
+                    if (!x) { memcpy(r,u,2 * sizeof(mp_limb_t)); return 1; }
+                    mp_limb_t t = clzlx(b,3);
                     ib += t;
                     d += t;
-                    mpfq_2_64_longshift_left(b,b,2,t);
+                    mpfq_2_64_longshift_left(b,b,3,t);
             }
     }
 }
@@ -807,77 +831,77 @@ static inline
 void mpfq_2_64_as_solve(mpfq_2_64_dst_field K, mpfq_2_64_dst_elt r, mpfq_2_64_src_elt s)
 {
     static const mpfq_2_64_elt t[64] = {
-        { 0x19c9369f278adc02UL, },
-        { 0x84b2b22ab2383ee4UL, },
-        { 0x84b2b22ab2383ee6UL, },
-        { 0x9d7b84b495b3e3f6UL, },
-        { 0x84b2b22ab2383ee2UL, },
-        { 0x37c470b49213f790UL, },
-        { 0x9d7b84b495b3e3feUL, },
-        { 0x1000a0105137cUL, },
-        { 0x84b2b22ab2383ef2UL, },
-        { 0x368e964a8edce1fcUL, },
-        { 0x37c470b49213f7b0UL, },
-        { 0x19c9368e278fdf4cUL, },
-        { 0x9d7b84b495b3e3beUL, },
-        { 0x2e4da23cbc7d4570UL, },
-        { 0x1000a010513fcUL, },
-        { 0x84f35772bac24232UL, },
-        { 0x84b2b22ab2383ff2UL, },
-        { 0x37c570ba9314e4fcUL, },
-        { 0x368e964a8edce3fcUL, },
-        { 0xb377c390213cdb0eUL, },
-        { 0x37c470b49213f3b0UL, },
-        { 0x85ed5a3aa99c24f2UL, },
-        { 0x19c9368e278fd74cUL, },
-        { 0xaabff0000780000eUL, },
-        { 0x9d7b84b495b3f3beUL, },
-        { 0x84b6b3dab03038f2UL, },
-        { 0x2e4da23cbc7d6570UL, },
-        { 0x511ea03494ffcUL, },
-        { 0x1000a010553fcUL, },
-        { 0xae0c0220343c6c0eUL, },
-        { 0x84f35772bac2c232UL, },
-        { 0x800000008000000eUL, },
-        { 0x84b2b22ab2393ff2UL, },
-        { 0xb376c29c202bc97eUL, },
-        { 0x37c570ba9316e4fcUL, },
-        { 0x9c3062488879e6ceUL, },
-        { 0x368e964a8ed8e3fcUL, },
-        { 0x41e42c08e47e70UL, },
-        { 0xb377c3902134db0eUL, },
-        { 0x85b9b108a60f56ceUL, },
-        { 0x37c470b49203f3b0UL, },
-        { 0x19dd3b6e21f3cb4cUL, },
-        { 0x85ed5a3aa9bc24f2UL, },
-        { 0x198ddf682c428ac0UL, },
-        { 0x19c9368e27cfd74cUL, },
-        { 0x4b7c68431ca84b0UL, },
-        { 0xaabff0000700000eUL, },
-        { 0x8040655489ffefbeUL, },
-        { 0x9d7b84b494b3f3beUL, },
-        { 0x18c1354e32bfa74cUL, },
-        { 0x84b6b3dab23038f2UL, },
-        { 0xaaf613cc0f74627eUL, },
-        { 0x2e4da23cb87d6570UL, },
-        { 0x3248b3d6b3342a8cUL, },
-        { 0x511ea0b494ffcUL, },
-        { 0xb60813c00e70700eUL, },
-        { 0x1000a110553fcUL, },
-        { 0x1e0d022a05393ffcUL, },
-        { 0xae0c0220143c6c0eUL, },
-        { 0xe0c0220143c6c00UL, },
-        { 0x84f35772fac2c232UL, },
-        { 0xc041e55948fbfdceUL, },
-        { 0x800000000000000eUL, },
-        { 0x0UL, },
+        { 0x278adc02UL, 0x19c9369fUL, },
+        { 0xb2383ee4UL, 0x84b2b22aUL, },
+        { 0xb2383ee6UL, 0x84b2b22aUL, },
+        { 0x95b3e3f6UL, 0x9d7b84b4UL, },
+        { 0xb2383ee2UL, 0x84b2b22aUL, },
+        { 0x9213f790UL, 0x37c470b4UL, },
+        { 0x95b3e3feUL, 0x9d7b84b4UL, },
+        { 0x105137cUL, 0x1000aUL, },
+        { 0xb2383ef2UL, 0x84b2b22aUL, },
+        { 0x8edce1fcUL, 0x368e964aUL, },
+        { 0x9213f7b0UL, 0x37c470b4UL, },
+        { 0x278fdf4cUL, 0x19c9368eUL, },
+        { 0x95b3e3beUL, 0x9d7b84b4UL, },
+        { 0xbc7d4570UL, 0x2e4da23cUL, },
+        { 0x10513fcUL, 0x1000aUL, },
+        { 0xbac24232UL, 0x84f35772UL, },
+        { 0xb2383ff2UL, 0x84b2b22aUL, },
+        { 0x9314e4fcUL, 0x37c570baUL, },
+        { 0x8edce3fcUL, 0x368e964aUL, },
+        { 0x213cdb0eUL, 0xb377c390UL, },
+        { 0x9213f3b0UL, 0x37c470b4UL, },
+        { 0xa99c24f2UL, 0x85ed5a3aUL, },
+        { 0x278fd74cUL, 0x19c9368eUL, },
+        { 0x780000eUL, 0xaabff000UL, },
+        { 0x95b3f3beUL, 0x9d7b84b4UL, },
+        { 0xb03038f2UL, 0x84b6b3daUL, },
+        { 0xbc7d6570UL, 0x2e4da23cUL, },
+        { 0x3494ffcUL, 0x511eaUL, },
+        { 0x10553fcUL, 0x1000aUL, },
+        { 0x343c6c0eUL, 0xae0c0220UL, },
+        { 0xbac2c232UL, 0x84f35772UL, },
+        { 0x8000000eUL, 0x80000000UL, },
+        { 0xb2393ff2UL, 0x84b2b22aUL, },
+        { 0x202bc97eUL, 0xb376c29cUL, },
+        { 0x9316e4fcUL, 0x37c570baUL, },
+        { 0x8879e6ceUL, 0x9c306248UL, },
+        { 0x8ed8e3fcUL, 0x368e964aUL, },
+        { 0x8e47e70UL, 0x41e42cUL, },
+        { 0x2134db0eUL, 0xb377c390UL, },
+        { 0xa60f56ceUL, 0x85b9b108UL, },
+        { 0x9203f3b0UL, 0x37c470b4UL, },
+        { 0x21f3cb4cUL, 0x19dd3b6eUL, },
+        { 0xa9bc24f2UL, 0x85ed5a3aUL, },
+        { 0x2c428ac0UL, 0x198ddf68UL, },
+        { 0x27cfd74cUL, 0x19c9368eUL, },
+        { 0x31ca84b0UL, 0x4b7c684UL, },
+        { 0x700000eUL, 0xaabff000UL, },
+        { 0x89ffefbeUL, 0x80406554UL, },
+        { 0x94b3f3beUL, 0x9d7b84b4UL, },
+        { 0x32bfa74cUL, 0x18c1354eUL, },
+        { 0xb23038f2UL, 0x84b6b3daUL, },
+        { 0xf74627eUL, 0xaaf613ccUL, },
+        { 0xb87d6570UL, 0x2e4da23cUL, },
+        { 0xb3342a8cUL, 0x3248b3d6UL, },
+        { 0xb494ffcUL, 0x511eaUL, },
+        { 0xe70700eUL, 0xb60813c0UL, },
+        { 0x110553fcUL, 0x1000aUL, },
+        { 0x5393ffcUL, 0x1e0d022aUL, },
+        { 0x143c6c0eUL, 0xae0c0220UL, },
+        { 0x143c6c00UL, 0xe0c0220UL, },
+        { 0xfac2c232UL, 0x84f35772UL, },
+        { 0x48fbfdceUL, 0xc041e559UL, },
+        { 0xeUL, 0x80000000UL, },
+        { 0x0UL, 0x0UL, },
     };
     const mpfq_2_64_elt * ptr = t;
     unsigned int i,j;
     memset(r, 0, sizeof(mpfq_2_64_elt));
-    for(i = 0 ; i < 1 ; i++) {
+    for(i = 0 ; i < 2 ; i++) {
         mp_limb_t a = s[i];
-        for(j = 0 ; j < 64 && ptr != &t[64]; j++, ptr++) {
+        for(j = 0 ; j < 32 && ptr != &t[64]; j++, ptr++) {
             if (a & 1UL) {
                 mpfq_2_64_add(K, r, r, *ptr);
             }
@@ -890,7 +914,7 @@ void mpfq_2_64_as_solve(mpfq_2_64_dst_field K, mpfq_2_64_dst_elt r, mpfq_2_64_sr
 static inline
 unsigned long mpfq_2_64_trace(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_src_elt s)
 {
-    return ((s[0]>>63) ^ (s[0]>>61)) & 1;
+    return ((s[1]>>31) ^ (s[1]>>29)) & 1;
 }
 
 /* *Mpfq::defaults::flatdata::code_for_elt_ur_set, Mpfq::gf2n::trivialities */
@@ -927,82 +951,55 @@ static inline
 void mpfq_2_64_elt_ur_add(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur r, mpfq_2_64_src_elt_ur s1, mpfq_2_64_src_elt_ur s2)
 {
     int i;
-    for(i = 0 ; i < 2 ; i++)
+    for(i = 0 ; i < 4 ; i++)
         r[i] = s1[i] ^ s2[i];
 }
 
 /* *Mpfq::gf2n::mul::code_for_mul_ur */
+#ifndef HAVE_GF2X
+static inline void
+gf2x_mul1 (unsigned long *c, unsigned long a, unsigned long b)
+{
+   unsigned long hi, lo, tmp, A[16];
+   A[0]  = 0;         A[1]  = a;         A[2]  = A[1] << 1; A[3]  = A[2] ^ a;
+   A[4]  = A[2] << 1; A[5]  = A[4] ^ a;  A[6]  = A[3] << 1; A[7]  = A[6] ^ a;
+   A[8]  = A[4] << 1; A[9]  = A[8] ^ a;  A[10] = A[5] << 1; A[11] = A[10] ^ a;
+   A[12] = A[6] << 1; A[13] = A[12] ^ a; A[14] = A[7] << 1; A[15] = A[14] ^ a;
+   lo = (A[b >> 28] << 4) ^ A[(b >> 24) & 15];
+   hi = lo >> 24;
+   lo = (lo << 8) ^ (A[(b >> 20) & 15] << 4) ^ A[(b >> 16) & 15];
+   hi = (hi << 8) | (lo >> 24);
+   lo = (lo << 8) ^ (A[(b >> 12) & 15] << 4) ^ A[(b >> 8) & 15];
+   hi = (hi << 8) | (lo >> 24);
+   lo = (lo << 8) ^ (A[(b >> 4) & 15] << 4) ^ A[b & 15];
+   tmp = -((a >> 31) & 1); tmp &= ((b & 0xfefefefe) >> 1); hi = hi ^ tmp;
+   tmp = -((a >> 30) & 1); tmp &= ((b & 0xfcfcfcfc) >> 2); hi = hi ^ tmp;
+   tmp = -((a >> 29) & 1); tmp &= ((b & 0xf8f8f8f8) >> 3); hi = hi ^ tmp;
+   tmp = -((a >> 28) & 1); tmp &= ((b & 0xf0f0f0f0) >> 4); hi = hi ^ tmp;
+   tmp = -((a >> 27) & 1); tmp &= ((b & 0xe0e0e0e0) >> 5); hi = hi ^ tmp;
+   tmp = -((a >> 26) & 1); tmp &= ((b & 0xc0c0c0c0) >> 6); hi = hi ^ tmp;
+   tmp = -((a >> 25) & 1); tmp &= ((b & 0x80808080) >> 7); hi = hi ^ tmp;
+   c[0] = lo; c[1] = hi;
+}
+static inline void gf2x_mul2(unsigned long *c, const unsigned long *a,
+			     const unsigned long *b)
+{
+    unsigned long t;
+    unsigned long u[2];
+
+    gf2x_mul1(c, a[0], b[0]);
+    gf2x_mul1(c + 2, a[1], b[1]);
+    t = c[1] ^ c[2];
+    gf2x_mul1(u, a[0] ^ a[1], b[0] ^ b[1]);
+    c[1] = c[0] ^ u[0] ^ t;
+    c[2] = c[3] ^ u[1] ^ t;
+}
+#endif
+
 static inline
 void mpfq_2_64_mul_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t, mpfq_2_64_src_elt s1, mpfq_2_64_src_elt s2)
 {
-#ifdef HAVE_GF2X
-    gf2x_mul1(t, s1, s2);
-#else
-       unsigned long hi, lo;
-       unsigned long A[16];
-       unsigned long a = s2[0];
-       unsigned long b = s1[0];
-    
-       A[0] = 0;
-       A[1] = a;
-       A[2] = A[1] << 1;
-       A[3] = A[2] ^ A[1];
-       A[4] = A[2] << 1;
-       A[5] = A[4] ^ A[1];
-       A[6] = A[3] << 1;
-       A[7] = A[6] ^ A[1];
-       A[8] = A[4] << 1;
-       A[9] = A[8] ^ A[1];
-       A[10] = A[5] << 1;
-       A[11] = A[10] ^ A[1];
-       A[12] = A[6] << 1;
-       A[13] = A[12] ^ A[1];
-       A[14] = A[7] << 1;
-       A[15] = A[14] ^ A[1];
-    
-       lo = (A[b >> 60] << 4) ^ A[(b >> 56) & 15];
-       hi = lo >> 56;
-       lo = (lo << 8) ^ (A[(b >> 52) & 15] << 4) ^ A[(b >> 48) & 15];
-       hi = (hi << 8) | (lo >> 56);
-       lo = (lo << 8) ^ (A[(b >> 44) & 15] << 4) ^ A[(b >> 40) & 15];
-       hi = (hi << 8) | (lo >> 56);
-       lo = (lo << 8) ^ (A[(b >> 36) & 15] << 4) ^ A[(b >> 32) & 15];
-       hi = (hi << 8) | (lo >> 56);
-       lo = (lo << 8) ^ (A[(b >> 28) & 15] << 4) ^ A[(b >> 24) & 15];
-       hi = (hi << 8) | (lo >> 56);
-       lo = (lo << 8) ^ (A[(b >> 20) & 15] << 4) ^ A[(b >> 16) & 15];
-       hi = (hi << 8) | (lo >> 56);
-       lo = (lo << 8) ^ (A[(b >> 12) & 15] << 4) ^ A[(b >> 8) & 15];
-       hi = (hi << 8) | (lo >> 56);
-       lo = (lo << 8) ^ (A[(b >> 4) & 15] << 4) ^ A[b & 15];
-    
-       {
-         unsigned long tmp;
-         tmp = -((a >> 63) & 1);
-         tmp &= ((b & 0xfefefefefefefefe) >> 1);
-         hi = hi ^ tmp;
-         tmp = -((a >> 62) & 1);
-         tmp &= ((b & 0xfcfcfcfcfcfcfcfc) >> 2);
-         hi = hi ^ tmp;
-         tmp = -((a >> 61) & 1);
-         tmp &= ((b & 0xf8f8f8f8f8f8f8f8) >> 3);
-         hi = hi ^ tmp;
-         tmp = -((a >> 60) & 1);
-         tmp &= ((b & 0xf0f0f0f0f0f0f0f0) >> 4);
-         hi = hi ^ tmp;
-         tmp = -((a >> 59) & 1);
-         tmp &= ((b & 0xe0e0e0e0e0e0e0e0) >> 5);
-         hi = hi ^ tmp;
-         tmp = -((a >> 58) & 1);
-         tmp &= ((b & 0xc0c0c0c0c0c0c0c0) >> 6);
-         hi = hi ^ tmp;
-         tmp = -((a >> 57) & 1);
-         tmp &= ((b & 0x8080808080808080) >> 7);
-         hi = hi ^ tmp;
-       }
-       t[0] = lo;
-       t[1] = hi;
-#endif
+    gf2x_mul2(t, s1, s2);
 }
 
 /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
@@ -1024,29 +1021,29 @@ void mpfq_2_64_sqr_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t
         u = g[s[0] >> 12 & 15];
     t[0] ^= u << 24;
         u = g[s[0] >> 16 & 15];
-    t[0] ^= u << 32;
-        u = g[s[0] >> 20 & 15];
-    t[0] ^= u << 40;
-        u = g[s[0] >> 24 & 15];
-    t[0] ^= u << 48;
-        u = g[s[0] >> 28 & 15];
-    t[0] ^= u << 56;
-        u = g[s[0] >> 32 & 15];
     t[1]  = u;
-        u = g[s[0] >> 36 & 15];
+        u = g[s[0] >> 20 & 15];
     t[1] ^= u <<  8;
-        u = g[s[0] >> 40 & 15];
+        u = g[s[0] >> 24 & 15];
     t[1] ^= u << 16;
-        u = g[s[0] >> 44 & 15];
+        u = g[s[0] >> 28 & 15];
     t[1] ^= u << 24;
-        u = g[s[0] >> 48 & 15];
-    t[1] ^= u << 32;
-        u = g[s[0] >> 52 & 15];
-    t[1] ^= u << 40;
-        u = g[s[0] >> 56 & 15];
-    t[1] ^= u << 48;
-        u = g[s[0] >> 60 & 15];
-    t[1] ^= u << 56;
+        u = g[s[1]       & 15];
+    t[2]  = u;
+        u = g[s[1] >>  4 & 15];
+    t[2] ^= u <<  8;
+        u = g[s[1] >>  8 & 15];
+    t[2] ^= u << 16;
+        u = g[s[1] >> 12 & 15];
+    t[2] ^= u << 24;
+        u = g[s[1] >> 16 & 15];
+    t[3]  = u;
+        u = g[s[1] >> 20 & 15];
+    t[3] ^= u <<  8;
+        u = g[s[1] >> 24 & 15];
+    t[3] ^= u << 16;
+        u = g[s[1] >> 28 & 15];
+    t[3] ^= u << 24;
     }
 }
 
@@ -1055,35 +1052,50 @@ static inline
 void mpfq_2_64_reduce(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, mpfq_2_64_dst_elt_ur t)
 {
     {
-        mp_limb_t s[2];
+        mp_limb_t s[3];
         /* 63 excess bits */
         {
             unsigned long z;
             z = t[0];
             s[0] = z;
+            z = t[1];
+            s[1] = z;
         }
-        memset(s + 1, 0, 1 * sizeof(mp_limb_t));
+        memset(s + 2, 0, 1 * sizeof(mp_limb_t));
         {
             unsigned long z;
-            z = t[1];
+            z = t[2];
             s[0]^= z <<  4;
             s[0]^= z <<  3;
             s[0]^= z <<  1;
             s[0]^= z;
-            z >>= 60;
+            z >>= 28;
+            z^= t[3] <<  4;
+            s[1]^= z;
+            z >>= 1;
+            z^= t[3] >> 28 << 31;
+            s[1]^= z;
+            z >>= 2;
+            z^= t[3] >> 29 << 30;
             s[1]^= z;
             z >>= 1;
             s[1]^= z;
+            z >>= 28;
+            s[2]^= z;
+            z >>= 1;
+            s[2]^= z;
         }
         /* 3 excess bits */
         {
             unsigned long z;
             z = s[0];
             r[0] = z;
+            z = s[1];
+            r[1] = z;
         }
         {
             unsigned long z;
-            z = s[1];
+            z = s[2];
             r[0]^= z <<  4;
             r[0]^= z <<  3;
             r[0]^= z <<  1;
@@ -1096,15 +1108,19 @@ void mpfq_2_64_reduce(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt r, m
 static inline
 int mpfq_2_64_cmp(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_src_elt a, mpfq_2_64_src_elt b)
 {
-    return mpn_cmp(a, b, 1);
+    return mpn_cmp(a, b, 2);
 }
 
 /* *Mpfq::gf2n::trivialities::code_for_cmp_ui */
 static inline
 int mpfq_2_64_cmp_ui(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_src_elt r, unsigned long x)
 {
+    int i;
     if (r[0] < (x & 1UL)) return -1;
     if (r[0] > (x & 1UL)) return 1;
+    for(i = 1 ; i < 2 ; i++) {
+        if (r[i]) return 1;
+    }
     return 0;
 }
 
