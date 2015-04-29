@@ -58,7 +58,11 @@ if ENABLE_NTL_CHECKS
     MAYBE_APPS=apps
 endif
 
-SUBDIRS=. tests src $(MAYBE_APPS)
+if GF2X_FFT_PRESENT
+    MAYBE_APPS=gf2x-fft
+endif
+
+SUBDIRS=. tests src $(MAYBE_GF2X_FFT) $(MAYBE_APPS)
 
 DIST_SUBDIRS=tests src apps
 

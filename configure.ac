@@ -197,6 +197,13 @@ fi
 AC_CONFIG_HEADERS([gf2x/gf2x-config.h])
 
 AC_CONFIG_FILES([version.sh Makefile tests/Makefile apps/Makefile src/Makefile])
+if test -d "$srcdir/gf2x-fft" ; then
+ AC_MSG_NOTICE([Enabling optional gf2x-fft])
+ AC_CONFIG_SUBDIRS([gf2x-fft])
+else
+ AC_MSG_NOTICE([optional gf2x-fft not found])
+fi
+AM_CONDITIONAL([GF2X_FFT_PRESENT],[test -d "$srcdir/gf2x-fft"])
 AC_OUTPUT
 
 # vim: set sw=1:
