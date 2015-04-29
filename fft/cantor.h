@@ -28,6 +28,7 @@
 
 #include "macros.h"
 
+#include "gf2x-thresholds.h"
 
 #ifdef __cplusplus
 extern "C" {
