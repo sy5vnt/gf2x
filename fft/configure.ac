@@ -68,7 +68,7 @@ elif ! test -f "$srcdir/../gf2x.h" ; then
  AC_MSG_ERROR([gf2x source tree not found in parent directory $srcdir/..])
 else
  LDFLAGS="$LDFLAGS -L../.libs/"
- CPPFLAGS="$CPPFLAGS -I../gf2x/ -I$srcdir/.."
+ CPPFLAGS="$CPPFLAGS -I.. -I$srcdir/.."
  AC_DEFINE([HAVE_GF2X],[1],[Define if the gf2x library is present])
  AM_CONDITIONAL([GF2XFFT_HAVE_GF2X],1)
 fi
