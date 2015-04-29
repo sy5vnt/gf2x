@@ -800,6 +800,11 @@ gf2x_tfft_ptr gf2x_tfft_get(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr ptr, size_t k
     return ptr + k * gf2x_tfft_size(o);
 }
 
+gf2x_tfft_srcptr gf2x_tfft_get_const(gf2x_tfft_info_srcptr o, gf2x_tfft_srcptr ptr, size_t k)
+{
+    return ptr + k * gf2x_tfft_size(o);
+}
+
 static size_t
 gf2x_tfft_alloc_size(gf2x_tfft_info_srcptr o, size_t n)
 {

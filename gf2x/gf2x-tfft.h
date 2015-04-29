@@ -56,6 +56,7 @@ typedef const struct gf2x_tfft_info_s * gf2x_tfft_info_srcptr;
 
 extern size_t gf2x_tfft_size(gf2x_tfft_info_srcptr o);
 extern gf2x_tfft_ptr gf2x_tfft_get(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr ptr, size_t k);
+extern gf2x_tfft_srcptr gf2x_tfft_get_const(gf2x_tfft_info_srcptr o, gf2x_tfft_srcptr ptr, size_t k);
 extern void gf2x_tfft_zero(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr ptr, size_t n);
 extern void gf2x_tfft_cpy(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr y, gf2x_tfft_srcptr x);
 extern void gf2x_tfft_free(gf2x_tfft_info_srcptr o, gf2x_tfft_ptr ptr, size_t n);
