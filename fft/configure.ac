@@ -70,7 +70,7 @@ else
  LDFLAGS="$LDFLAGS -L../.libs/"
  CPPFLAGS="$CPPFLAGS -I.. -I$srcdir/.."
  AC_DEFINE([HAVE_GF2X],[1],[Define if the gf2x library is present])
- AM_CONDITIONAL([GF2XFFT_HAVE_GF2X],1)
+ AM_CONDITIONAL([GF2XFFT_HAVE_GF2X],[true])
 fi
 
 
