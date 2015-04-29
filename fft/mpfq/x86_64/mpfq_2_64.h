@@ -14,6 +14,10 @@
 #include <emmintrin.h>
 #include <stddef.h>
 #include <stdio.h>
+#ifdef  HAVE_GF2X
+#include "gf2x.h"
+#endif
+
 #include "assert.h"
 #ifdef	MPFQ_LAST_GENERATED_TAG
 #undef	MPFQ_LAST_GENERATED_TAG
@@ -935,6 +939,9 @@ void mpfq_2_64_elt_ur_add(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_
 static inline
 void mpfq_2_64_mul_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t, mpfq_2_64_src_elt s1, mpfq_2_64_src_elt s2)
 {
+#ifdef HAVE_GF2X
+    gf2x_mul1(t, s1, s2);
+#else
        unsigned long hi, lo;
        unsigned long A[16];
        unsigned long a = s2[0];
@@ -999,6 +1006,7 @@ void mpfq_2_64_mul_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t
        }
        t[0] = lo;
        t[1] = hi;
+#endif
 }
 
 /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
