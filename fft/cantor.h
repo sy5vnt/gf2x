@@ -28,7 +28,9 @@
 
 #include "macros.h"
 
+#ifdef  HAVE_GF2X
 #include "gf2x-thresholds.h"
+#endif  /* HAVE_GF2X */
 
 #ifdef __cplusplus
 extern "C" {
