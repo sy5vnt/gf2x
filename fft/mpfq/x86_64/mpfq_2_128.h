@@ -1031,25 +1031,6 @@ void mpfq_2_128_elt_ur_add(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_e
 static inline
 void mpfq_2_128_mul_ur(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt_ur t, mpfq_2_128_src_elt s1, mpfq_2_128_src_elt s2)
 {
-#ifdef  HAVE_GF2X
-    gf2x_mul2(t, s1, s2);
-#elif defined(HAVE_PCLMUL)      /* !HAVE_GF2X */
-#define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
-#define PZERO    _mm_setzero_si128()
-    __m128i ss1 = _mm_loadu_si128((__m128i *)s1);
-    __m128i ss2 = _mm_loadu_si128((__m128i *)s2);
-    __m128i t00 = _mm_clmulepi64_si128(ss1, ss2, 0);
-    __m128i t11 = _mm_clmulepi64_si128(ss1, ss2, 0x11);
-    ss1 = PXOR(ss1, _mm_shuffle_epi32(ss1, _MM_SHUFFLE(1,0,3,2)));
-    ss2 = PXOR(ss2, _mm_shuffle_epi32(ss2, _MM_SHUFFLE(1,0,3,2)));
-    __m128i tk = _mm_clmulepi64_si128(ss1, ss2, 0);
-    tk = PXOR(tk, PXOR(t00, t11));
-    /* store result */
-    _mm_storeu_si128((__m128i *)(t),  PXOR(t00, _mm_unpacklo_epi64(PZERO, tk)));
-    _mm_storeu_si128((__m128i *)(t+2),PXOR(t11, _mm_unpackhi_epi64(tk, PZERO)));
-#undef PZERO
-#undef PXOR
-#else   /* !HAVE_GF2X && !HAVE_PCLMUL */
 #define SHL(x, r) _mm_slli_epi64((x), (r))
 #define SHR(x, r) _mm_srli_epi64((x), (r))
 #define SHLD(x, r) _mm_slli_si128((x), (r) >> 3)
@@ -1138,7 +1119,6 @@ void mpfq_2_128_mul_ur(mpfq_2_128_dst_field K MAYBE_UNUSED, mpfq_2_128_dst_elt_u
 #undef XOREQ
 #undef PXOR
 #undef PAND
-#endif   /* !HAVE_GF2X && !HAVE_PCLMUL */
 }
 
 /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
