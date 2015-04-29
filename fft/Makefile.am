@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS=-I config --install
-AM_CFLAGS = -I$(top_srcdir)
-AM_CPPFLAGS = -I$(top_srcdir)
+AM_CFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
 
 # The ones that we do build on all occasions.
 lib_LTLIBRARIES = libcantor128.la
