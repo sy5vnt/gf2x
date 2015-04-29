@@ -354,7 +354,7 @@ void mpfq_2_128_field_init(mpfq_2_128_dst_field f)
 
 /* *Mpfq::gf2n::field::code_for_field_setopt */
 static inline
-void mpfq_2_128_field_setopt(mpfq_2_128_dst_field f, unsigned long x, void * y)
+void mpfq_2_128_field_setopt(mpfq_2_128_dst_field f, unsigned long x MAYBE_UNUSED, void * y)
 {
     assert(x == MPFQ_IO_TYPE);
     f->io_type=((unsigned long*)y)[0];
