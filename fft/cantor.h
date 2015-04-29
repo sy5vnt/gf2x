@@ -51,17 +51,28 @@ typedef struct cantor_info_struct cantor_info_t[1];
 typedef struct cantor_info_struct * cantor_info_ptr;
 typedef const struct cantor_info_struct * cantor_info_srcptr;
 
-#ifndef CANTOR_BASE_FIELD_SIZE
+#if !defined(GF2X_WORDSIZE) || (GF2X_WORDSIZE != 32 && GF2X_WORDSIZE != 64)
+#error  "define GF2X_WORDSIZE to either 32 or 64"
+#endif
+
+#if !defined(CANTOR_BASE_FIELD_SIZE) || (CANTOR_BASE_FIELD_SIZE != 64 && CANTOR_BASE_FIELD_SIZE != 128)
 #error  "Define CANTOR_BASE_FIELD_SIZE to 64 or 128"
 #endif
+
 #if CANTOR_BASE_FIELD_SIZE == 128
-#include "mpfq/mpfq_2_128.h"
-#define cantor_base_field_elt mpfq_2_128_elt
-#elif CANTOR_BASE_FIELD_SIZE == 64
-#include "mpfq/mpfq_2_64.h"
-#define cantor_base_field_elt mpfq_2_64_elt
+#if GF2X_WORDSIZE == 64
+#include "mpfq/x86_64/mpfq_2_128.h"
 #else
-#error  "Define CANTOR_BASE_FIELD_SIZE to 64 or 128"
+#include "mpfq/i386/mpfq_2_128.h"
+#endif
+#define cantor_base_field_elt mpfq_2_128_elt
+#else
+#if GF2X_WORDSIZE == 64
+#include "mpfq/x86_64/mpfq_2_64.h"
+#else
+#include "mpfq/i386/mpfq_2_64.h"
+#endif
+#define cantor_base_field_elt mpfq_2_64_elt
 #endif
 
 extern void cantor_init(cantor_info_t p, size_t nF, size_t nG, ...);

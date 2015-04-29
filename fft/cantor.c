@@ -36,10 +36,6 @@
 
 #include "cantor.h"
 
-#if !defined(GF2X_WORDSIZE) || (GF2X_WORDSIZE != 32 && GF2X_WORDSIZE != 64)
-#error  "define GF2X_WORDSIZE to either 32 or 64"
-#endif
-
 /* The following flags affect the behaviour of the program */
 
 #define xxxCANTOR_GM            /* Use Gao-Mateer recursion */
