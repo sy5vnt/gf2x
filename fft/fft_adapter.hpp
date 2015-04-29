@@ -37,7 +37,6 @@
 #define DEFINE_FFT_ADAPTER(visible,Z)					\
 struct visible {							\
 	CAT(Z,info_t) o;						\
-	typedef CAT(Z,t) t;						\
 	typedef CAT(Z,ptr) ptr;						\
 	typedef CAT(Z,srcptr) srcptr;					\
 									\

@@ -66,36 +66,38 @@ typedef const struct cantor_info_struct * cantor_info_srcptr;
 #else
 #include "mpfq/i386/mpfq_2_128.h"
 #endif
-#define cantor_base_field_elt mpfq_2_128_elt
+typedef mpfq_2_128_elt cantor_base_field_elt;
 #else
 #if GF2X_WORDSIZE == 64
 #include "mpfq/x86_64/mpfq_2_64.h"
 #else
 #include "mpfq/i386/mpfq_2_64.h"
 #endif
-#define cantor_base_field_elt mpfq_2_64_elt
+typedef mpfq_2_64_elt cantor_base_field_elt;
 #endif
+typedef cantor_base_field_elt * cantor_ptr;
+typedef const cantor_base_field_elt * cantor_srcptr;
 
 extern void cantor_init(cantor_info_t p, size_t nF, size_t nG, ...);
 extern void cantor_clear(cantor_info_t p MAYBE_UNUSED);
-extern cantor_base_field_elt * cantor_alloc(const cantor_info_t p, size_t n);
+extern cantor_ptr cantor_alloc(const cantor_info_t p, size_t n);
 extern void cantor_free(
         const cantor_info_t p MAYBE_UNUSED,
-        cantor_base_field_elt * x,
+        cantor_ptr x,
         size_t n MAYBE_UNUSED);
-extern cantor_base_field_elt * cantor_get(const cantor_info_t p, cantor_base_field_elt * x, size_t k);
-extern void cantor_zero(const cantor_info_t p, cantor_base_field_elt * x, size_t n);
+extern cantor_srcptr cantor_get(const cantor_info_t p, cantor_srcptr x, size_t k);
+extern void cantor_zero(const cantor_info_t p, cantor_ptr x, size_t n);
 
-extern void cantor_dft(const cantor_info_t p, cantor_base_field_elt * x, unsigned long * F, size_t nF);
+extern void cantor_dft(const cantor_info_t p, cantor_ptr x, unsigned long * F, size_t nF);
 extern void cantor_compose(const cantor_info_t p,
-		cantor_base_field_elt * y, cantor_base_field_elt * x1, cantor_base_field_elt * x2);
+		cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2);
 extern void cantor_addcompose(const cantor_info_t p,
-		cantor_base_field_elt * y, cantor_base_field_elt * x1, cantor_base_field_elt * x2);
+		cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2);
 extern void cantor_add(const cantor_info_t p,
-		cantor_base_field_elt * y, cantor_base_field_elt * x1, cantor_base_field_elt * x2);
-extern void cantor_cpy(const cantor_info_t p, cantor_base_field_elt * y, cantor_base_field_elt * x);
+		cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2);
+extern void cantor_cpy(const cantor_info_t p, cantor_ptr y, cantor_srcptr x);
 extern void cantor_ift(const cantor_info_t p,
-		unsigned long * H, size_t Hl, cantor_base_field_elt * h);
+		unsigned long * H, size_t Hl, cantor_srcptr h);
 extern size_t cantor_size(cantor_info_srcptr p);
 extern void cantor_init_similar(cantor_info_ptr o, size_t bits_a, size_t bits_b, cantor_info_srcptr other);
 extern int cantor_compatible(cantor_info_srcptr o1, cantor_info_srcptr o2);

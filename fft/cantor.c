@@ -44,6 +44,8 @@
 
 #include "mpfq/mpfq_name_K.h"
 
+/* It's a placeholder, really. After macro expansion, nobody really uses
+ * this */
 Kfield K;
 
 
@@ -56,8 +58,8 @@ Kfield K;
 size_t mulcount=0;
 #endif
 
-Kelt * fbase;
-size_t * findex;
+// Kelt * fbase;
+// size_t * findex;
 
 // Some constants related to Cantor's algorithm
 // Beta_i are such that Beta_{i-1} = Beta_i^2 + Beta_i
@@ -1297,7 +1299,7 @@ void cantor_clear(cantor_info_t p)
 }
 
 /* nF is a number of coefficients */
-void cantor_dft(const cantor_info_t p, Kelt * x, unsigned long * F, size_t nF)
+void cantor_dft(const cantor_info_t p, cantor_ptr x, unsigned long * F, size_t nF)
 {
     size_t Fl = (nF + GF2X_WORDSIZE - 1) / GF2X_WORDSIZE;
     if (nF % GF2X_WORDSIZE) {
@@ -1324,7 +1326,7 @@ void cantor_dft(const cantor_info_t p, Kelt * x, unsigned long * F, size_t nF)
 }
 
 
-void cantor_compose(const cantor_info_t p, Kelt * y, Kelt * x1, Kelt * x2)
+void cantor_compose(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2)
 {
     size_t j;
     for (j = 0; j < p->n; ++j) {
@@ -1335,7 +1337,7 @@ void cantor_compose(const cantor_info_t p, Kelt * y, Kelt * x1, Kelt * x2)
 #endif
     }
 }
-void cantor_addcompose(const cantor_info_t p, Kelt * y, Kelt * x1, Kelt * x2)
+void cantor_addcompose(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2)
 {
     size_t j;
     Kelt e;
@@ -1344,7 +1346,7 @@ void cantor_addcompose(const cantor_info_t p, Kelt * y, Kelt * x1, Kelt * x2)
         Kadd(y[j], y[j], e);
     }
 }
-void cantor_add(const cantor_info_t p, Kelt * y, Kelt * x1, Kelt * x2)
+void cantor_add(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2)
 {
     size_t j;
     for (j = 0; j < p->n; ++j) {
@@ -1352,7 +1354,7 @@ void cantor_add(const cantor_info_t p, Kelt * y, Kelt * x1, Kelt * x2)
     }
 }
 
-void cantor_cpy(const cantor_info_t p, Kelt * y, Kelt * x)
+void cantor_cpy(const cantor_info_t p, cantor_ptr y, cantor_srcptr x)
 {
     memcpy(y, x, (p->n)*sizeof(Kelt));
 }
@@ -1368,7 +1370,7 @@ void cantor_ift(
         const cantor_info_t p,
         unsigned long * H,
         size_t nH,
-        Kelt * h)
+        cantor_srcptr h)
 {
     size_t Hl = (nH + GF2X_WORDSIZE - 1) / GF2X_WORDSIZE;
 
@@ -1396,7 +1398,7 @@ void mulCantor(unsigned long * H, unsigned long * F, size_t Fl,
         unsigned long * G, size_t Gl)
 {
     cantor_info_t order;
-    Kelt * f, * g;
+    cantor_ptr f, g;
 
     size_t nF = Fl * GF2X_WORDSIZE;
     size_t nG = Gl * GF2X_WORDSIZE;
@@ -1419,24 +1421,24 @@ void mulCantor(unsigned long * H, unsigned long * F, size_t Fl,
     cantor_clear(order);
 }
 
-Kelt * cantor_alloc(const cantor_info_t p, size_t n)
+cantor_ptr cantor_alloc(const cantor_info_t p, size_t n)
 {
     return (Kelt *) malloc((n << p->k) * sizeof(Kelt));
 }
 void cantor_free(
         const cantor_info_t p MAYBE_UNUSED,
-        Kelt * x,
+        cantor_ptr x,
         size_t n MAYBE_UNUSED)
 {
     free(x);
 }
-Kelt * cantor_get(const cantor_info_t p, Kelt * x, size_t k)
+cantor_srcptr cantor_get(const cantor_info_t p, cantor_srcptr x, size_t k)
 {
     return x + (k << p->k);
 }
-void cantor_zero(const cantor_info_t p, Kelt * x, size_t n)
+void cantor_zero(const cantor_info_t p, cantor_ptr x, size_t n)
 {
-	memset(x, 0, (n << p->k) * sizeof(Kelt));
+    memset(x, 0, (n << p->k) * sizeof(Kelt));
 }
 void cantor_init_similar(cantor_info_ptr o, size_t bits_a, size_t bits_b, cantor_info_srcptr other MAYBE_UNUSED)
 {
