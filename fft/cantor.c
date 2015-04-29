@@ -27,6 +27,8 @@
  * truncated and non-truncated case.
  */
 
+#include "gf2xfft-config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
