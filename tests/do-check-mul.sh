@@ -36,6 +36,11 @@ cat "$srcdir/check-mul.res" | while read n1 n2 v s ; do
         exit 1
     fi
 done
+
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
 echo
 
 ./check-addmul
