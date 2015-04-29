@@ -12,7 +12,7 @@
 #include "macros.h"
 
 #include "fake_fft.h"
-#include "cantor/cantor128.h"
+#include "cantor.h"
 #include "gf2x/gf2x-tfft.h"
 
 #ifndef ULONG_BITS
