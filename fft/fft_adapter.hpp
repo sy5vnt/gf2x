@@ -66,9 +66,11 @@ public:                                                                 \
 	inline void free(ptr x, size_t n) const { CAT(Z,free)(o,x,n); }	\
 	inline void zero(ptr x, size_t n) const { CAT(Z,zero)(o,x,n); }	\
 	inline ptr get(ptr x, size_t n) const { return CAT(Z,get)(o,x,n); }\
+	inline srcptr get(srcptr x, size_t n) const { return CAT(Z,get_const)(o,x,n); }\
 	inline void dft(ptr x, unsigned long * F, size_t n) const {	\
 		return CAT(Z,dft)(o,x,F,n);				\
 	}								\
+        /* this destroys the input ! */                                 \
 	inline void ift(unsigned long * F, size_t n, ptr x) const {	\
 		return CAT(Z,ift)(o,F,n,x);				\
 	}								\

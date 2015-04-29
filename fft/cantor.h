@@ -85,7 +85,8 @@ extern void cantor_free(
         const cantor_info_t p MAYBE_UNUSED,
         cantor_ptr x,
         size_t n MAYBE_UNUSED);
-extern cantor_srcptr cantor_get(const cantor_info_t p, cantor_srcptr x, size_t k);
+extern cantor_ptr cantor_get(const cantor_info_t p, cantor_ptr x, size_t k);
+extern cantor_srcptr cantor_get_const(const cantor_info_t p, cantor_srcptr x, size_t k);
 extern void cantor_zero(const cantor_info_t p, cantor_ptr x, size_t n);
 
 extern void cantor_dft(const cantor_info_t p, cantor_ptr x, unsigned long * F, size_t nF);
@@ -97,7 +98,7 @@ extern void cantor_add(const cantor_info_t p,
 		cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2);
 extern void cantor_cpy(const cantor_info_t p, cantor_ptr y, cantor_srcptr x);
 extern void cantor_ift(const cantor_info_t p,
-		unsigned long * H, size_t Hl, cantor_srcptr h);
+		unsigned long * H, size_t Hl, cantor_ptr h);
 extern size_t cantor_size(cantor_info_srcptr p);
 extern void cantor_init_similar(cantor_info_ptr o, size_t bits_a, size_t bits_b, cantor_info_srcptr other);
 extern int cantor_compatible(cantor_info_srcptr o1, cantor_info_srcptr o2);

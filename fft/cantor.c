@@ -1366,11 +1366,12 @@ size_t cantor_size(const cantor_info_t p)
 }
 
 /* nH is a number of coefficients */
+/* this destroys the input */
 void cantor_ift(
         const cantor_info_t p,
         unsigned long * H,
         size_t nH,
-        cantor_srcptr h)
+        cantor_ptr h)
 {
     size_t Hl = (nH + GF2X_WORDSIZE - 1) / GF2X_WORDSIZE;
 
@@ -1411,7 +1412,7 @@ void mulCantor(unsigned long * H, unsigned long * F, size_t Fl,
     g = cantor_alloc(order, 1);
     cantor_dft(order, g, G, nG);
 
-    cantor_compose(order, f, f, g);
+    cantor_compose(order, f, (cantor_srcptr) f, (cantor_srcptr) g);
 
     cantor_free(order, g, 1);
     cantor_ift(order, H, nF + nG -1, f);
@@ -1432,7 +1433,11 @@ void cantor_free(
 {
     free(x);
 }
-cantor_srcptr cantor_get(const cantor_info_t p, cantor_srcptr x, size_t k)
+cantor_srcptr cantor_get_const(const cantor_info_t p, cantor_srcptr x, size_t k)
+{
+    return x + (k << p->k);
+}
+cantor_ptr cantor_get(const cantor_info_t p, cantor_ptr x, size_t k)
 {
     return x + (k << p->k);
 }

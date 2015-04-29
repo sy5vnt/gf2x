@@ -55,6 +55,9 @@ static inline void fake_free(fake_info_srcptr p MAYBE_UNUSED,
 static inline fake_ptr fake_get(fake_info_srcptr p, fake_ptr x, size_t k) {
     return x + (k * p->size);
 }
+static inline fake_srcptr fake_get_const(fake_info_srcptr p, fake_srcptr x, size_t k) {
+    return x + (k * p->size);
+}
 static inline void fake_zero(fake_info_srcptr p, fake_ptr x, size_t n)
 {
     memset(x, 0, n * p->size * sizeof(unsigned long));
