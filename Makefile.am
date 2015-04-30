@@ -54,14 +54,6 @@ nobase_nodist_include_HEADERS=	\
 
 libgf2x_la_LDFLAGS=-version-info @gf2x_lib_version@
 
-if ENABLE_NTL_CHECKS
-    MAYBE_APPS=apps
-endif
-
-if GF2X_FFT_PRESENT
-    MAYBE_APPS=gf2x-fft
-endif
-
 SUBDIRS=. tests src $(MAYBE_GF2X_FFT) $(MAYBE_APPS)
 
 DIST_SUBDIRS=tests src apps

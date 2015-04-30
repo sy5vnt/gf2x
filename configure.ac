@@ -56,7 +56,12 @@ AC_ARG_ENABLE([pclmul],
               [AS_HELP_STRING([--enable-pclmul],
                               [Turn on pclmul code (default is yes)])])
 
-AM_CONDITIONAL([ENABLE_NTL_CHECKS],[test x$enable_ntl_checks = xyes])
+if test "x$enable_ntl_checks" = xyes ; then
+ MAYBE_APPS=apps
+else
+ MAYBE_APPS=
+fi
+AC_SUBST([MAYBE_APPS])
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -196,14 +201,18 @@ fi
 
 AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h])
 
-AC_CONFIG_FILES([version.sh Makefile tests/Makefile apps/Makefile src/Makefile])
 if test -d "$srcdir/gf2x-fft" ; then
  AC_MSG_NOTICE([Enabling optional gf2x-fft])
  AC_CONFIG_SUBDIRS([gf2x-fft])
+ MAYBE_GF2X_FFT=gf2x-fft
 else
  AC_MSG_NOTICE([optional gf2x-fft not found])
+ MAYBE_GF2X_FFT=
 fi
-AM_CONDITIONAL([GF2X_FFT_PRESENT],[test -d "$srcdir/gf2x-fft"])
+AC_SUBST([MAYBE_GF2X_FFT])
+
+AC_CONFIG_FILES([version.sh Makefile tests/Makefile apps/Makefile src/Makefile])
+
 AC_OUTPUT
 
 # vim: set sw=1:
