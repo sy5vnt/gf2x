@@ -149,7 +149,7 @@ AC_DEFUN([CHECK_SSE2_SUPPORT],[
   CPPFLAGS="$CPPFLAGS -msse2"
  fi
  if test "$gf2x_cv_cc_supports_sse2" != "no" ;then
-  AC_DEFINE([HAVE_SSE2_SUPPORT],[1],[Define if sse-2 code as present in the source tree is supported by the compiler])
+  AC_DEFINE([GF2X_HAVE_SSE2_SUPPORT],[1],[Define if sse-2 code as present in the source tree is supported by the compiler])
  fi
 ])# CHECK_SSE2_SUPPORT
 
@@ -231,7 +231,7 @@ AC_DEFUN([CHECK_PCLMUL_SUPPORT],[
   CPPFLAGS="$CPPFLAGS -mpclmul"
  fi
  if test "$gf2x_cv_cc_supports_pclmul" != "no" ;then
-  AC_DEFINE([HAVE_PCLMUL_SUPPORT],[1],[Define if pclmul as present in the source tree is supported by the compiler and hardware])
+  AC_DEFINE([GF2X_HAVE_PCLMUL_SUPPORT],[1],[Define if pclmul as present in the source tree is supported by the compiler and hardware])
  fi
 ])# CHECK_PCLMUL_SUPPORT
 

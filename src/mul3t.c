@@ -44,7 +44,7 @@
 
 #include "gf2x/gf2x-config.h"
 
-#ifndef HAVE_SSE2_SUPPORT
+#ifndef GF2X_HAVE_SSE2_SUPPORT
 #error "This code needs sse-2 support"
 #endif
 

@@ -101,7 +101,7 @@ extern void gf2x_mul_fft(unsigned long *c, const unsigned long *a, size_t an,
 extern short best_tab[GF2X_TOOM_TUNING_LIMIT];
 extern short best_utab[GF2X_TOOM_TUNING_LIMIT];
 
-#ifdef  HAVE_SSE2_SUPPORT
+#ifdef  GF2X_HAVE_SSE2_SUPPORT
 #include <emmintrin.h>
 #include <stdint.h>
 #if defined(__GNUC__) && __GNUC__ == 4 &&__GNUC_MINOR__ == 1

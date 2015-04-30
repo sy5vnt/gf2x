@@ -44,7 +44,7 @@
 
 #include "gf2x/gf2x-config.h"
 
-#ifndef HAVE_PCLMUL_SUPPORT
+#ifndef GF2X_HAVE_PCLMUL_SUPPORT
 #error "This code needs pclmul support"
 #endif
 

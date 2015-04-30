@@ -194,7 +194,7 @@ else
  AC_DEFINE([GPL_CODE_PRESENT],0,[Have LGPL code (no GPL taint)])
 fi
 
-AC_CONFIG_HEADERS([gf2x/gf2x-config.h])
+AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h])
 
 AC_CONFIG_FILES([version.sh Makefile tests/Makefile apps/Makefile src/Makefile])
 if test -d "$srcdir/gf2x-fft" ; then
