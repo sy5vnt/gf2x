@@ -169,7 +169,9 @@ void gf2x_mul3(unsigned long *t, unsigned long const *s1,
 
     /* store result */
     _mm_storeu_si128((__m128i *)(t),  PXOR(t0, _mm_unpacklo_epi64(PZERO, t1)));
-    _mm_storeu_si128((__m128i *)(t+4),PXOR(t2, _mm_unpackhi_epi64(t1, PZERO)));
+    XOREQ(t2, _mm_unpackhi_epi64(t1, PZERO));
+    t[4] =  _mm_cvtsi128_si32(t2);
+    t[5] =  _mm_cvtsi128_si32(SHRD(t2, 32));
 #undef PAND
 #undef XOREQ
 #undef PZERO
