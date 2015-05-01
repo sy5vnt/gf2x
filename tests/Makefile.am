@@ -32,8 +32,8 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 check_PROGRAMS=check-mul check-addmul
 check_mul_SOURCES=check-mul.c
 check_addmul_SOURCES=check-addmul.c
-check_mul_LDADD=../libgf2x.la
-check_addmul_LDADD=../libgf2x.la
+check_mul_LDADD=$(top_builddir)/libgf2x.la
+check_addmul_LDADD=$(top_builddir)/libgf2x.la
 
 # LOG_COMPILER=$(SHELL) 2>/dev/null
 
@@ -72,7 +72,7 @@ TESTS = check-addmul $(SYNTHESIZED_TESTS)
 TEST_EXTENSIONS = .mul
 # We'll run the *.mul tests above as:
 # 	./do-check-mul.sh -m check_10000_5437_64751d23_76540123.mul
-MUL_LOG_COMPILER = ./do-check-mul.sh
+MUL_LOG_COMPILER = $(srcdir)/do-check-mul.sh
 AM_MUL_LOG_FLAGS = -m
 
 EXTRA_DIST=do-check-mul.sh
