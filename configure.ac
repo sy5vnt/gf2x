@@ -33,7 +33,7 @@ AC_LANG([C])
 
 AC_SUBST([gf2x_lib_version], [1:2:0])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.13])
 
 AM_MAINTAINER_MODE([disable])
 

@@ -15,6 +15,22 @@ version 2 of the License, or (at your option) any later version.
 This package contains routines for fast arithmetic in GF(2)[x]
 (multiplication, squaring, gcd).
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# The text below is outdated (dates back to gf2x 1.0 at best).
+
+------------------------------------------------------------------------
 Summary:
 ========
 
@@ -52,7 +68,6 @@ gf2x-small.h           - small-sized inlined multiplication routines
 toom.c                 - main file for Karatsuba and Toom-Cook multiplication
 toom-gpl.c             - same, for GPL-tainted distribution
 fft.c                  - multiplication using Fast Fourier Transform
-ntl_gf2x_mul_code.h    - file to be hooked in NTL (see below)
 
 Code adapted for the selected hardware
 
@@ -70,7 +85,6 @@ gf2x/                  - place where symlinks to the files above go
 For testing:
 
 tests/check-mul.c       - simple check program
-tests/check-mul.res     - reference results from check-mul
 tests/do-check-mul.sh   - shell script driving check-mul
 
 For tuning:

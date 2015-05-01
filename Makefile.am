@@ -34,6 +34,7 @@ libgf2x_la_SOURCES+=toom-gpl.c
 endif
 nobase_include_HEADERS=gf2x.h	\
 		gf2x/gf2x-impl.h		\
+		gf2x/gf2x-impl-export.h		\
 		gf2x/gf2x-tfft.h		\
 		gf2x/gf2x-small.h
 
