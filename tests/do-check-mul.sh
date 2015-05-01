@@ -41,8 +41,10 @@ if [ "$magic" ] ; then
 $magic_tr
 EOF
     echo "n1 = $n1 ; n2=$n2 ; v=$v ; s=$s"
-    got=`./check-mul $n1 $n2`
+    echo "## ./check-mul $n1 $n2"
     expected="$n1 $n2 $v $s"
+    echo "## expected output: $expected"
+    got=`./check-mul $n1 $n2`
     if [ "$got" != "$expected" ] ; then
         echo "failed check for ${n1}x${n2} : '$got' != '$expected'" >&2
         echo "failed : '$got' != '$expected'"

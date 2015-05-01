@@ -1103,18 +1103,18 @@ void gf2x_tfft_clear(gf2x_tfft_info_ptr o)
 {
     if (o->K) {
         free(o->tmp);
+        /* the current situation is that all of these are within a big
+         * fat malloc, and need not be freed separately. This very
+         * probably won't stay, though...
+        free(o->perm);
         free(o->c1);
         free(o->c2);
-
-        free(o->perm);
-
         free (o->ta);
         free (o->tb);
         free (o->tc);
-
         free (o->A);
-
         free (o->buf);
+         */
     }
     memset(o, 0, sizeof(gf2x_tfft_info_t));
 }
