@@ -1,11 +1,10 @@
 export LANG=C
 export AUTOCONF_VERSION=2.69
 export AUTOMAKE_VERSION=1.13
-rm -f toom-gpl.c
 autoreconf -i
 src="$PWD"
 TMP=`mktemp -d /tmp/${BUILD_TAG}-XXXXXXX`
-if ! (cd "$TMP" ; $src/configure && make dist) ; then
+if ! (cd "$TMP" ; $src/configure && make untaint && make dist) ; then
    echo "FAILED"
    rm -rf "$TMP"
    exit 1

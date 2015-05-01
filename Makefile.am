@@ -5,13 +5,14 @@
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of either:
-#   - If the archive contains a file named toom-gpl.c, the GNU General
-#     Public License as published by the Free Software Foundation; either
-#     version 3 of the License, or (at your option) any later version.
-#   - If the archive contains no file named toom-gpl.c, the GNU Lesser
-#     General Public License as published by the Free Software
-#     Foundation; either version 2.1 of the License, or (at your option)
-#     any later version.
+#   - If the archive contains a file named toom-gpl.c (not a trivial
+#     placeholder), the GNU General Public License as published by the
+#     Free Software Foundation; either version 3 of the License, or (at
+#     your option) any later version.
+#   - If the archive contains a file named toom-gpl.c which is a trivial
+#     placeholder, the GNU Lesser General Public License as published by
+#     the Free Software Foundation; either version 2.1 of the License, or
+#     (at your option) any later version.
 #  
 #  This program is distributed in the hope that it will be useful, but WITHOUT
 #  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -28,10 +29,7 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 
 
 lib_LTLIBRARIES=libgf2x.la
-libgf2x_la_SOURCES=gf2x.c toom.c fft.c
-if GPL_CODE_PRESENT
-libgf2x_la_SOURCES+=toom-gpl.c
-endif
+libgf2x_la_SOURCES=gf2x.c toom.c toom-gpl.c fft.c
 nobase_include_HEADERS=gf2x.h	\
 		gf2x/gf2x-impl.h		\
 		gf2x/gf2x-impl-export.h		\
@@ -77,6 +75,13 @@ EXTRA_DIST+=BUGS
 EXTRA_DIST+=already_tuned
 EXTRA_DIST+=config/configfsf.sub
 EXTRA_DIST+=config/configfsf.guess
+EXTRA_DIST+=toom-gpl-placeholder.c
+
+# This is really a maintainer-only command. This can be used for creating
+# a tarball with an LGPL-licensed gf2x. Note that when this is done,
+# configure must be re-run !
+untaint:
+	cp $(srcdir)/toom-gpl-placeholder.c $(srcdir)/toom-gpl.c
 
 dist-hook:
 	-find $(distdir) \( -name .svn -type d \) -o -name "*~" -o -name ".#*" \

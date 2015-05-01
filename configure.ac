@@ -5,13 +5,27 @@
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of either:
-#   - If the archive contains a file named toom-gpl.c, the GNU General
-#     Public License as published by the Free Software Foundation; either
-#     version 3 of the License, or (at your option) any later version.
-#   - If the archive contains no file named toom-gpl.c, the GNU Lesser
-#     General Public License as published by the Free Software
-#     Foundation; either version 2.1 of the License, or (at your option)
-#     any later version.
+#   - If the archive contains a file named toom-gpl.c (not a trivial
+                                                       #     placeholder),
+                                                       #     the GNU
+                                                       #     General
+                                                       #     Public
+                                                       #     License as
+                                                       #     published by
+                                                       #     the Free
+                                                       #     Software
+                                                       #     Foundation;
+                                                       #     either
+                                                       #     version 3 of
+                                                       #     the License,
+                                                       #     or (at your
+                                                                 #     option)
+                                                       #     any later
+                                                       #     version.
+#   - If the archive contains a file named toom-gpl.c which is a trivial
+#     placeholder, the GNU Lesser General Public License as published by
+#     the Free Software Foundation; either version 2.1 of the License, or
+#     (at your option) any later version.
 #  
 #  This program is distributed in the hope that it will be useful, but WITHOUT
 #  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -190,12 +204,12 @@ AM_CONDITIONAL([GF2X_32BIT_SOURCES],[test "x$tuned_nbits" = x32])
 AM_CONDITIONAL([GF2X_64BIT_SOURCES],[test "x$tuned_nbits" = x64])
 AM_CONDITIONAL([GF2X_SSE2_AVAILABLE],[test "x$gf2x_cv_cc_supports_sse2" != xno])
 AM_CONDITIONAL([GF2X_PCLMUL_AVAILABLE],[test "x$gf2x_cv_cc_supports_pclmul" != xno])
-AM_CONDITIONAL([GPL_CODE_PRESENT],[test -f "$srcdir/toom-gpl.c"])
-if test -f "$srcdir/toom-gpl.c" ; then
+AM_CONDITIONAL([GPL_CODE_PRESENT],[grep -q "released under the GPL" "$srcdir/toom-gpl.c"])
+if grep -q "released under the GPL" "$srcdir/toom-gpl.c" ; then
  echo "File $srcdir/toom-gpl.c is present, using a GPL-licensed gf2x"
  AC_DEFINE([GPL_CODE_PRESENT],1,[Have GPL code])
 else
- echo "File $srcdir/toom-gpl.c is absent, using an LGPL-licensed gf2x"
+ echo "File $srcdir/toom-gpl.c is a placeholder, using an LGPL-licensed gf2x"
  AC_DEFINE([GPL_CODE_PRESENT],0,[Have LGPL code (no GPL taint)])
 fi
 

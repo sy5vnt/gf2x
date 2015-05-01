@@ -5,13 +5,14 @@
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of either:
-    - If the archive contains a file named toom-gpl.c, the GNU General
-      Public License as published by the Free Software Foundation; either
-      version 3 of the License, or (at your option) any later version.
-    - If the archive contains no file named toom-gpl.c, the GNU Lesser
-      General Public License as published by the Free Software
-      Foundation; either version 2.1 of the License, or (at your option)
-      any later version.
+    - If the archive contains a file named toom-gpl.c (not a trivial
+    placeholder), the GNU General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+    - If the archive contains a file named toom-gpl.c which is a trivial
+    placeholder, the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 2.1 of the License, or
+    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful, but WITHOUT
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -52,13 +53,14 @@ int main(int argc, char *argv[])
 "\n"
 "   This program is free software; you can redistribute it and/or modify it\n"
 "   under the terms of either:\n"
-"    - If the archive contains a file named toom-gpl.c, the GNU General\n"
-"      Public License as published by the Free Software Foundation; either\n"
-"      version 3 of the License, or (at your option) any later version.\n"
-"    - If the archive contains no file named toom-gpl.c, the GNU Lesser\n"
-"      General Public License as published by the Free Software\n"
-"      Foundation; either version 2.1 of the License, or (at your option)\n"
-"      any later version.\n"
+"    - If the archive contains a file named toom-gpl.c (not a trivial\n"
+"    placeholder), the GNU General Public License as published by the Free\n"
+"    Software Foundation; either version 3 of the License, or (at your\n"
+"    option) any later version.\n"
+"    - If the archive contains a file named toom-gpl.c which is a trivial\n"
+"    placeholder, the GNU Lesser General Public License as published by\n"
+"    the Free Software Foundation; either version 2.1 of the License, or\n"
+"    (at your option) any later version.\n"
 "\n"
 "   This program is distributed in the hope that it will be useful, but WITHOUT\n"
 "   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or\n"
