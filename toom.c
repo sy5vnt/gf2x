@@ -262,7 +262,3 @@ void gf2x_mul_kara(unsigned long * c, const unsigned long * a, const unsigned lo
 	c2[j] ^= cc[j];
     }
 }
-
-#if GPL_CODE_PRESENT
-#include "toom-gpl.c"
-#endif
