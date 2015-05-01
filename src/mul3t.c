@@ -66,6 +66,8 @@ void gf2x_mul3(unsigned long *t, unsigned long const *s1,
 #define PSUB(x, y)      _mm_sub_epi64((x), (y))
 #define PNEG(x)      PSUB(PZERO, (x))
 #define PXOR(lop, rop) _mm_xor_si128((lop), (rop))
+#define XOREQ(lop, rop) lop = _mm_xor_si128((lop), (rop))
+#define PAND(lop, rop) _mm_and_si128((lop), (rop))
 
     __m128i u;
     __m128i t0;
@@ -168,6 +170,8 @@ void gf2x_mul3(unsigned long *t, unsigned long const *s1,
     /* store result */
     _mm_storeu_si128((__m128i *)(t),  PXOR(t0, _mm_unpacklo_epi64(PZERO, t1)));
     _mm_storeu_si128((__m128i *)(t+4),PXOR(t2, _mm_unpackhi_epi64(t1, PZERO)));
+#undef PAND
+#undef XOREQ
 #undef PZERO
 #undef PADD
 #undef PSUB
