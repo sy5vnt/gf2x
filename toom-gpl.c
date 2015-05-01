@@ -36,8 +36,6 @@
 /* We need gf2x_addmul_1_n */
 #include "gf2x/gf2x-small.h"
 
-#include "gf2x/gf2x-config.h"
-
 /* the following routines come from the irred-ntl package from Paul Zimmermann,
    (http://webloria.loria.fr/~zimmerma/irred/), who contributes them under
    LGPL for gf2x */

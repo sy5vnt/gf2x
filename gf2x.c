@@ -24,6 +24,8 @@
    02110-1301, USA.
 */
 
+#include "gf2x/gf2x-config.h"
+
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>

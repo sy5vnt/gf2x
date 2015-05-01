@@ -28,19 +28,13 @@
 #define GF2X_MUL5_H_
 
 #include "gf2x.h"
-#include "gf2x/gf2x-impl.h"
 /* All gf2x source files for lowlevel functions must include gf2x-small.h
  * This is mandatory for the tuning mechanism. */
 #include "gf2x/gf2x-small.h"
 
-#include <emmintrin.h>
-#include <wmmintrin.h>
-
 #if GF2X_WORDSIZE != 64
 #error "This code is for 64-bit only"
 #endif
-
-#include "gf2x/gf2x-config.h"
 
 #ifndef GF2X_HAVE_PCLMUL_SUPPORT
 #error "This code needs pclmul support"

@@ -31,18 +31,12 @@
 
 #include "gf2x.h"
 
-#include "gf2x/gf2x-thresholds.h"
-
-/* functions here will end up as static functions, therefore we prefer to
- * avoid the warning relative to the fact that they are unused. */
-
-#ifndef	MAYBE_UNUSED
-#if defined(__GNUC__)
-#define MAYBE_UNUSED __attribute__ ((unused))
-#else
-#define MAYBE_UNUSED
-#endif
-#endif
+/* the header files included here will either put macros in the
+ * namespaces GF2X_* or gf2x_*, or possibly macros with generally
+ * accepted meaning such as GF2X_MAYBE_UNUSED and such */
+#include "gf2x/gf2x-config-export.h"    /* GF2X_HAVE_* macros */
+#include "gf2x/gf2x-impl-export.h"      /* utility macros */
+#include "gf2x/gf2x-thresholds.h"       /* GF2X_STORAGE_CLASS_* macros */
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,39 +44,39 @@ extern "C" {
 
 GF2X_STORAGE_CLASS_mul1 void
 gf2x_mul1(unsigned long *c, unsigned long a, unsigned long b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul_1_n unsigned long
 gf2x_mul_1_n(unsigned long *cp, const unsigned long *bp, long sb, unsigned long a)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_addmul_1_n unsigned long
 gf2x_addmul_1_n(unsigned long *dp,
         const unsigned long *cp, const unsigned long* bp,
         long sb, unsigned long a)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul2 void
 gf2x_mul2(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul3 void
 gf2x_mul3(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul4 void
 gf2x_mul4(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul5 void
 gf2x_mul5(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul6 void
 gf2x_mul6(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul7 void
 gf2x_mul7(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul8 void
 gf2x_mul8(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 GF2X_STORAGE_CLASS_mul9 void
 gf2x_mul9(unsigned long *c, const unsigned long *a, const unsigned long *b)
-        MAYBE_UNUSED;
+        GF2X_MAYBE_UNUSED;
 
 #ifdef __cplusplus
 }

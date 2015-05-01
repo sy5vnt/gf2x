@@ -27,6 +27,8 @@
 /* Multiplication over GF(2)[x] using Fast Fourier Transform.
  * Bit-aligned version. */
 
+#include "gf2x/gf2x-config.h"
+
 #include <stdio.h>
 #include <stdint.h> /* for uint64_t in Lshift */
 #include <stdlib.h>

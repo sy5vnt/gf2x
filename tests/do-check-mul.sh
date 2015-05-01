@@ -24,10 +24,23 @@
 #  Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 
+echo "## $0 $@"
 
+while [ $# -gt 0 ] ; do
+    arg="$1"
+    shift
+    case "$arg" in
+        -m)     magic="$1" ; shift;;
+        *)      echo "unexpected test arg: $arg" >&2; exit 1;;
+    esac
+done
 
-cat "$srcdir/check-mul.res" | while read n1 n2 v s ; do
-    echo -n "${n1}x${n2} "
+if [ "$magic" ] ; then
+    magic_tr=`echo $magic | tr '_.' '  '`
+    read check n1 n2 v s mul <<EOF
+$magic_tr
+EOF
+    echo "n1 = $n1 ; n2=$n2 ; v=$v ; s=$s"
     got=`./check-mul $n1 $n2`
     expected="$n1 $n2 $v $s"
     if [ "$got" != "$expected" ] ; then
@@ -35,14 +48,7 @@ cat "$srcdir/check-mul.res" | while read n1 n2 v s ; do
         echo "failed : '$got' != '$expected'"
         exit 1
     fi
-done
-
-if [ $? -ne 0 ]; then
+else
+    echo "No test to run ??" >&2
     exit 1
 fi
-
-echo
-
-./check-addmul
-
-exit $?
