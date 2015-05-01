@@ -75,6 +75,4 @@ TEST_EXTENSIONS = .mul
 MUL_LOG_COMPILER = ./do-check-mul.sh
 AM_MUL_LOG_FLAGS = -m
 
-
-
-EXTRA_DIST=$(TESTS) check-mul.res
+EXTRA_DIST=do-check-mul.sh
