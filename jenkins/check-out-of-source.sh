@@ -5,7 +5,7 @@ autoreconf -i
 src="$PWD"
 TMP=`mktemp -d /tmp/${BUILD_TAG}-XXXXXXX`
 cd "$TMP"
-if ! ($src/configure &amp;&amp; make &amp;&amp; make check) ; then
+if ! ($src/configure && make && make check) ; then
    echo "FAILED"
    cd "$src"
    rm -rf "$TMP"
