@@ -37,7 +37,7 @@ check_addmul_LDADD=../libgf2x.la
 
 # LOG_COMPILER=$(SHELL) 2>/dev/null
 
-TESTS = check-addmul \
+SYNTHESIZED_TESTS = \
     check_1_1_71194aa9_76540123.mul		\
     check_2_2_b0a25e22_76540123.mul		\
     check_3_3_d0821e1e_76540123.mul		\
@@ -64,6 +64,10 @@ TESTS = check-addmul \
     check_10000_10000_c2f4746f_76540123.mul	\
     check_832040_1346269_6fd76898_76540123.mul	\
     check_785672_1271244_23c9bb24_76540123.mul
+
+$(SYNTHESIZED_TESTS) : ; @touch $@
+
+TESTS = check-addmul $(SYNTHESIZED_TESTS)
 
 TEST_EXTENSIONS = .mul
 # We'll run the *.mul tests above as:
