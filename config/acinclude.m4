@@ -85,7 +85,7 @@ AC_DEFUN([VERIFY_WORDSIZE],[
 # includes a subset of sse-2, but do not support the full sse-2 insn set.
 AC_DEFUN([SSE2_EXAMPLE],[AC_LANG_SOURCE([
 #include <emmintrin.h>
-int main(int argc, char * argv[]) {
+int main(int argc, char * argv[[]]) {
      __m128i foo = _mm_setr_epi32(argc, argc + 1, argc + 2, argc + 3);
      __m128i bar = _mm_setr_epi32(argc + 3, argc + 2, argc + 1, argc);
     foo = _mm_mullo_epi16(foo, bar);
