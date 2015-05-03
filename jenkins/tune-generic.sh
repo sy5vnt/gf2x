@@ -2,4 +2,5 @@ source "`dirname $0`"/common.sh
 autoreconf -i
 ./configure
 make
-make check
+make tune-lowlevel
+make tune-toom

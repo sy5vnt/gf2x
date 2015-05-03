@@ -1,6 +1,4 @@
-export LANG=C
-export AUTOCONF_VERSION=2.69
-export AUTOMAKE_VERSION=1.13
+source "`dirname $0`"/common.sh
 autoreconf -i
 src="$PWD"
 TMP=`mktemp -d /tmp/${BUILD_TAG}-XXXXXXX`
