@@ -1,4 +1,4 @@
-source "`dirname $0`"/common.sh
+. "`dirname $0`"/common.sh
 autoreconf -i
 src="$PWD"
 TMP=`mktemp -d /tmp/${BUILD_TAG}-XXXXXXX`
