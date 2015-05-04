@@ -90,7 +90,7 @@ tests/do-check-mul.sh   - shell script driving check-mul
 
 For tuning:
 
-src/mul*.c              - various candidate code samples for basic routines
+lowlevel/mul*.c              - various candidate code samples for basic routines
 src/tuneup.c            - tuning program for basecase multiplication
 src/tunetoom.c          - tuning program for Karatsuba/Toom-Cook multiplication
 src/tunefft.c           - tuning program for FFT multiplication

@@ -1,21 +1,28 @@
-/*
-   Copyright 2007 Pierrick Gaudry.
-   Copyright 2008,2009,2010,2011,2012 Emmanuel Thomé.
+/* This file is part of the gf2x library.
+
+   Copyright 2007, 2008, 2009, 2010, 2013, 2014, 2015
+   Richard Brent, Pierrick Gaudry, Emmanuel Thome', Paul Zimmermann
 
    This program is free software; you can redistribute it and/or modify it
-   under the terms of the GNU Lesser General Public License as published by
-   the Free Software Foundation; either version 2.1 of the License, or (at
-   your option) any later version.
+   under the terms of either:
+    - If the archive contains a file named toom-gpl.c (not a trivial
+    placeholder), the GNU General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+    - If the archive contains a file named toom-gpl.c which is a trivial
+    placeholder, the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 2.1 of the License, or
+    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful, but WITHOUT
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-   License for more details.
+   FITNESS FOR A PARTICULAR PURPOSE.  See the license text for more details.
    
-   You should have received a copy of the GNU Lesser General Public
-   License along with CADO-NFS; see the file COPYING.  If not, write to
-   the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-   Boston, MA 02110-1301, USA.
+   You should have received a copy of the GNU General Public License as
+   well as the GNU Lesser General Public License along with this program;
+   see the files COPYING and COPYING.LIB.  If not, write to the Free
+   Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+   02110-1301, USA.
 */
 
 #include <stdio.h>
@@ -26,7 +33,7 @@
 #include <sys/resource.h>
 #include <gmp.h>		// for random
 
-#include "gf2xfft-config.h"
+#include "gf2x-config.h"
 
 #ifdef  MULCOUNT
 extern int mulcount;
@@ -35,7 +42,7 @@ static const int mulcount = 0;
 #endif
 
 #if defined(ENGINE_CANTOR)
-#include "cantor.h"
+#include "gf2x-cantor-fft.h"
 
 typedef cantor_base_field_elt * cantor_transform_t;
 #define ENGINE_EXTRA_ARG_DEFAULT  0     /* does not make sense here (yet) */
@@ -50,8 +57,8 @@ typedef cantor_base_field_elt * cantor_transform_t;
 #define ENGINE_ift cantor_ift
 #define ENGINE_clear cantor_clear
 #define ENGINE_recoverorder(o)  ((o)->k)
-#elif defined(ENGINE_GF2X_TFFT)
-#include "gf2x/gf2x-tfft.h"
+#elif defined(ENGINE_TERNARY)
+#include "gf2x-ternary-fft.h"
 #include "gf2x/gf2x-thresholds.h"
 #ifdef MULCOUNT
 #error "MULCOUNT incompatible with gf2x_tfft"
@@ -72,7 +79,7 @@ typedef gf2x_tfft_ptr gf2x_tfft_transform_t;
 #define ENGINE_clear gf2x_tfft_clear
 #define ENGINE_recoverorder(o)  ((o)->K * ((o)->split ? -1 : 1))
 #else
-#error "Please define either ENGINE_CANTOR or ENGINE_GF2X_TFFT"
+#error "Please define either ENGINE_CANTOR or ENGINE_TERNARY"
 #endif
 
 long init_extra_arg = ENGINE_EXTRA_ARG_DEFAULT;
@@ -262,7 +269,7 @@ int main(int argc, char **argv)
 	       (sizeof(unsigned long) / sizeof(mp_limb_t)) * nmax);
 
 
-#ifdef ENGINE_GF2X_TFFT
+#ifdef ENGINE_TERNARY
     int automatic_tuning = (init_extra_arg == 0);
 #endif
 
@@ -278,7 +285,7 @@ int main(int argc, char **argv)
         time_ift = 0;
         time_conv = 0;
 
-#ifdef ENGINE_GF2X_TFFT
+#ifdef ENGINE_TERNARY
         if (automatic_tuning) {
 #ifdef ARTIFICIAL_NON_SPLIT_VERSION
             int64_t T_FFT_TAB[][2] = {

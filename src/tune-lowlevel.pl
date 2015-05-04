@@ -99,16 +99,16 @@ for my $s (sort { $a <=> $b } keys %sizes) {
         if ($r == $best) {
             $msg .= " **BEST**";
         }
-        my $xxlink_target_in_already_tuned_subdir = "../../src/$cfile";
+        my $xxlink_target_in_already_tuned_subdir = "../../lowlevel/$cfile";
         # Arrange so that $cfile is something reachable for us, and also
         # so that $xxlink_target_in_already_tuned_subdir is reachable from the
         # already_tuned/tuned subdirectory.
         if (! -f $cfile) {
             my $e;
-            if (defined($e=$ENV{'abs_srcdir'}) && -f "$e/$cfile") {
+            if (defined($e=$ENV{'abs_srcdir'}) && -f "$e/../lowlevel/$cfile") {
                 # We are building out of source, so we resort to putting an
                 # absolute path in the link target.
-                $xxlink_target_in_already_tuned_subdir="$e/$cfile";
+                $xxlink_target_in_already_tuned_subdir="$e/../lowlevel/$cfile";
                 $cfile="$e/$cfile";
             } else {
                 die "Cannot find $cfile anywhere !"

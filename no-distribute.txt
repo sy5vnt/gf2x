@@ -1,4 +1,0 @@
-no-distribute.txt
-bench.c
-wipeout-autotools
-README.git-tree

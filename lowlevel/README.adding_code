@@ -1,7 +1,7 @@
 
 (This documentation is related to the development of gf2x)
 
-This src/ subdirectory is the place where new code may be added to gf2x,
+This lowlevel/ subdirectory is the place where new code may be added to gf2x,
 in particular new code for lowlevel routines, so-called mul1, mul2, mul3,
 and so on. The steps for adding code are:
 

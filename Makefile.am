@@ -24,16 +24,29 @@
 #  Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 
+AUTOMAKE_OPTIONS=subdir-objects
 ACLOCAL_AMFLAGS=-I config --install
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 
+FFT_SOURCES=fft/gf2x-ternary-fft.c
+if ENABLE_GF2X_FFT
+FFT_SOURCES+=fft/gf2x-fake-fft.c
+FFT_SOURCES+=fft/gf2x-cantor-fft.c
+gf2x_includedir=$(includedir)/gf2x
+gf2x_include_HEADERS=	\
+	fft/gf2x-fft.h			\
+	fft/gf2x-fake-fft.h		\
+	fft/gf2x-cantor-fft.h		\
+	fft/gf2x-ternary-fft.h
+endif
+
 
 lib_LTLIBRARIES=libgf2x.la
-libgf2x_la_SOURCES=gf2x.c toom.c toom-gpl.c fft.c
+libgf2x_la_SOURCES=gf2x.c toom.c toom-gpl.c $(FFT_SOURCES)
+
 nobase_include_HEADERS=gf2x.h	\
 		gf2x/gf2x-impl.h		\
 		gf2x/gf2x-impl-export.h		\
-		gf2x/gf2x-tfft.h		\
 		gf2x/gf2x-small.h
 
 # All these are generated.
@@ -54,9 +67,9 @@ nobase_nodist_include_HEADERS=	\
 
 libgf2x_la_LDFLAGS=-version-info @gf2x_lib_version@
 
-SUBDIRS=. tests src $(MAYBE_GF2X_FFT) $(MAYBE_APPS)
+SUBDIRS=. tests lowlevel src $(MAYBE_APPS)
 
-DIST_SUBDIRS=tests src apps
+DIST_SUBDIRS=tests src lowlevel apps
 
 DISTCLEANFILES=gf2x/gf2x-thresholds.h	\
 	       gf2x/gf2x_mul1.h		\

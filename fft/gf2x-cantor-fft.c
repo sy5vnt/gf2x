@@ -1,22 +1,28 @@
-/* An implementation of Cantor's algorithm for multiplication of
-   polynomials over GF(2).
-   
-   Copyright 2007-2014 Pierrick Gaudry, Emmanuel Thomé.
+/* This file is part of the gf2x library.
+
+   Copyright 2007, 2008, 2009, 2010, 2013, 2014, 2015
+   Richard Brent, Pierrick Gaudry, Emmanuel Thome', Paul Zimmermann
 
    This program is free software; you can redistribute it and/or modify it
-   under the terms of the GNU Lesser General Public License as published by
-   the Free Software Foundation; either version 2.1 of the License, or (at
-   your option) any later version.
+   under the terms of either:
+    - If the archive contains a file named toom-gpl.c (not a trivial
+    placeholder), the GNU General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+    - If the archive contains a file named toom-gpl.c which is a trivial
+    placeholder, the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 2.1 of the License, or
+    (at your option) any later version.
    
    This program is distributed in the hope that it will be useful, but WITHOUT
    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-   License for more details.
+   FITNESS FOR A PARTICULAR PURPOSE.  See the license text for more details.
    
-   You should have received a copy of the GNU Lesser General Public
-   License along with CADO-NFS; see the file COPYING.  If not, write to
-   the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-   Boston, MA 02110-1301, USA.
+   You should have received a copy of the GNU General Public License as
+   well as the GNU Lesser General Public License along with this program;
+   see the files COPYING and COPYING.LIB.  If not, write to the Free
+   Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+   02110-1301, USA.
 */
 
 /* 20080122 -- shortened the input file somewhat. Old disabled code has
@@ -36,7 +42,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include "cantor.h"
+#include "gf2x-cantor-fft.h"
 
 /* The following flags affect the behaviour of the program */
 
@@ -1271,7 +1277,7 @@ void recomposeK(unsigned long * F, Kelt * f, size_t Fl, unsigned int k MAYBE_UNU
 #endif
 
 /* nF is a number of coefficients == number of bits ; a.k.a. degree + 1 */
-void cantor_init(cantor_info_t p, size_t nF, size_t nG, ...)
+void gf2x_cantor_fft_init(gf2x_cantor_fft_info_t p, size_t nF, size_t nG, ...)
 {
     unsigned int k;
     size_t Hl;
@@ -1295,13 +1301,13 @@ void cantor_init(cantor_info_t p, size_t nF, size_t nG, ...)
 
 }
 
-void cantor_clear(cantor_info_t p)
+void gf2x_cantor_fft_clear(gf2x_cantor_fft_info_t p)
 {
-    memset(p, 0, sizeof(cantor_info_t));
+    memset(p, 0, sizeof(gf2x_cantor_fft_info_t));
 }
 
 /* nF is a number of coefficients */
-void cantor_dft(const cantor_info_t p, cantor_ptr x, unsigned long * F, size_t nF)
+void gf2x_cantor_fft_dft(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, unsigned long * F, size_t nF)
 {
     size_t Fl = (nF + GF2X_WORDSIZE - 1) / GF2X_WORDSIZE;
     if (nF % GF2X_WORDSIZE) {
@@ -1328,7 +1334,7 @@ void cantor_dft(const cantor_info_t p, cantor_ptr x, unsigned long * F, size_t n
 }
 
 
-void cantor_compose(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2)
+void gf2x_cantor_fft_compose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
     size_t j;
     for (j = 0; j < p->n; ++j) {
@@ -1339,7 +1345,7 @@ void cantor_compose(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, canto
 #endif
     }
 }
-void cantor_addcompose(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2)
+void gf2x_cantor_fft_addcompose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
     size_t j;
     Kelt e;
@@ -1348,7 +1354,7 @@ void cantor_addcompose(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, ca
         Kadd(y[j], y[j], e);
     }
 }
-void cantor_add(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, cantor_srcptr x2)
+void gf2x_cantor_fft_add(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
     size_t j;
     for (j = 0; j < p->n; ++j) {
@@ -1356,12 +1362,12 @@ void cantor_add(const cantor_info_t p, cantor_ptr y, cantor_srcptr x1, cantor_sr
     }
 }
 
-void cantor_cpy(const cantor_info_t p, cantor_ptr y, cantor_srcptr x)
+void gf2x_cantor_fft_cpy(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x)
 {
     memcpy(y, x, (p->n)*sizeof(Kelt));
 }
 
-size_t cantor_size(const cantor_info_t p)
+size_t gf2x_cantor_fft_size(const gf2x_cantor_fft_info_t p)
 {
     // the _size() is a number of Kelt of the result.
     return p->n;
@@ -1369,11 +1375,11 @@ size_t cantor_size(const cantor_info_t p)
 
 /* nH is a number of coefficients */
 /* this destroys the input */
-void cantor_ift(
-        const cantor_info_t p,
+void gf2x_cantor_fft_ift(
+        const gf2x_cantor_fft_info_t p,
         unsigned long * H,
         size_t nH,
-        cantor_ptr h)
+        gf2x_cantor_fft_ptr h)
 {
     size_t Hl = (nH + GF2X_WORDSIZE - 1) / GF2X_WORDSIZE;
 
@@ -1400,58 +1406,58 @@ void cantor_ift(
 void mulCantor(unsigned long * H, unsigned long * F, size_t Fl,
         unsigned long * G, size_t Gl)
 {
-    cantor_info_t order;
-    cantor_ptr f, g;
+    gf2x_cantor_fft_info_t order;
+    gf2x_cantor_fft_ptr f, g;
 
     size_t nF = Fl * GF2X_WORDSIZE;
     size_t nG = Gl * GF2X_WORDSIZE;
 
-    cantor_init(order, nF, nG);
+    gf2x_cantor_fft_init(order, nF, nG);
 
-    f = cantor_alloc(order, 1);
-    cantor_dft(order, f, F, nF);
+    f = gf2x_cantor_fft_alloc(order, 1);
+    gf2x_cantor_fft_dft(order, f, F, nF);
 
-    g = cantor_alloc(order, 1);
-    cantor_dft(order, g, G, nG);
+    g = gf2x_cantor_fft_alloc(order, 1);
+    gf2x_cantor_fft_dft(order, g, G, nG);
 
-    cantor_compose(order, f, (cantor_srcptr) f, (cantor_srcptr) g);
+    gf2x_cantor_fft_compose(order, f, (gf2x_cantor_fft_srcptr) f, (gf2x_cantor_fft_srcptr) g);
 
-    cantor_free(order, g, 1);
-    cantor_ift(order, H, nF + nG -1, f);
+    gf2x_cantor_fft_free(order, g, 1);
+    gf2x_cantor_fft_ift(order, H, nF + nG -1, f);
 
-    cantor_free(order, f, 1);
+    gf2x_cantor_fft_free(order, f, 1);
 
-    cantor_clear(order);
+    gf2x_cantor_fft_clear(order);
 }
 
-cantor_ptr cantor_alloc(const cantor_info_t p, size_t n)
+gf2x_cantor_fft_ptr gf2x_cantor_fft_alloc(const gf2x_cantor_fft_info_t p, size_t n)
 {
     return (Kelt *) malloc((n << p->k) * sizeof(Kelt));
 }
-void cantor_free(
-        const cantor_info_t p MAYBE_UNUSED,
-        cantor_ptr x,
+void gf2x_cantor_fft_free(
+        const gf2x_cantor_fft_info_t p MAYBE_UNUSED,
+        gf2x_cantor_fft_ptr x,
         size_t n MAYBE_UNUSED)
 {
     free(x);
 }
-cantor_srcptr cantor_get_const(const cantor_info_t p, cantor_srcptr x, size_t k)
+gf2x_cantor_fft_srcptr gf2x_cantor_fft_get_const(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_srcptr x, size_t k)
 {
     return x + (k << p->k);
 }
-cantor_ptr cantor_get(const cantor_info_t p, cantor_ptr x, size_t k)
+gf2x_cantor_fft_ptr gf2x_cantor_fft_get(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, size_t k)
 {
     return x + (k << p->k);
 }
-void cantor_zero(const cantor_info_t p, cantor_ptr x, size_t n)
+void gf2x_cantor_fft_zero(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, size_t n)
 {
     memset(x, 0, (n << p->k) * sizeof(Kelt));
 }
-void cantor_init_similar(cantor_info_ptr o, size_t bits_a, size_t bits_b, cantor_info_srcptr other MAYBE_UNUSED)
+void gf2x_cantor_fft_init_similar(gf2x_cantor_fft_info_ptr o, size_t bits_a, size_t bits_b, gf2x_cantor_fft_info_srcptr other MAYBE_UNUSED)
 {
-    cantor_init(o, bits_a, bits_b);
+    gf2x_cantor_fft_init(o, bits_a, bits_b);
 }
-int cantor_compatible(cantor_info_srcptr o1, cantor_info_srcptr o2)
+int gf2x_cantor_fft_compatible(gf2x_cantor_fft_info_srcptr o1, gf2x_cantor_fft_info_srcptr o2)
 {
     return o1->k == o2->k;
 }

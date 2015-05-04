@@ -1,27 +1,14 @@
 #  This file is part of the gf2x library.
 #
-#  Copyright 2007, 2008, 2009, 2010, 2012, 2013, 2015
+#  Copyright 2007, 2008, 2009, 2010, 2013, 2014, 2015
 #  Richard Brent, Pierrick Gaudry, Emmanuel Thome', Paul Zimmermann
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of either:
 #   - If the archive contains a file named toom-gpl.c (not a trivial
-                                                       #     placeholder),
-                                                       #     the GNU
-                                                       #     General
-                                                       #     Public
-                                                       #     License as
-                                                       #     published by
-                                                       #     the Free
-                                                       #     Software
-                                                       #     Foundation;
-                                                       #     either
-                                                       #     version 3 of
-                                                       #     the License,
-                                                       #     or (at your
-                                                                 #     option)
-                                                       #     any later
-                                                       #     version.
+#     placeholder), the GNU General Public License as published by the
+#     Free Software Foundation; either version 3 of the License, or (at
+#     your option) any later version.
 #   - If the archive contains a file named toom-gpl.c which is a trivial
 #     placeholder, the GNU Lesser General Public License as published by
 #     the Free Software Foundation; either version 2.1 of the License, or
@@ -36,6 +23,7 @@
 #  see the files COPYING and COPYING.LIB.  If not, write to the Free
 #  Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #  02110-1301, USA.
+
 
 AC_INIT([gf2x], [1.2])
 : ${CFLAGS=-g -O4}
@@ -76,6 +64,12 @@ else
  MAYBE_APPS=
 fi
 AC_SUBST([MAYBE_APPS])
+
+AC_ARG_ENABLE([fft-interface],
+              [AS_HELP_STRING([--enable-fft-interface],
+                [compile with the optional fft interface (default is no)])],
+                [],[])
+AM_CONDITIONAL([ENABLE_GF2X_FFT],[test "x$enable_fft_interface" = xyes])
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -215,17 +209,17 @@ fi
 
 AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h])
 
-if test -d "$srcdir/gf2x-fft" ; then
- AC_MSG_NOTICE([Enabling optional gf2x-fft])
- AC_CONFIG_SUBDIRS([gf2x-fft])
- MAYBE_GF2X_FFT=gf2x-fft
-else
- AC_MSG_NOTICE([optional gf2x-fft not found])
- MAYBE_GF2X_FFT=
-fi
-AC_SUBST([MAYBE_GF2X_FFT])
+#if test -d "$srcdir/gf2x-fft" ; then
+# AC_MSG_NOTICE([Enabling optional gf2x-fft])
+# AC_CONFIG_SUBDIRS([gf2x-fft])
+# MAYBE_GF2X_FFT=gf2x-fft
+#else
+# AC_MSG_NOTICE([optional gf2x-fft not found])
+# MAYBE_GF2X_FFT=
+#fi
+#AC_SUBST([MAYBE_GF2X_FFT])
 
-AC_CONFIG_FILES([version.sh Makefile tests/Makefile apps/Makefile src/Makefile])
+AC_CONFIG_FILES([version.sh Makefile tests/Makefile lowlevel/Makefile src/Makefile fft/Makefile apps/Makefile])
 
 AC_OUTPUT
 
