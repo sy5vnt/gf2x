@@ -172,7 +172,7 @@ int main(int argc, char * argv[])
         exit(1);
     }
 
-    printf("%d %d %08" PRIx32 " %08" PRIx32 "\n", n1, n2, check0, start);
+    printf("%d %d %08" PRIx32 "\n", n1, n2, check0);
 
     free(a);
     free(b);

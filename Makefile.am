@@ -32,6 +32,7 @@ FFT_SOURCES=fft/gf2x-ternary-fft.c
 if ENABLE_GF2X_FFT
 FFT_SOURCES+=fft/gf2x-fake-fft.c
 FFT_SOURCES+=fft/gf2x-cantor-fft.c
+AM_CPPFLAGS += -I$(top_srcdir)/fft/mpfq
 gf2x_includedir=$(includedir)/gf2x
 gf2x_include_HEADERS=	\
 	fft/gf2x-fft.h			\
@@ -42,7 +43,14 @@ endif
 
 
 lib_LTLIBRARIES=libgf2x.la
+if ENABLE_GF2X_FFT
+# default which gets shipped
+libgf2x_la_CFLAGS=$(AM_CFLAGS) -DCANTOR_BASE_FIELD_SIZE=128
+endif
 libgf2x_la_SOURCES=gf2x.c toom.c toom-gpl.c $(FFT_SOURCES)
+
+
+
 
 nobase_include_HEADERS=gf2x.h	\
 		gf2x/gf2x-impl.h		\

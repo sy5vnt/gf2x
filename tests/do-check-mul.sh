@@ -38,12 +38,12 @@ done
 
 if [ "$magic" ] ; then
     magic_tr=`echo $magic | tr '_.' '  '`
-    read check n1 n2 v s mul <<EOF
+    read check n1 n2 v mul <<EOF
 $magic_tr
 EOF
-    echo "n1 = $n1 ; n2=$n2 ; v=$v ; s=$s"
+    echo "n1 = $n1 ; n2=$n2 ; v=$v"
     echo "## ./check-mul $n1 $n2"
-    expected="$n1 $n2 $v $s"
+    expected="$n1 $n2 $v"
     echo "## expected output: $expected"
     got=`./check-mul $n1 $n2`
     if [ "$got" != "$expected" ] ; then

@@ -34,6 +34,7 @@
 #include <gmp.h>		// for random
 
 #include "gf2x-config.h"
+#include "gf2x-thresholds.h"
 
 #ifdef  MULCOUNT
 extern int mulcount;
@@ -44,39 +45,38 @@ static const int mulcount = 0;
 #if defined(ENGINE_CANTOR)
 #include "gf2x-cantor-fft.h"
 
-typedef cantor_base_field_elt * cantor_transform_t;
 #define ENGINE_EXTRA_ARG_DEFAULT  0     /* does not make sense here (yet) */
 
-#define ENGINE_info_t cantor_info_t
-#define ENGINE_transform_t cantor_transform_t
-#define ENGINE_init cantor_init
-#define ENGINE_alloc cantor_alloc
-#define ENGINE_dft cantor_dft
-#define ENGINE_compose cantor_compose
-#define ENGINE_free cantor_free
-#define ENGINE_ift cantor_ift
-#define ENGINE_clear cantor_clear
+#define ENGINE_info_t gf2x_cantor_fft_info_t
+#define ENGINE_srcptr gf2x_cantor_fft_srcptr
+#define ENGINE_ptr gf2x_cantor_fft_ptr
+#define ENGINE_init gf2x_cantor_fft_init
+#define ENGINE_alloc gf2x_cantor_fft_alloc
+#define ENGINE_dft gf2x_cantor_fft_dft
+#define ENGINE_compose gf2x_cantor_fft_compose
+#define ENGINE_free gf2x_cantor_fft_free
+#define ENGINE_ift gf2x_cantor_fft_ift
+#define ENGINE_clear gf2x_cantor_fft_clear
 #define ENGINE_recoverorder(o)  ((o)->k)
 #elif defined(ENGINE_TERNARY)
 #include "gf2x-ternary-fft.h"
-#include "gf2x/gf2x-thresholds.h"
 #ifdef MULCOUNT
-#error "MULCOUNT incompatible with gf2x_tfft"
+#error "MULCOUNT incompatible with gf2x_ternary_fft"
 #endif
-typedef gf2x_tfft_ptr gf2x_tfft_transform_t;
 
 /* This is fit for 1M words */
 #define ENGINE_EXTRA_ARG_DEFAULT  0
 
-#define ENGINE_info_t gf2x_tfft_info_t
-#define ENGINE_transform_t gf2x_tfft_transform_t
-#define ENGINE_init gf2x_tfft_init
-#define ENGINE_alloc gf2x_tfft_alloc
-#define ENGINE_dft gf2x_tfft_dft
-#define ENGINE_compose gf2x_tfft_compose
-#define ENGINE_free gf2x_tfft_free
-#define ENGINE_ift gf2x_tfft_ift
-#define ENGINE_clear gf2x_tfft_clear
+#define ENGINE_info_t gf2x_ternary_fft_info_t
+#define ENGINE_srcptr gf2x_ternary_fft_srcptr
+#define ENGINE_ptr gf2x_ternary_fft_ptr
+#define ENGINE_init gf2x_ternary_fft_init
+#define ENGINE_alloc gf2x_ternary_fft_alloc
+#define ENGINE_dft gf2x_ternary_fft_dft
+#define ENGINE_compose gf2x_ternary_fft_compose
+#define ENGINE_free gf2x_ternary_fft_free
+#define ENGINE_ift gf2x_ternary_fft_ift
+#define ENGINE_clear gf2x_ternary_fft_clear
 #define ENGINE_recoverorder(o)  ((o)->K * ((o)->split ? -1 : 1))
 #else
 #error "Please define either ENGINE_CANTOR or ENGINE_TERNARY"
@@ -106,20 +106,20 @@ long ENGINE_mul(unsigned long * H, unsigned long * F, size_t Fl, unsigned long *
     t=cputime(); time_total -= t;
     ENGINE_init(order, Fl * GF2X_WORDSIZE, Gl * GF2X_WORDSIZE, init_extra_arg);
 
-    ENGINE_transform_t f = ENGINE_alloc(order, 1);
+    ENGINE_ptr f = ENGINE_alloc(order, 1);
 
     t=cputime(); time_dft -= t;
     ENGINE_dft(order, f, F, Fl * GF2X_WORDSIZE);
     t=cputime(); time_dft += t;
 
-    ENGINE_transform_t g = ENGINE_alloc(order, 1);
+    ENGINE_ptr g = ENGINE_alloc(order, 1);
 
     t=cputime(); time_dft -= t;
     ENGINE_dft(order, g, G, Gl * GF2X_WORDSIZE);
     t=cputime(); time_dft += t;
 
     t=cputime(); time_conv -= t;
-    ENGINE_compose(order, f, f, g);
+    ENGINE_compose(order, f, (ENGINE_srcptr) f, (ENGINE_srcptr) g);
     t=cputime(); time_conv += t;
 
     ENGINE_free(order, g, 1);

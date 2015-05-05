@@ -25,8 +25,10 @@
 #  02110-1301, USA.
 
 ACLOCAL_AMFLAGS=-I config --install
-AM_CFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
+# AM_CFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
+# AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
+# AM_CFLAGS = -I$(srcdir)/mpfq
+AM_CPPFLAGS = -I$(top_srcdir) -I$(srcdir)/mpfq
 
 # We want to stress-test the cantor implementation with the following
 # extra features (compile-time flags)
@@ -43,17 +45,19 @@ C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
 
 check_PROGRAMS=
 
-# ternary fft is included by default in gf2x.
-check_PROGRAMS += ternary
-ternary_SOURCES=bench.c
-ternary_CFLAGS= $(AM_CFLAGS) -DENGINE_TERNARY
-ternary_LDADD=../libgf2x.la -lgmp
-
-check_PROGRAMS += ternary_ns
-ternary_ns_SOURCES=bench.c
-ternary_ns_CFLAGS= $(AM_CFLAGS) -DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
-ternary_ns_LDADD=../libgf2x.la -lgmp
-
+# This is temporarily disabled.
+# # ternary fft is included by default in gf2x.
+# check_PROGRAMS += ternary
+# ternary_SOURCES=bench.c
+# ternary_CFLAGS= $(AM_CFLAGS) -DENGINE_TERNARY
+# ternary_LDADD=../libgf2x.la -lgmp
+ 
+# This is temporarily disabled.
+# check_PROGRAMS += ternary_ns
+# ternary_ns_SOURCES=bench.c
+# ternary_ns_CFLAGS= $(AM_CFLAGS) -DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
+# ternary_ns_LDADD=../libgf2x.la -lgmp
+ 
 check_PROGRAMS += cantor64
 cantor64_SOURCES=bench.c gf2x-cantor-fft.c
 cantor64_CFLAGS= $(AM_CFLAGS) $(C64)
@@ -99,5 +103,5 @@ AM_TESTS_ENVIRONMENT = \
     all_sizes="10 100 1000 10000 100000"; export all_sizes;	\
     tests_location="$(builddir)"; export tests_location;
 
-TESTS=./debug/check_cantor.sh
+TESTS = ./debug/check_cantor.sh
 EXTRA_DIST=$(TESTS)

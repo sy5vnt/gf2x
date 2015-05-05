@@ -39,32 +39,32 @@ check_addmul_LDADD=$(top_builddir)/libgf2x.la
 # LOG_COMPILER=$(SHELL) 2>/dev/null
 
 SYNTHESIZED_TESTS = \
-    check_1_1_71194aa9_76540123.mul		\
-    check_2_2_b0a25e22_76540123.mul		\
-    check_3_3_d0821e1e_76540123.mul		\
-    check_4_4_cbcec8a9_76540123.mul		\
-    check_5_5_ef506fd3_76540123.mul		\
-    check_6_6_5e201456_76540123.mul		\
-    check_7_7_d492afae_76540123.mul		\
-    check_8_8_1068cb97_76540123.mul		\
-    check_9_9_2e2e13e3_76540123.mul		\
-    check_20_20_8b5a3c69_76540123.mul		\
-    check_100_20_a8d1adaa_76540123.mul		\
-    check_100_100_2269c4fa_76540123.mul		\
-    check_1000_20_a419864d_76540123.mul		\
-    check_1000_100_fc4a566b_76540123.mul	\
-    check_1000_1000_a12a7e03_76540123.mul	\
-    check_5437_20_87588c37_76540123.mul		\
-    check_5437_100_9397839a_76540123.mul	\
-    check_5437_1000_ce4d6e43_76540123.mul	\
-    check_5437_5437_9e364ad1_76540123.mul	\
-    check_10000_20_11bbc400_76540123.mul	\
-    check_10000_100_cc43341e_76540123.mul	\
-    check_10000_1000_d51f2fa8_76540123.mul	\
-    check_10000_5437_64751d23_76540123.mul	\
-    check_10000_10000_c2f4746f_76540123.mul	\
-    check_832040_1346269_6fd76898_76540123.mul	\
-    check_785672_1271244_23c9bb24_76540123.mul
+    check_1_1_71194aa9.mul		\
+    check_2_2_b0a25e22.mul		\
+    check_3_3_d0821e1e.mul		\
+    check_4_4_cbcec8a9.mul		\
+    check_5_5_ef506fd3.mul		\
+    check_6_6_5e201456.mul		\
+    check_7_7_d492afae.mul		\
+    check_8_8_1068cb97.mul		\
+    check_9_9_2e2e13e3.mul		\
+    check_20_20_8b5a3c69.mul		\
+    check_100_20_a8d1adaa.mul		\
+    check_100_100_2269c4fa.mul		\
+    check_1000_20_a419864d.mul		\
+    check_1000_100_fc4a566b.mul		\
+    check_1000_1000_a12a7e03.mul	\
+    check_5437_20_87588c37.mul		\
+    check_5437_100_9397839a.mul		\
+    check_5437_1000_ce4d6e43.mul	\
+    check_5437_5437_9e364ad1.mul	\
+    check_10000_20_11bbc400.mul		\
+    check_10000_100_cc43341e.mul	\
+    check_10000_1000_d51f2fa8.mul	\
+    check_10000_5437_64751d23.mul	\
+    check_10000_10000_c2f4746f.mul	\
+    check_832040_1346269_6fd76898.mul	\
+    check_785672_1271244_23c9bb24.mul
 
 $(SYNTHESIZED_TESTS) : ; @touch $@
 
@@ -72,7 +72,7 @@ TESTS = check-addmul $(SYNTHESIZED_TESTS)
 
 TEST_EXTENSIONS = .mul
 # We'll run the *.mul tests above as:
-# 	./do-check-mul.sh -m check_10000_5437_64751d23_76540123.mul
+# 	./do-check-mul.sh -m check_10000_5437_64751d23.mul
 MUL_LOG_COMPILER = $(srcdir)/do-check-mul.sh
 AM_MUL_LOG_FLAGS = -m
 

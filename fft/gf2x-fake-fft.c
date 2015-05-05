@@ -29,7 +29,7 @@
 #include "gf2x-config.h"
 #include "gf2x-fake-fft.h"
 #include "gf2x.h"
-#include "macros.h"
+#include "gf2x-impl.h"
 
 
 #define ULONG_BITS      GF2X_WORDSIZE

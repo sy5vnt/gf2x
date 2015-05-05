@@ -44,17 +44,15 @@
    Boston, MA 02110-1301, USA.
 */
 
-#ifndef CANTOR_H_
-#define CANTOR_H_
+#ifndef GF2X_FFT_CANTOR_H_
+#define GF2X_FFT_CANTOR_H_
 
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "macros.h"
-
-#ifdef  HAVE_GF2X
-#include "gf2x-thresholds.h"
-#endif  /* HAVE_GF2X */
+#include "gf2x.h"
+#include "gf2x-config-export.h"
+#include "gf2x-thresholds.h"       /* GF2X_WORDSIZE */
 
 #ifdef __cplusplus
 extern "C" {
@@ -134,4 +132,4 @@ extern int gf2x_cantor_fft_compatible(gf2x_cantor_fft_info_srcptr o1, gf2x_canto
 }
 #endif
 
-#endif	/* CANTOR_H_ */
+#endif	/* GF2X_FFT_CANTOR_H_ */

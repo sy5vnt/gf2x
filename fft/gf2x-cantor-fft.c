@@ -33,7 +33,7 @@
  * truncated and non-truncated case.
  */
 
-#include "gf2xfft-config.h"
+#include "gf2x-config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +43,7 @@
 #include <limits.h>
 
 #include "gf2x-cantor-fft.h"
+#include "gf2x-impl.h"
 
 /* The following flags affect the behaviour of the program */
 
