@@ -103,7 +103,7 @@ src/tuning-common.h     - helper code
 src/tuning-common.c     - helper code
 src/timing.h            - helper code
 src/timing.c            - helper code
-src/update-thresholds.c - helper code
+src/modify-thresholds.c - helper code
 
 Applications that use gf2x and NTL. These applications are covered by the
 GPL.

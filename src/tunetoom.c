@@ -55,10 +55,10 @@
         -> does 1 by 1 steps up to size 2048, prepare output in tunetoom.res
 
       The output file tunetoom.res can then be used as input for the
-      update-thresholds program, like in the following:
+      modify-thresholds program, like in the following:
 
        cat ../gf2x-thresholds.h > tuned_thresholds.h
-       ./update-thresholds -o tuned_thresholds.h < tunetoom.res
+       ./modify-thresholds -o tuned_thresholds.h < tunetoom.res
        mkdir -p ../already_tuned/tuned/
        mv tuned_thresholds.h ../already_tuned/tuned/gf2x-thresholds.h
        rm -f ../gf2x-thresholds.h

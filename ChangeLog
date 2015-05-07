@@ -137,7 +137,7 @@ Date:   Fri Nov 15 15:20:05 2013 +0000
  src/tuning-common.h                           |   4 +-
  src/tuning_undef_wrapper.h                    |   4 +-
  src/tuning_undefs_pre.h                       |   4 +-
- src/update-thresholds.c                       |   4 +-
+ src/modify-thresholds.c                       |   4 +-
  tests/Makefile.am                             |   4 +-
  tests/check-addmul.c                          |   2 +-
  tests/check-mul.c                             |   4 +-
@@ -295,7 +295,7 @@ Date:   Fri Jul 12 14:52:20 2013 +0000
     
     git-svn-id: svn+ssh://scm.gforge.inria.fr/svn/gf2x@153 e5c1114b-a573-4582-9dac-f72f410959ce
 
- src/update-thresholds.c | 3 +--
+ src/modify-thresholds.c | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 commit ff64742dacec236cdd1d1d145ddf20d210a0ed83
@@ -307,7 +307,7 @@ Date:   Thu Jun 6 16:57:18 2013 +0000
     
     git-svn-id: svn+ssh://scm.gforge.inria.fr/svn/gf2x@152 e5c1114b-a573-4582-9dac-f72f410959ce
 
- src/update-thresholds.c | 14 +++++++-------
+ src/modify-thresholds.c | 14 +++++++-------
  1 file changed, 7 insertions(+), 7 deletions(-)
 
 commit ef7118ae91edc089cb5249d3c487a491e629a1f1
@@ -333,7 +333,7 @@ Date:   Wed Jun 5 12:30:42 2013 +0000
     git-svn-id: svn+ssh://scm.gforge.inria.fr/svn/gf2x@150 e5c1114b-a573-4582-9dac-f72f410959ce
 
  README                  |  4 ++--
- src/update-thresholds.c | 11 ++++++++++-
+ src/modify-thresholds.c | 11 ++++++++++-
  2 files changed, 12 insertions(+), 3 deletions(-)
 
 commit 738474490b109f73b339dd44bda8a30833f4e7ed
@@ -376,7 +376,7 @@ Date:   Fri Apr 26 12:58:55 2013 +0000
  src/gen_bb_mul_code.c   |  4 ++--
  src/replace.c           |  6 +++---
  src/replace.h           |  2 +-
- src/update-thresholds.c | 32 ++++++++++++++++----------------
+ src/modify-thresholds.c | 32 ++++++++++++++++----------------
  toom.c                  |  4 ++--
  9 files changed, 41 insertions(+), 41 deletions(-)
 
@@ -791,7 +791,7 @@ Date:   Fri Nov 26 10:08:54 2010 +0000
  src/tuning-common.h                           |  23 +-
  src/tuning_undef_wrapper.h                    |  25 +-
  src/tuning_undefs_pre.h                       |  25 +-
- src/update-thresholds.c                       |  23 +-
+ src/modify-thresholds.c                       |  23 +-
  tests/Makefile.am                             |  27 +-
  tests/check-addmul.c                          |  22 +-
  tests/check-mul.c                             |  23 +-
@@ -1860,7 +1860,7 @@ Date:   Thu Sep 9 14:36:32 2010 +0000
  src/tuning-common.h                           |  66 ++++
  src/tuning_undef_wrapper.h                    |  19 ++
  src/tuning_undefs_pre.h                       |  53 ++++
- src/update-thresholds.c                       | 425 ++++++++++++++++++++++++++
+ src/modify-thresholds.c                       | 425 ++++++++++++++++++++++++++
  tuning/Makefile.am                            | 375 -----------------------
  tuning/README                                 |  55 ----
  tuning/TODO                                   |   3 -
@@ -1885,7 +1885,7 @@ Date:   Thu Sep 9 14:36:32 2010 +0000
  tuning/tuning-common.h                        |  66 ----
  tuning/tuning_undef_wrapper.h                 |  19 --
  tuning/tuning_undefs_pre.h                    |  53 ----
- tuning/update-thresholds.c                    | 425 --------------------------
+ tuning/modify-thresholds.c                    | 425 --------------------------
  wipeout-autotools                             |   3 +-
  90 files changed, 5390 insertions(+), 5389 deletions(-)
 
@@ -2145,7 +2145,7 @@ Date:   Mon Nov 9 15:36:36 2009 +0000
  tuning/tuneup.c                     |  23 +-
  tuning/tuning-common.c              |  23 +-
  tuning/tuning-common.h              |  23 +-
- tuning/update-thresholds.c          |  23 +-
+ tuning/modify-thresholds.c          |  23 +-
  44 files changed, 1222 insertions(+), 734 deletions(-)
 
 commit 3cbc68050ef3081877f0eb98e54380297555cdfc
@@ -2475,7 +2475,7 @@ Date:   Mon Mar 30 13:36:22 2009 +0000
  tuning/tuneup.c                     |    2 +-
  tuning/tuning-common.c              |    2 +-
  tuning/tuning-common.h              |    2 +-
- tuning/update-thresholds.c          |    2 +-
+ tuning/modify-thresholds.c          |    2 +-
  wipeout-autotools                   |    2 +-
  55 files changed, 4171 insertions(+), 92 deletions(-)
 
@@ -2652,6 +2652,6 @@ Date:   Thu Mar 26 15:43:38 2009 +0000
  tuning/tuneup.c                     |  108 ++
  tuning/tuning-common.c              |  144 +++
  tuning/tuning-common.h              |   67 ++
- tuning/update-thresholds.c          |  426 ++++++++
+ tuning/modify-thresholds.c          |  426 ++++++++
  wipeout-autotools                   |    6 +
  71 files changed, 11910 insertions(+)

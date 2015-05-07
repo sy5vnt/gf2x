@@ -591,8 +591,8 @@ EXTRA_DIST+=tune-lowlevel.pl
 ######################################################################
 noinst_HEADERS=timing.h tuning-common.h replace.h
 
-EXTRA_PROGRAMS+=update-thresholds$(EXEEXT)
-update_thresholds_SOURCES=update-thresholds.c replace.c
+EXTRA_PROGRAMS+=modify-thresholds$(EXEEXT)
+modify_thresholds_SOURCES=modify-thresholds.c replace.c
 
 ######################################################################
 EXTRA_PROGRAMS+=tunetoom$(EXEEXT)
@@ -605,10 +605,10 @@ if GPL_CODE_PRESENT
 tunetoom.res: tunetoom$(EXEEXT)
 	./tunetoom -s 1.05 $(TOOM_TUNING_LIMIT) -o tunetoom.res
 
-tune-toom: tunetoom.res update-thresholds$(EXEEXT)
+tune-toom: tunetoom.res modify-thresholds$(EXEEXT)
 	cd $(top_builddir) ; $(MAKE)
 	cat ../gf2x/gf2x-thresholds.h > tuned_thresholds.h
-	./update-thresholds -o tuned_thresholds.h < tunetoom.res
+	./modify-thresholds -o tuned_thresholds.h < tunetoom.res
 	mkdir -p ../already_tuned/tuned/
 	mv -f tuned_thresholds.h ../already_tuned/tuned/gf2x-thresholds.h
 	rm -f ../gf2x/gf2x-thresholds.h
@@ -631,10 +631,10 @@ FFT_TUNING_SCALE=1.02
 tunefft.res: tunefft$(EXEEXT)
 	./tunefft -s $(FFT_TUNING_SCALE) $(FFT_TUNING_LIMIT) -o tunefft.res
 
-tune-fft: tunefft.res update-thresholds$(EXEEXT)
+tune-fft: tunefft.res modify-thresholds$(EXEEXT)
 	cd $(top_builddir) ; $(MAKE)
 	cat ../gf2x/gf2x-thresholds.h > tuned_thresholds.h
-	./update-thresholds -o tuned_thresholds.h < tunefft.res
+	./modify-thresholds -o tuned_thresholds.h < tunefft.res
 	mkdir -p ../already_tuned/tuned/
 	mv -f tuned_thresholds.h ../already_tuned/tuned/gf2x-thresholds.h
 	rm -f ../gf2x/gf2x-thresholds.h

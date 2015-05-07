@@ -407,7 +407,7 @@ void usage(int rc)
 {
     FILE * f = rc ? stderr : stdout;
 
-    fprintf(f, "Usage: update-thresholds [-o <thresholds file>]\n");
+    fprintf(f, "Usage: modify-thresholds [-o <thresholds file>]\n");
     exit(rc);
 }
 

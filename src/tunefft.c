@@ -45,10 +45,10 @@
       tuning quicker, but less accurate.
 
       The output file tunefft.res can then be used as input for the
-      update-thresholds program, like in the following:
+      modify-thresholds program, like in the following:
 
        cat ../gf2x-thresholds.h > tuned_thresholds.h
-       ./update-thresholds -o tuned_thresholds.h < tunefft.res
+       ./modify-thresholds -o tuned_thresholds.h < tunefft.res
        mkdir -p ../already_tuned/tuned/
        mv tuned_thresholds.h ../already_tuned/tuned/gf2x-thresholds.h
        rm -f ../gf2x-thresholds.h
