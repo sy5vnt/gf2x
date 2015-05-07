@@ -39,6 +39,9 @@ general_fftcheck_sources=check.c	\
 		      ../test-tools.c
 
 # This must be exactly the same list of configurations as in fft/Makefile.am
+# the flags WITHOUT_CANTOR_TRUNCATION, CANTOR_GM, and CANTOR_GM_TRUNCATE
+# are irrelevant here, but we lazily copy the config block from
+# fft/Makefile.am
 CCOMMON=-DENGINE_CANTOR -DESCAPE_CANTOR_SYMBOLS
 C64=$(CCOMMON) -DCANTOR_BASE_FIELD_SIZE=64
 C64nt=$(C64) -DWITHOUT_CANTOR_TRUNCATION

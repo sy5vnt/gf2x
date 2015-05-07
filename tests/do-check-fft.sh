@@ -41,7 +41,7 @@ if [ "$magic" ] ; then
 $magic_tr
 EOF
     expected="$n $k $v"
-    cmdline="`dirname $0`/check_$binary --test $n --matrixsize $k --crc"
+    cmdline="`dirname $0`/check_$binary --n $n --k $k --crc"
     echo "## $cmdline"
     echo "## expected output: $expected"
     got="`$cmdline`"

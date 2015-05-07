@@ -146,7 +146,7 @@ int test(int n, int d)
 }
 void usage_and_die(char **argv)
 {
-    fprintf(stderr, "usage: %s --test <n>\n", argv[0]);
+    fprintf(stderr, "usage: %s --n <n> --k <k>\n", argv[0]);
     exit(1);
 }
 
@@ -164,11 +164,11 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if (i < argc - 1 && strcmp(argv[i], "--test") == 0) {
+        if (i < argc - 1 && strcmp(argv[i], "--n") == 0) {
             N = atoi(argv[++i]);
             continue;
         }
-        if (i < argc - 1 && strcmp(argv[i], "--matrixsize") == 0) {
+        if (i < argc - 1 && strcmp(argv[i], "--k") == 0) {
             k = atoi(argv[++i]);
             continue;
         }
