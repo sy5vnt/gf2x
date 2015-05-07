@@ -14,11 +14,11 @@ done
 # AUTOMAKE_VERSION variables be set. For most other nodes, this is
 # irrelevant and ignored.
 export AUTOCONF_VERSION=2.69
-if type aclocal-1.15 > /dev/null ; then
+if type aclocal-1.15 > /dev/null 2>&1 ; then
     export AUTOMAKE_VERSION=1.15
-elif type aclocal-1.14 > /dev/null ; then
+elif type aclocal-1.14 > /dev/null 2>&1 ; then
     export AUTOMAKE_VERSION=1.14
-elif type aclocal-1.13 > /dev/null ; then
+elif type aclocal-1.13 > /dev/null 2>&1 ; then
     export AUTOMAKE_VERSION=1.13
 elif type aclocal > /dev/null ; then
     :
