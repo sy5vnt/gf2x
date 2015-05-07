@@ -238,6 +238,15 @@ static inline void allBetai(Kdst_elt x, size_t i)
     }
 }
 
+static inline size_t transform_datasize(gf2x_cantor_fft_info_srcptr p)
+{
+    size_t n = p->n;
+#ifdef WITHOUT_CANTOR_TRUNCATION
+    n = 1 << p->k;
+#endif
+    return n;
+}
+
 #ifdef  CANTOR_GM
 #if 0
 /* These versions would make sense if Kelt were defined to be _v2di *,
@@ -1337,8 +1346,7 @@ void gf2x_cantor_fft_dft(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, 
 
 void gf2x_cantor_fft_compose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
-    size_t j;
-    for (j = 0; j < p->n; ++j) {
+    for (size_t j = 0; j < transform_datasize(p) ; j++) {
         Kmul(y[j], x1[j], x2[j]);
 #ifdef  DOUBLE_MUL_FOR_TIMING_ONLY
         asm volatile("# HELLO COMP"::"r"(x1),"r"(y):"memory");
@@ -1348,30 +1356,29 @@ void gf2x_cantor_fft_compose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr
 }
 void gf2x_cantor_fft_addcompose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
-    size_t j;
     Kelt e;
-    for (j = 0; j < p->n; ++j) {
+    for (size_t j = 0; j < transform_datasize(p) ; j++) {
         Kmul(e, x1[j], x2[j]);
         Kadd(y[j], y[j], e);
     }
 }
 void gf2x_cantor_fft_add(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
-    size_t j;
-    for (j = 0; j < p->n; ++j) {
+    for (size_t j = 0; j < transform_datasize(p) ; j++) {
         Kadd(y[j], x1[j], x2[j]);
     }
 }
 
 void gf2x_cantor_fft_cpy(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x)
 {
-    memcpy(y, x, (p->n)*sizeof(Kelt));
+    memcpy(y, x, transform_datasize(p)*sizeof(Kelt));
 }
 
 size_t gf2x_cantor_fft_size(const gf2x_cantor_fft_info_t p)
 {
     // the _size() is a number of Kelt of the result.
-    return p->n;
+    // n normally, except when not truncating...
+    return transform_datasize(p);
 }
 
 /* nH is a number of coefficients */
@@ -1384,11 +1391,11 @@ void gf2x_cantor_fft_ift(
 {
     size_t Hl = (nH + GF2X_WORDSIZE - 1) / GF2X_WORDSIZE;
 
-    // fill in with zeros to facilitate interpolation
-    memset(h + p->n, 0, ((1UL << p->k) - p->n) * sizeof(Kelt));
 #ifdef WITHOUT_CANTOR_TRUNCATION
     interpolateK(h, p->k);
 #else
+    // fill in with zeros to facilitate interpolation
+    memset(h + p->n, 0, ((1UL << p->k) - p->n) * sizeof(Kelt));
     if (p->n & (p->n - 1)) {
         /* n is not a power of 2 */
         interpolateK_trunc(h, p->k, p->n);
