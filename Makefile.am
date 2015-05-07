@@ -75,9 +75,9 @@ nobase_nodist_include_HEADERS=	\
 
 libgf2x_la_LDFLAGS=-version-info @gf2x_lib_version@
 
-SUBDIRS=. tests lowlevel src $(MAYBE_APPS)
+SUBDIRS=lowlevel src fft . tests $(MAYBE_APPS)
 
-DIST_SUBDIRS=tests src lowlevel apps
+DIST_SUBDIRS=lowlevel src fft . tests apps
 
 DISTCLEANFILES=gf2x/gf2x-thresholds.h	\
 	       gf2x/gf2x_mul1.h		\
