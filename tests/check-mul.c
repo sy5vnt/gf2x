@@ -33,76 +33,7 @@
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
 
-/* Fill the ulong* array a by n1 32-bit values in geometric progression.
- * Returns a value which is appropriate for chaining.
- */
-uint32_t fill(unsigned long * a, int n1, uint32_t v, uint32_t start)
-{
-    int i;
-#if GF2X_WORDSIZE == 32
-    for(i = 0 ; i < n1 ; i++) { a[i] = v; v *= start; }
-#elif GF2X_WORDSIZE == 64
-    int N1 = n1 / 2 + (n1 & 1);
-    unsigned long w = 1;
-    for(i = 0 ; i < N1 ; i++) {
-        w = (unsigned long) v * (unsigned long) start;
-        a[i] = w << 32 | (unsigned long) v;
-        v = w * start;
-    }
-    if (n1 & 1) { v = w; a[N1-1] &= (1UL << 32) - 1; }
-#else
-#error "Config problem"
-#endif
-    return v;
-}
-
-#define RED(l,h) do {							\
-        /* Compute crc mod x^32 + x^7 + x^6 + x^2 + 1 */		\
-        l ^= h ^ h << 2 ^ h << 6 ^ h << 7;				\
-        h  = h >> 30 ^ h >> 26 ^ h >> 25;				\
-        /* h is at most 7 bits now. */					\
-        l ^= h ^ h << 2 ^ h << 6 ^ h << 7;				\
-        h = 0;								\
-} while (0)
-
-uint32_t crc32(unsigned long * c, int n3)
-{
-    int i;
-    uint32_t v = 0UL;
-#if GF2X_WORDSIZE == 32
-    for(i = 0 ; i < n3 ; i++) {
-        uint32_t l,h;
-        l = c[i];
-        h = v;
-        RED(l,h);
-        v = l;
-    }
-#elif GF2X_WORDSIZE == 64
-    int N3 = n3 / 2 + (n3 & 3);
-    i = 0;
-    for(int j = 0 ; j < N3 ; j++) {
-        uint32_t l, h;
-        unsigned long cj = c[j];
-
-        h = v;
-        l = cj;
-        RED(l,h);
-        i++;
-        v = l;
-        if (i == n3) break;
-
-        cj >>= 32;
-
-        h = v;
-        l = cj;
-        RED(l,h);
-        i++;
-        v = l;
-        if (i == n3) break;
-    }
-#endif
-    return v;
-}
+#include "test-tools.h"
 
 
 int main(int argc, char * argv[])
@@ -138,7 +69,8 @@ int main(int argc, char * argv[])
     unsigned long * b = malloc(N2 * sizeof(unsigned long));
     unsigned long * c = malloc(N3 * sizeof(unsigned long));
 
-    uint32_t start=0x76540123UL;
+    uint32_t start=0x32104567UL;
+    uint32_t ratio=0x76540123UL;
 
     start |= 1UL;
 
@@ -146,15 +78,15 @@ int main(int argc, char * argv[])
     uint32_t check0, check1;
 
     v = start;
-    v = fill(a, n1, v, start);
-    v = fill(b, n2, v, start);
+    v = fill(a, n1, v, ratio);
+    v = fill(b, n2, v, ratio);
     gf2x_mul(c,a,N1,b,N2);
-    check0 = crc32(c, n3);
+    check0 = crc32(c, n3, 0);
 
     v = start;
-    v = fill(c, n1, v, start);
+    v = fill(c, n1, v, ratio);
     gf2x_mul(c,c,N1,b,N2);
-    check1 = crc32(c, n3);
+    check1 = crc32(c, n3, 0);
 
     if (check0 != check1) {
         printf("aliasing test failed\n");
@@ -162,10 +94,10 @@ int main(int argc, char * argv[])
     }
 
     v = start;
-    v = fill(a, n1, v, start);
-    v = fill(c, n2, v, start);
+    v = fill(a, n1, v, ratio);
+    v = fill(c, n2, v, ratio);
     gf2x_mul(c,a,N1,c,N2);
-    check1 = crc32(c, n3);
+    check1 = crc32(c, n3, 0);
 
     if (check0 != check1) {
         printf("aliasing test failed\n");

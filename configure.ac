@@ -219,7 +219,8 @@ AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h])
 #fi
 #AC_SUBST([MAYBE_GF2X_FFT])
 
-AC_CONFIG_FILES([version.sh Makefile tests/Makefile lowlevel/Makefile src/Makefile fft/Makefile apps/Makefile])
+AC_CONFIG_FILES([version.sh Makefile tests/Makefile lowlevel/Makefile
+                 src/Makefile fft/Makefile tests/fft/Makefile apps/Makefile])
 
 AC_OUTPUT
 

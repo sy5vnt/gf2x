@@ -31,40 +31,38 @@
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 
 check_PROGRAMS=check-mul check-addmul
-check_mul_SOURCES=check-mul.c
+check_mul_SOURCES=check-mul.c test-tools.c
 check_addmul_SOURCES=check-addmul.c
 check_mul_LDADD=$(top_builddir)/libgf2x.la
 check_addmul_LDADD=$(top_builddir)/libgf2x.la
 
-# LOG_COMPILER=$(SHELL) 2>/dev/null
-
 SYNTHESIZED_TESTS = \
-    check_1_1_71194aa9.mul		\
-    check_2_2_b0a25e22.mul		\
-    check_3_3_d0821e1e.mul		\
-    check_4_4_cbcec8a9.mul		\
-    check_5_5_ef506fd3.mul		\
-    check_6_6_5e201456.mul		\
-    check_7_7_d492afae.mul		\
-    check_8_8_1068cb97.mul		\
-    check_9_9_2e2e13e3.mul		\
-    check_20_20_8b5a3c69.mul		\
-    check_100_20_a8d1adaa.mul		\
-    check_100_100_2269c4fa.mul		\
-    check_1000_20_a419864d.mul		\
-    check_1000_100_fc4a566b.mul		\
-    check_1000_1000_a12a7e03.mul	\
-    check_5437_20_87588c37.mul		\
-    check_5437_100_9397839a.mul		\
-    check_5437_1000_ce4d6e43.mul	\
-    check_5437_5437_9e364ad1.mul	\
-    check_10000_20_11bbc400.mul		\
-    check_10000_100_cc43341e.mul	\
-    check_10000_1000_d51f2fa8.mul	\
-    check_10000_5437_64751d23.mul	\
-    check_10000_10000_c2f4746f.mul	\
-    check_832040_1346269_6fd76898.mul	\
-    check_785672_1271244_23c9bb24.mul
+	check_1_1_1_819ea234.mul		\
+	check_2_2_1_928e7e94.mul		\
+	check_3_3_1_14aac2f1.mul		\
+	check_4_4_1_fbc8042f.mul		\
+	check_5_5_1_049e6e28.mul		\
+	check_6_6_1_f7fa48ac.mul		\
+	check_7_7_1_39d1a8b9.mul		\
+	check_8_8_1_11334230.mul		\
+	check_9_9_1_a499e414.mul		\
+	check_20_20_1_d40a21e3.mul		\
+	check_100_20_1_6dc5ac13.mul		\
+	check_100_100_1_5094c182.mul		\
+	check_1000_20_1_6ce07fed.mul		\
+	check_1000_100_1_08825281.mul		\
+	check_1000_1000_1_c28bc2e3.mul		\
+	check_5437_20_1_ad84f617.mul		\
+	check_5437_100_1_8eb064ef.mul		\
+	check_5437_1000_1_c546a34c.mul		\
+	check_5437_5437_1_f09c5936.mul		\
+	check_10000_20_1_4d3b9b2d.mul		\
+	check_10000_100_1_f2e7cc20.mul		\
+	check_10000_1000_1_3b8778b1.mul		\
+	check_10000_5437_1_b337c8eb.mul		\
+	check_10000_10000_1_2706ca53.mul	\
+	check_832040_1346269_1_8513d1fb.mul	\
+	check_785672_1271244_1_842e0d19.mul
 
 $(SYNTHESIZED_TESTS) : ; @touch $@
 
@@ -77,3 +75,6 @@ MUL_LOG_COMPILER = $(srcdir)/do-check-mul.sh
 AM_MUL_LOG_FLAGS = -m
 
 EXTRA_DIST=do-check-mul.sh
+
+SUBDIRS=fft
+

@@ -1,4 +1,3 @@
-#!/bin/sh
 #  This file is part of the gf2x library.
 #
 #  Copyright 2007, 2008, 2009, 2010, 2013
@@ -38,21 +37,16 @@ done
 
 if [ "$magic" ] ; then
     magic_tr=`echo $magic | tr '_.' '  '`
-    read check n1 n2 k v mul <<EOF
+    read check binary n k v fft <<EOF
 $magic_tr
 EOF
-    if [ $k != 1 ] ; then
-        echo "check-mul does not support -k" >&2
-        exit 1
-    fi
-    echo "n1 = $n1 ; n2=$n2 ; v=$v"
-    expected="$n1 $n2 $v"
-    cmdline="`dirname $0`/check-mul $n1 $n2"
+    expected="$n $k $v"
+    cmdline="`dirname $0`/check_$binary --test $n --matrixsize $k --crc"
     echo "## $cmdline"
     echo "## expected output: $expected"
     got="`$cmdline`"
     if [ "$got" != "$expected" ] ; then
-        echo "failed check for ${n1}x${n2} : '$got' != '$expected'" >&2
+        echo "failed check for ${n}x${n}, matrix size $k : '$got' != '$expected'" >&2
         echo "failed : '$got' != '$expected'"
         exit 1
     fi
