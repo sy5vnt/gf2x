@@ -1244,9 +1244,6 @@ void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k GF2X_MAYBE_UNUSED)
 #endif
 
 #elif (GF2X_WORDSIZE == 32)
-
-/* not thoroughly tested */
-#error "32-bits + CANTOR_BASE_FIELD_SIZE==64 unimplemented"
 void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
 {
     size_t i;
