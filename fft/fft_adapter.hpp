@@ -45,7 +45,7 @@ struct visible {							\
 	~visible() { CAT(Z,clear)(o); }                 		\
 									\
 private: /* Make sure we forbid copies */                               \
-        visible(visible const& other MAYBE_UNUSED) {}                   \
+        visible(visible const& other GF2X_MAYBE_UNUSED) {}                   \
 public:                                                                 \
         /* The extra <acc> argument gives the number of times the */    \
         /* fft is going to be reused. It might be replaced by some */   \
@@ -54,7 +54,7 @@ public:                                                                 \
         /* n1 and n2 give the length of the two operands. The */        \
         /* product is taken as having length n1+n2-1 */                 \
 									\
-	visible(size_t n1, size_t n2, int acc MAYBE_UNUSED)		\
+	visible(size_t n1, size_t n2, int acc GF2X_MAYBE_UNUSED)		\
 	{								\
 		CAT(Z,init)(o, n1, n2, acc);				\
 	}								\

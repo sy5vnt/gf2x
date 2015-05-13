@@ -25,10 +25,7 @@
 #  02110-1301, USA.
 
 ACLOCAL_AMFLAGS=-I config --install
-# AM_CFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
-# AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/mpfq
-# AM_CFLAGS = -I$(srcdir)/mpfq
-AM_CPPFLAGS = -I$(top_srcdir) -I$(srcdir)/mpfq
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) -I$(srcdir)/mpfq
 
 # We want to stress-test the libcantor_la implementation with the following
 # extra features (compile-time flags)
@@ -44,6 +41,20 @@ C128gm=$(C128) -DCANTOR_GM
 C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
 
 check_LTLIBRARIES=
+
+EXTRA_DIST=	\
+	mpfq/better-integrate-gf2x.patch	\
+	mpfq/i386/mpfq_2_128.c			\
+	mpfq/i386/mpfq_2_128.h			\
+	mpfq/i386/mpfq_2_64.c			\
+	mpfq/i386/mpfq_2_64.h			\
+	mpfq/mpfq.h				\
+	mpfq/mpfq_gf2n_common.h			\
+	mpfq/mpfq_name_K.h			\
+	mpfq/x86_64/mpfq_2_128.c		\
+	mpfq/x86_64/mpfq_2_128.h		\
+	mpfq/x86_64/mpfq_2_64.c			\
+	mpfq/x86_64/mpfq_2_64.h
 
 # This is temporarily disabled.
 # # ternary fft is included by default in gf2x.

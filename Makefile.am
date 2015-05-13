@@ -30,6 +30,7 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 
 FFT_SOURCES=fft/gf2x-ternary-fft.c
 if ENABLE_GF2X_FFT
+AM_CPPFLAGS += -I$(srcdir)/mpfq
 FFT_SOURCES+=fft/gf2x-fake-fft.c
 FFT_SOURCES+=fft/gf2x-cantor-fft.c
 AM_CPPFLAGS += -I$(top_srcdir)/fft/mpfq

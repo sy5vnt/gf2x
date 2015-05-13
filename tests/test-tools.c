@@ -25,8 +25,9 @@
    02110-1301, USA.
 */
 
-#include "gf2x-config.h"
-#include "gf2x-thresholds.h"
+#include "gf2x/gf2x-config.h"
+#include "gf2x/gf2x-thresholds.h"
+
 #include "test-tools.h"
 
 /* Fill the ulong* array a by n1 32-bit values in geometric progression.

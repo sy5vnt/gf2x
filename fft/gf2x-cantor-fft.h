@@ -51,8 +51,8 @@
 #include <stdlib.h>
 
 #include "gf2x.h"
-#include "gf2x-config-export.h"
-#include "gf2x-thresholds.h"       /* GF2X_WORDSIZE */
+#include "gf2x/gf2x-config-export.h"
+#include "gf2x/gf2x-thresholds.h"       /* GF2X_WORDSIZE */
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,12 +104,12 @@ typedef gf2x_cantor_fft_base_field_elt * gf2x_cantor_fft_ptr;
 typedef const gf2x_cantor_fft_base_field_elt * gf2x_cantor_fft_srcptr;
 
 extern void gf2x_cantor_fft_init(gf2x_cantor_fft_info_t p, size_t nF, size_t nG, ...);
-extern void gf2x_cantor_fft_clear(gf2x_cantor_fft_info_t p MAYBE_UNUSED);
+extern void gf2x_cantor_fft_clear(gf2x_cantor_fft_info_t p GF2X_MAYBE_UNUSED);
 extern gf2x_cantor_fft_ptr gf2x_cantor_fft_alloc(const gf2x_cantor_fft_info_t p, size_t n);
 extern void gf2x_cantor_fft_free(
-        const gf2x_cantor_fft_info_t p MAYBE_UNUSED,
+        const gf2x_cantor_fft_info_t p GF2X_MAYBE_UNUSED,
         gf2x_cantor_fft_ptr x,
-        size_t n MAYBE_UNUSED);
+        size_t n GF2X_MAYBE_UNUSED);
 extern gf2x_cantor_fft_ptr gf2x_cantor_fft_get(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, size_t k);
 extern gf2x_cantor_fft_srcptr gf2x_cantor_fft_get_const(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_srcptr x, size_t k);
 extern void gf2x_cantor_fft_zero(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, size_t n);

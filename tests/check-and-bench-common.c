@@ -33,8 +33,10 @@
 #include <sys/resource.h>
 #include <gmp.h>		// for random
 
-#include "gf2x-config.h"
-#include "gf2x-thresholds.h"
+#include "gf2x/gf2x-config.h"
+#include "gf2x/gf2x-impl.h"
+#include "gf2x/gf2x-thresholds.h"
+
 #include "test-tools.h"
 #include "check-and-bench-common.h"
 

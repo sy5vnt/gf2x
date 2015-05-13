@@ -33,8 +33,6 @@
  * truncated and non-truncated case.
  */
 
-#include "gf2x-config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -42,8 +40,10 @@
 #include <string.h>
 #include <limits.h>
 
+#include "gf2x/gf2x-config.h"
+#include "gf2x/gf2x-impl.h"
+
 #include "gf2x-cantor-fft.h"
-#include "gf2x-impl.h"
 
 /* The following flags affect the behaviour of the program */
 
@@ -916,7 +916,7 @@ void multievaluateKrec(Kelt * f, unsigned int i, size_t rep_beta)
 
 #ifdef  CANTOR_GM
 // f must have 2^k coeffs exactly
-void multievaluateGM(Kelt * f, unsigned int k, size_t length MAYBE_UNUSED)
+void multievaluateGM(Kelt * f, unsigned int k, size_t length GF2X_MAYBE_UNUSED)
 {
     unsigned int t = 1;
     unsigned int two_t;
@@ -1205,7 +1205,7 @@ void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
     memset(f + i, 0, ((1UL << k) - Fl) * sizeof(Kelt));
 }
 
-void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k MAYBE_UNUSED)
+void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k GF2X_MAYBE_UNUSED)
 {
     size_t i;
     assert(Fl <= (1UL << k));
@@ -1229,7 +1229,7 @@ void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
     memset(f + i, 0, ((1UL << k) - 2*Fl) * sizeof(Kelt));
 }
 
-void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k MAYBE_UNUSED)
+void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k GF2X_MAYBE_UNUSED)
 {
     size_t i;
     assert(Fl <= (1UL << (k-1)));
@@ -1267,7 +1267,7 @@ void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
     memset(f + i, 0, ((1UL << k) - i) * sizeof(Kelt));
 }
 
-void recomposeK(unsigned long * F, Kelt * f, size_t Fl, unsigned int k MAYBE_UNUSED)
+void recomposeK(unsigned long * F, Kelt * f, size_t Fl, unsigned int k GF2X_MAYBE_UNUSED)
 {
     size_t i;
 
@@ -1443,9 +1443,9 @@ gf2x_cantor_fft_ptr gf2x_cantor_fft_alloc(const gf2x_cantor_fft_info_t p, size_t
     return (Kelt *) malloc((n << p->k) * sizeof(Kelt));
 }
 void gf2x_cantor_fft_free(
-        const gf2x_cantor_fft_info_t p MAYBE_UNUSED,
+        const gf2x_cantor_fft_info_t p GF2X_MAYBE_UNUSED,
         gf2x_cantor_fft_ptr x,
-        size_t n MAYBE_UNUSED)
+        size_t n GF2X_MAYBE_UNUSED)
 {
     free(x);
 }
@@ -1461,7 +1461,7 @@ void gf2x_cantor_fft_zero(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x,
 {
     memset(x, 0, (n << p->k) * sizeof(Kelt));
 }
-void gf2x_cantor_fft_init_similar(gf2x_cantor_fft_info_ptr o, size_t bits_a, size_t bits_b, gf2x_cantor_fft_info_srcptr other MAYBE_UNUSED)
+void gf2x_cantor_fft_init_similar(gf2x_cantor_fft_info_ptr o, size_t bits_a, size_t bits_b, gf2x_cantor_fft_info_srcptr other GF2X_MAYBE_UNUSED)
 {
     gf2x_cantor_fft_init(o, bits_a, bits_b);
 }

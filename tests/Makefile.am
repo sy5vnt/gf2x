@@ -38,6 +38,8 @@ SYNTHESIZED_TESTS =
 TESTS = check-addmul
 TEST_EXTENSIONS =
 
+EXTRA_DIST=test-tools.h check-and-bench-common.h
+
 ############# mul checks
 
 check_PROGRAMS += check-mul
@@ -253,4 +255,4 @@ $(SYNTHESIZED_TESTS) : ; @touch $@
 TESTS += $(SYNTHESIZED_TESTS)
 
 
-EXTRA_DIST=do-check-mul.sh do-check-fft.sh
+EXTRA_DIST+=do-check-mul.sh do-check-fft.sh

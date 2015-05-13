@@ -31,7 +31,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "macros.h"
+#include "gf2x/gf2x-config-export.h"
+#include "gf2x/gf2x-impl-export.h"
+#include "gf2x/gf2x-thresholds.h"
 
 /* This file is a placeholder for the typical requirements of an FFT
  * interface. Of course, there is nothing interesting being done here.
@@ -69,13 +71,13 @@ typedef gf2x_fake_fft_t * gf2x_fake_fft_ptr;
 typedef const gf2x_fake_fft_t * gf2x_fake_fft_srcptr;
 
 extern void gf2x_fake_fft_init(gf2x_fake_fft_info_ptr p, size_t nF, size_t nG, ...); 
-static inline void gf2x_fake_fft_clear(gf2x_fake_fft_info_ptr p MAYBE_UNUSED) {}
+static inline void gf2x_fake_fft_clear(gf2x_fake_fft_info_ptr p GF2X_MAYBE_UNUSED) {}
 static inline gf2x_fake_fft_ptr gf2x_fake_fft_alloc(gf2x_fake_fft_info_srcptr p, size_t n) {
     return (gf2x_fake_fft_ptr) malloc(n * p->size * sizeof(unsigned long));
 }
-static inline void gf2x_fake_fft_free(gf2x_fake_fft_info_srcptr p MAYBE_UNUSED,
+static inline void gf2x_fake_fft_free(gf2x_fake_fft_info_srcptr p GF2X_MAYBE_UNUSED,
         gf2x_fake_fft_ptr x,
-        size_t n MAYBE_UNUSED)
+        size_t n GF2X_MAYBE_UNUSED)
 {
     free(x);
 }
