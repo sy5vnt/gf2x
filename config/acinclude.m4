@@ -280,6 +280,43 @@ AC_MSG_CHECKING([warning verbosity option])
 ])
 
 
+dnl check gmp
+AC_DEFUN([GF2X_CHECK_FOR_GMP],[
+	AC_ARG_WITH([gmp],
+		    [AS_HELP_STRING([--with-gmp=DIR],[GMP installation directory])],
+		    [
+		    CPPFLAGS="$CPPFLAGS -I$withval/include"
+		    LDFLAGS="$LDFLAGS -L$withval/lib"
+		    ])
+	AC_MSG_CHECKING(for GMP)
+	LIBS="-lgmp $LIBS"
+	AC_LINK_IFELSE(
+		[AC_LANG_PROGRAM(
+			[[#include "gmp.h"]],
+			[[mpz_t x;  mpz_init(x) ; mpz_clear(x);]]
+		)],
+		[AC_MSG_RESULT(yes)],
+		[
+		AC_MSG_RESULT(no)
+		AC_MSG_ERROR([libgmp not found or uses a different API. Please see the README file for issues with missing dependencies.])
+		])
+	AC_MSG_CHECKING(for recent GMP)
+	AC_COMPILE_IFELSE(
+		[AC_LANG_SOURCE(
+		[[
+	#include "gmp.h"
+	#if (__GNU_MP_VERSION*100 + __GNU_MP_VERSION_MINOR*10 + __GNU_MP_VERSION_PATCHLEVEL < 432)
+	# error "Minimal GMP version is 4.3.2"
+	error
+	#endif
+		]])],
+		[AC_MSG_RESULT(yes)],
+		[
+		AC_MSG_RESULT(no)
+		AC_MSG_ERROR([GMP version >= 4.3.2 required])
+		])
+])
+
 
 dnl -- taken from gmp-4.2.1, LGPL v2.1+ --
 dnl -- renamed GMP_ to GF2X_ --
