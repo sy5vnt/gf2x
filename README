@@ -21,6 +21,19 @@ This package contains routines for fast arithmetic in GF(2)[x]
 
 
 
+Dependencies
+============
+
+gf2x requires the Gnu MP (GMP) library. GMP is packaged in most major
+software distributions. You may also build it from source and install it
+from yourself, see here for further details.
+
+    https://gmplib.org/
+
+If you got the path of installing GMP to a custom location, this location
+must be specified to gf2x's configure script as follows:
+
+    ./configure --with-gmp=/path/which/was/given/as/a/prefix/for/gmp/build
 
 
 
