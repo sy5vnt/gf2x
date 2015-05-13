@@ -29,4 +29,6 @@ fi
 
 if [ -d "$HOME/Packages/gmp-6.0.0" ] ; then
     configure_extra="--with-gmp=$HOME/Packages/gmp-6.0.0"
+elif [ -f "/usr/local/include/gmp.h" ] ; then
+    configure_extra="--with-gmp=/usr/local"
 fi
