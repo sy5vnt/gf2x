@@ -40,7 +40,7 @@ TEST_EXTENSIONS =
 
 ############# mul checks
 
-check_PROGRAMS += check_mul
+check_PROGRAMS += check-mul
 check_mul_SOURCES=check-mul.c test-tools.c
 check_mul_LDADD=$(top_builddir)/libgf2x.la
 SYNTHESIZED_TESTS += \
