@@ -27,3 +27,6 @@ else
     exit 1
 fi
 
+if [ -d "$HOME/Packages/gmp-6.0.0" ] ; then
+    configure_extra="--with-gmp=$HOME/Packages/gmp-6.0.0"
+fi
