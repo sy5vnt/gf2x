@@ -77,7 +77,7 @@ TEST_EXTENSIONS += .mul
 # We'll run the *.mul tests above as:
 #       ./do-check-mul.sh -m check_10000_5437_64751d23.mul
 MUL_LOG_COMPILER = $(srcdir)/do-check-mul.sh
-AM_MUL_LOG_FLAGS = -m
+AM_MUL_LOG_FLAGS = -b $(builddir) -m
 
 ############# fft interface checks
 
@@ -246,7 +246,7 @@ TEST_EXTENSIONS += .fft
 # We'll run the *.fft tests above as:
 #       ./do-check-fft.sh -m check_cantor64_100_1_00000000.fft
 FFT_LOG_COMPILER = $(srcdir)/do-check-fft.sh
-AM_FFT_LOG_FLAGS=-m
+AM_FFT_LOG_FLAGS=-b $(builddir) -m
 
 
 
