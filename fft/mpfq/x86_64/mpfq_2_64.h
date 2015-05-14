@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <ctype.h>
+#include <emmintrin.h>
 #include <stddef.h>
 #include <stdio.h>
 #ifdef  HAVE_GF2X
