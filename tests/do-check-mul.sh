@@ -27,19 +27,11 @@
 
 echo "## $0 $@"
 
-# $builddir can be overridden with -b
-# defaulting to the location of $0 would be wrong in the out-of-source
-# case, so we always use -b in Makefile.am. However, for quick testing, a
-# priori in source, we're fine with a mere -m with this default (and
-# having -b in this case too cannot hurt)
-builddir="`dirname $0`"
-
 while [ $# -gt 0 ] ; do
     arg="$1"
     shift
     case "$arg" in
         -m)     magic="$1" ; shift;;
-        -b)     builddir="$1" ; shift;;
         *)      echo "unexpected test arg: $arg" >&2; exit 1;;
     esac
 done
@@ -55,7 +47,7 @@ EOF
     fi
     echo "n1 = $n1 ; n2=$n2 ; v=$v"
     expected="$n1 $n2 $v"
-    cmdline="$builddir/check-mul $n1 $n2"
+    cmdline="`dirname $0`/check-mul $n1 $n2"
     echo "## $cmdline"
     echo "## expected output: $expected"
     got="`$cmdline`"
