@@ -1199,6 +1199,7 @@ void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
     size_t i;
     assert(Fl <= (1UL << k));
     for (i = 0; i < Fl; ++i) {
+        /* Set low part of 128 bits from 64-bits in F[i] */
         f[i][0] = F[i];
         f[i][1] = 0;
     }
@@ -1223,7 +1224,9 @@ void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
      */
     assert(Fl <= (1UL << (k-1)));
     for (i = 0; i < 2*Fl ; i+=2) {
+        /* Set low part of 64 bits from low 32 bits in F[i/2] */
         f[i][0] = F[i/2] & ((1UL<<32)-1);
+        /* Set low part of 64 bits from low 32 bits in F[i/2] */
         f[i+1][0] = F[i/2] >> 32;
     }
     memset(f + i, 0, ((1UL << k) - 2*Fl) * sizeof(Kelt));
@@ -1244,17 +1247,20 @@ void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k GF2X_MAYBE_UNUSED)
 #endif
 
 #elif (GF2X_WORDSIZE == 32)
+#if CANTOR_BASE_FIELD_SIZE == 128
 void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
 {
     size_t i;
     assert(Fl <= (1UL << (k+1)));
     for (i = 0; i < Fl / 2 ; ++i) {
+        /* Set low part of 128 bits from 64-bits in F[i] */
         f[i][0] = F[2*i];
         f[i][1] = F[2*i + 1];
         f[i][2] = 0;
         f[i][3] = 0;
     }
     if (Fl & 1) {
+        /* Fix the tail, too */
         f[i][0] = F[2*i];
         f[i][1] = 0;
         f[i][2] = 0;
@@ -1279,6 +1285,32 @@ void recomposeK(unsigned long * F, Kelt * f, size_t Fl, unsigned int k GF2X_MAYB
             F[i] = f[i/2][0] ^ f[i/2 - 1][2];
     }
 }
+#elif CANTOR_BASE_FIELD_SIZE == 64
+void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
+{
+    /* We're computing a DFT of length 2^k, so we can accomodate 2^k*32
+     * bits in the coefficients. We need to make Fl*32 bits fit. Hence
+     * the following assertion.
+     */
+    assert(Fl <= (1UL << k));
+    for (size_t i = 0; i < Fl; ++i) {
+        /* Set low part of 64 bits from 32-bits in F[i] */
+        f[i][0] = F[i];
+        f[i][1] = 0;
+    }
+    memset(f + i, 0, ((1UL << k) - Fl) * sizeof(Kelt));
+}
+
+void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k GF2X_MAYBE_UNUSED)
+{
+    assert(Fl <= (1UL << k));
+    F[0] = f[0][0];
+    for (size_t i = 1; i < Fl ; ++i)
+        F[i] = f[i][0] ^ f[i - 1][1];
+}
+#else
+#error  "Define CANTOR_BASE_FIELD_SIZE to 64 or 128"
+#endif
 #else
 #error "define GF2X_WORDSIZE"
 #endif
