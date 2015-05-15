@@ -27,8 +27,14 @@ else
     exit 1
 fi
 
+# By default, we do check the FFT interface, but as an option, we also
+# allow not checking it.
+if ! [ "$DISABLE_FFT" ] ; then
+    configure_extra="$configure_extra --enable-fft-interface"
+fi
+
 if [ -d "$HOME/Packages/gmp-6.0.0" ] ; then
-    configure_extra="--with-gmp=$HOME/Packages/gmp-6.0.0"
+    configure_extra="$configure_extra --with-gmp=$HOME/Packages/gmp-6.0.0"
 elif [ -f "/usr/local/include/gmp.h" ] ; then
-    configure_extra="--with-gmp=/usr/local"
+    configure_extra="$configure_extra --with-gmp=/usr/local"
 fi
