@@ -1196,22 +1196,20 @@ void interpolateK_trunc(Kelt * f, unsigned int k, size_t length)
 #if CANTOR_BASE_FIELD_SIZE == 128
 void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
 {
-    size_t i;
     assert(Fl <= (1UL << k));
-    for (i = 0; i < Fl; ++i) {
+    for (size_t i = 0; i < Fl; ++i) {
         /* Set low part of 128 bits from 64-bits in F[i] */
         f[i][0] = F[i];
         f[i][1] = 0;
     }
-    memset(f + i, 0, ((1UL << k) - Fl) * sizeof(Kelt));
+    memset(f + Fl, 0, ((1UL << k) - Fl) * sizeof(Kelt));
 }
 
 void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k GF2X_MAYBE_UNUSED)
 {
-    size_t i;
     assert(Fl <= (1UL << k));
     F[0] = f[0][0];
-    for (i = 1; i < Fl ; ++i)
+    for (size_t i = 1; i < Fl ; ++i)
         F[i] = f[i][0] ^ f[i - 1][1];
 }
 #elif CANTOR_BASE_FIELD_SIZE == 64
@@ -1298,7 +1296,7 @@ void decomposeK(Kelt * f, unsigned long * F, size_t Fl, int k)
         f[i][0] = F[i];
         f[i][1] = 0;
     }
-    memset(f + i, 0, ((1UL << k) - Fl) * sizeof(Kelt));
+    memset(f + Fl, 0, ((1UL << k) - Fl) * sizeof(Kelt));
 }
 
 void recomposeK(unsigned long * F, Kelt * f, size_t Fl, int k GF2X_MAYBE_UNUSED)
