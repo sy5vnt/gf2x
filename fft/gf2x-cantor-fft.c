@@ -611,6 +611,7 @@ void gm_trick(unsigned int two_t, Kelt * f, size_t j)
     if (two_t == 4) {
         fprintf(stderr, "// Unrolling gm_trick(%d,f,%d)\n",two_t, j);
         fbase = f;
+        /* beware ; on 32-bit machines, two_t might be equal to 32... */
         findex = malloc(sizeof(long int) << two_t);
         for(int i = 0 ; i < (1UL << two_t) ; i++) {
             findex[i] = i;
@@ -700,12 +701,15 @@ void gm_trick_trunc(unsigned int two_t, Kelt * f, Kelt * buf, size_t j, unsigned
         gm_trick_trunc(two_t>>1, f, buf, j, k, n);
         return;
     }
-    assert(k > (two_t>>1));
-    assert(k <= two_t);
-    assert(n > (1UL << (two_t>>1)));
-    assert(n <= (1UL << two_t));
 
     unsigned int t = two_t >> 1;
+
+    assert(k > t);
+    assert(k <= two_t);
+    assert(n > (1UL << t));
+    /* beware ; on 32-bit machines, two_t might be equal to 32... */
+    assert(two_t == GF2X_WORDSIZE || n <= (1UL << two_t));
+
     size_t tau = 1UL << t;
     // long cn = (n+tau-1)>>t;      // Ceiling(n/tau);
     size_t cn = 1UL << (k-t);
