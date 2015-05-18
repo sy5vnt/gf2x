@@ -60,7 +60,6 @@ extern long init_extra_arg;
 #error "MULCOUNT incompatible with gf2x_ternary_fft"
 #endif
 
-/* This is fit for 1M words */
 #define ENGINE_EXTRA_ARG_DEFAULT  0
 
 #define ENGINE_info_t gf2x_ternary_fft_info_t

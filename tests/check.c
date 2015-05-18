@@ -50,17 +50,17 @@ static const int mulcount = 0;
 
 int print_crc = 0;
 
-/* n is a number of 32-bit words ; k is a matrix dimension */
-int test(int n, int d)
+/* n32bitwords is a number of 32-bit words ; k is a matrix dimension */
+int test(int n32bitwords, int d)
 {
     unsigned long **f, **g, **h;
 
-    int N = n;
+    int nwords = n32bitwords;
 #if GF2X_WORDSIZE == 64
-    N = N / 2 + (N & 1);
+    nwords = nwords / 2 + (nwords & 1);
 #endif
 
-    /* now N is a number of unsigned longs */
+    /* now nwords is a number of unsigned longs */
 
     f = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
     g = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
@@ -68,9 +68,9 @@ int test(int n, int d)
 
     for(int i = 0 ; i < d ; i++)
         for(int j = 0 ; j < d ; j++) {
-            f[i*d+j] = (unsigned long *) malloc(N * sizeof(unsigned long));
-            g[i*d+j] = (unsigned long *) malloc(N * sizeof(unsigned long));
-            h[i*d+j] = (unsigned long *) malloc(2 * N * sizeof(unsigned long));
+            f[i*d+j] = (unsigned long *) malloc(nwords * sizeof(unsigned long));
+            g[i*d+j] = (unsigned long *) malloc(nwords * sizeof(unsigned long));
+            h[i*d+j] = (unsigned long *) malloc(2 * nwords * sizeof(unsigned long));
         }
 
     uint32_t start=0x32104567UL;
@@ -79,11 +79,11 @@ int test(int n, int d)
     uint32_t v = start;
     for(int i = 0 ; i < d ; i++)
         for(int j = 0 ; j < d ; j++) {
-            v = fill(f[i*d+j], n, v, ratio);
+            v = fill(f[i*d+j], n32bitwords, v, ratio);
         }
     for(int i = 0 ; i < d ; i++)
         for(int j = 0 ; j < d ; j++) {
-            v = fill(g[i*d+j], n, v, ratio);
+            v = fill(g[i*d+j], n32bitwords, v, ratio);
         }
 
     if (!print_crc) {
@@ -96,9 +96,9 @@ int test(int n, int d)
             for(int j = 0 ; j < d ; j++) {
                 if (i || j) printf(", ");
                 printf("[");
-                for (int k = 0; k < N - 1; ++k)
+                for (int k = 0; k < nwords - 1; ++k)
                     printf("%lu, ", f[i*d+j][k]);
-                printf("%lu\n]\n", f[i*d+j][N - 1]);
+                printf("%lu\n]\n", f[i*d+j][nwords - 1]);
             }
         printf("];\n");
         printf("g := [\n");
@@ -106,15 +106,15 @@ int test(int n, int d)
             for(int j = 0 ; j < d ; j++) {
                 if (i || j) printf(", ");
                 printf("[");
-                for (int k = 0; k < N - 1; ++k)
+                for (int k = 0; k < nwords - 1; ++k)
                     printf("%lu, ", g[i*d+j][k]);
-                printf("%lu\n]\n", g[i*d+j][N - 1]);
+                printf("%lu\n]\n", g[i*d+j][nwords - 1]);
             }
         printf("];\n");
     }
 
     //for (int i = 0; i < 10; ++i) 
-    ENGINE_mul(h,f,N,g,N,d);
+    ENGINE_mul(h,f,nwords,g,nwords,d);
 
     if (!print_crc) {
         printf("fg := [\n");
@@ -122,17 +122,17 @@ int test(int n, int d)
             for(int j = 0 ; j < d ; j++) {
                 if (i || j) printf(", ");
                 printf("[");
-                for (int k = 0; k < 2*N - 1; ++k)
+                for (int k = 0; k < 2*nwords - 1; ++k)
                     printf("%lu, ", h[i*d+j][k]);
-                printf("%lu\n]\n", h[i*d+j][2*N - 1]);
+                printf("%lu\n]\n", h[i*d+j][2*nwords - 1]);
             }
         printf("];\n");
     } else {
         uint32_t check0 = 0;
         for(int i = 0 ; i < d ; i++)
             for(int j = 0 ; j < d ; j++)
-                check0 = crc32(h[(d-1-i)*d+(d-1-j)], 2*n, check0);
-        printf("%d %d %08" PRIx32 "\n", n, d, check0);
+                check0 = crc32(h[(d-1-i)*d+(d-1-j)], 2*n32bitwords, check0);
+        printf("%d %d %08" PRIx32 "\n", n32bitwords, d, check0);
     }
 
     for(int i = 0 ; i < d ; i++)
@@ -148,13 +148,13 @@ int test(int n, int d)
 }
 void usage_and_die(char **argv)
 {
-    fprintf(stderr, "usage: %s --n <n> --k <k>\n", argv[0]);
+    fprintf(stderr, "usage: %s --n <n32bitwords> --k <k>\n", argv[0]);
     exit(1);
 }
 
 int main(int argc, char **argv)
 {
-    int N = -1;
+    int n32bitwords = -1;
     int k = 1;
 
     for(int i = 1 ; i < argc ; i++) {
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
         }
 
         if (i < argc - 1 && strcmp(argv[i], "--n") == 0) {
-            N = atoi(argv[++i]);
+            n32bitwords = atoi(argv[++i]);
             continue;
         }
         if (i < argc - 1 && strcmp(argv[i], "--k") == 0) {
@@ -177,10 +177,54 @@ int main(int argc, char **argv)
         usage_and_die(argv);
     }
 
-    if (N < 0)
+    if (n32bitwords < 0)
         usage_and_die(argv);
 
-    test(N, k);
+    /* In the specification here, n32bitwords is a number of 32-bit
+     * words. However, the tuning table makes sense for full words.
+     */
+    {
+#ifdef ENGINE_TERNARY
+        int nwords = n32bitwords;
+#if GF2X_WORDSIZE == 64
+        nwords = nwords / 2 + (nwords & 1);
+#endif
+        int64_t T_FFT_TAB[][2] = GF2X_MUL_FFT_TABLE;
+        long max_ix = sizeof(T_FFT_TAB)/sizeof(T_FFT_TAB[0]);
+        int j;
+#ifdef ARTIFICIAL_NON_SPLIT_VERSION
+        /* remove completely the FFT2 setups */
+        j = 0;
+        for(int i = 0 ; i < max_ix ; i++) {
+            if (T_FFT_TAB[i][1] > 0) {
+                T_FFT_TAB[j][0] = T_FFT_TAB[i][0];
+                T_FFT_TAB[j][1] = T_FFT_TAB[i][1];
+                j++;
+            }
+        }
+        max_ix = j;
+#endif
+        /* artificial: use FFT always */
+        assert(T_FFT_TAB[0][0] == 1);
+        if (T_FFT_TAB[0][1] == 1) T_FFT_TAB[0][1] = 3;
+        /* also for intermediary steps */
+        j = 0;
+        for(int i = 0 ; i < max_ix ; i++) {
+            if (T_FFT_TAB[i][1] != 1) {
+                T_FFT_TAB[j][0] = T_FFT_TAB[i][0];
+                T_FFT_TAB[j][1] = T_FFT_TAB[i][1];
+                j++;
+            }
+        }
+        max_ix = j;
+        int i;
+        for (i = 0; T_FFT_TAB[i + 1][0] <= nwords && i + 1 < max_ix; i++);
+        /* now T_FFT_TAB[i][0] <= nwords < T_FFT_TAB[i+1][0] */
+        init_extra_arg = T_FFT_TAB[i][1];
+#endif  /* ENGINE_TERNARY */
+    }
+
+    test(n32bitwords, k);
 
     return 0;
 }

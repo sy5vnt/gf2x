@@ -97,6 +97,8 @@ C128=$(CCOMMON) -DCANTOR_BASE_FIELD_SIZE=128
 C128nt=$(C128) -DWITHOUT_CANTOR_TRUNCATION
 C128gm=$(C128) -DCANTOR_GM
 C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
+TERNARY=-DENGINE_TERNARY
+TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 
 # TODO: auto-generate this for all variants !
 #
@@ -118,6 +120,8 @@ C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
 #
 # -- end pattern --
 # -- begin arguments --
+#  ternary $(TERNARY)
+#  ternaryns $(TERNARY_NS)
 #  cantor64 $(C64)
 #  cantor64nt $(C64nt)
 #  cantor64gm $(C64gm)
@@ -128,6 +132,34 @@ C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
 #  cantor128gmt $(C128gmt)
 # -- end arguments --
 # -- begin generated code --
+check_PROGRAMS+=check_ternary
+check_ternary_SOURCES=$(general_fftcheck_sources)
+check_ternary_CFLAGS=$(AM_CFLAGS) $(TERNARY)
+check_ternary_LDADD=$(top_builddir)/fft/libternary.la
+SYNTHESIZED_TESTS+=   \
+    check_ternary_1000_1_c28bc2e3.fft            \
+    check_ternary_1000_2_77db95cc.fft            \
+    check_ternary_1000_3_6dc06b2f.fft            \
+    check_ternary_10000_1_2706ca53.fft           \
+    check_ternary_10000_2_3f32a516.fft           \
+    check_ternary_10000_3_fd7bba07.fft           \
+    check_ternary_100000_1_fca70ced.fft          \
+    check_ternary_100000_2_cd1293a5.fft          \
+    check_ternary_100000_3_91e7d307.fft
+check_PROGRAMS+=check_ternaryns
+check_ternaryns_SOURCES=$(general_fftcheck_sources)
+check_ternaryns_CFLAGS=$(AM_CFLAGS) $(TERNARY_NS)
+check_ternaryns_LDADD=$(top_builddir)/fft/libternaryns.la
+SYNTHESIZED_TESTS+=   \
+    check_ternaryns_1000_1_c28bc2e3.fft            \
+    check_ternaryns_1000_2_77db95cc.fft            \
+    check_ternaryns_1000_3_6dc06b2f.fft            \
+    check_ternaryns_10000_1_2706ca53.fft           \
+    check_ternaryns_10000_2_3f32a516.fft           \
+    check_ternaryns_10000_3_fd7bba07.fft           \
+    check_ternaryns_100000_1_fca70ced.fft          \
+    check_ternaryns_100000_2_cd1293a5.fft          \
+    check_ternaryns_100000_3_91e7d307.fft
 check_PROGRAMS+=check_cantor64
 check_cantor64_SOURCES=$(general_fftcheck_sources)
 check_cantor64_CFLAGS=$(AM_CFLAGS) $(C64)

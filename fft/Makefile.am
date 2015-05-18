@@ -39,6 +39,8 @@ C128=$(CCOMMON) -DCANTOR_BASE_FIELD_SIZE=128
 C128nt=$(C128) -DWITHOUT_CANTOR_TRUNCATION
 C128gm=$(C128) -DCANTOR_GM
 C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
+TERNARY=-DENGINE_TERNARY
+TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 
 check_LTLIBRARIES=
 
@@ -56,17 +58,19 @@ EXTRA_DIST=	\
 	mpfq/x86_64/mpfq_2_64.c			\
 	mpfq/x86_64/mpfq_2_64.h
 
-# This is temporarily disabled.
 # # ternary fft is included by default in gf2x.
-# check_LTLIBRARIES += libternary.la
-# libternary_la_SOURCES=$(general_check_sources)
-# libternary_la_CFLAGS= $(AM_CFLAGS) -DENGINE_TERNARY
+check_LTLIBRARIES += libternary.la
+libternary_la_SOURCES=gf2x-ternary-fft.c
+libternary_la_CFLAGS= $(AM_CFLAGS) $(TERNARY)
+libternary_la_LIBADD= $(top_builddir)/libgf2x.la
  
-# This is temporarily disabled.
-# check_LTLIBRARIES += libternary_ns.la
-# libternary_ns_la_SOURCES=$(general_check_sources)
-# libternary_ns_la_CFLAGS= $(AM_CFLAGS) -DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
+check_LTLIBRARIES += libternaryns.la
+libternaryns_la_SOURCES=gf2x-ternary-fft.c
+libternaryns_la_CFLAGS= $(AM_CFLAGS) $(TERNARY_NS)
+libternaryns_la_LIBADD= $(top_builddir)/libgf2x.la
  
+# The rest is optional
+
 check_LTLIBRARIES += libcantor64.la
 libcantor64_la_SOURCES=gf2x-cantor-fft.c
 libcantor64_la_CFLAGS= $(AM_CFLAGS) $(C64)
