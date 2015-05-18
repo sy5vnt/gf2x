@@ -126,6 +126,14 @@ static inline void XORBIT(unsigned long *a, size_t i, unsigned long x)
 #define ABS(h) ((h) < 0 ? -(h) : (h))
 #endif
 
+static void *malloc_or_die(size_t size)
+{
+    void *res = malloc(size);
+    if (res == NULL)
+	abort();
+    return res;
+}
+
 static inline void Copy(unsigned long *a, const unsigned long *b, size_t n)
 {
     memcpy(a, b, n * sizeof(unsigned long));
@@ -551,7 +559,7 @@ static void fft(unsigned long **A, uint64_t K, uint64_t j, size_t Np, size_t str
 #undef c
 }
 
-/* put in A[0]...A[K-1] the content of {a, an} cut into K chunks of M bits;
+/* allocate A[0]...A[K-1], and put there {a, an} cut into K chunks of M bits;
    return pointer to block of memory containing A[0]...A[K-1] (to be freed
    by the calling routine) */
 
@@ -808,10 +816,14 @@ gf2x_ternary_fft_srcptr gf2x_ternary_fft_get_const(gf2x_ternary_fft_info_srcptr 
     return ptr + k * gf2x_ternary_fft_size(o);
 }
 
-static size_t
-gf2x_ternary_fft_alloc_size(gf2x_ternary_fft_info_srcptr o, size_t n)
+gf2x_ternary_fft_ptr gf2x_ternary_fft_alloc(gf2x_ternary_fft_info_srcptr o, size_t n)
 {
-  return n * gf2x_ternary_fft_size(o) * sizeof(gf2x_ternary_fft_t);
+    return malloc_or_die(n * gf2x_ternary_fft_size(o) * sizeof(gf2x_ternary_fft_t));
+}
+
+void gf2x_ternary_fft_free(gf2x_ternary_fft_info_srcptr o GF2X_MAYBE_UNUSED, gf2x_ternary_fft_ptr ptr, size_t n GF2X_MAYBE_UNUSED)
+{
+    free(ptr);
 }
 
 static void gf2x_ternary_fft_dft_inner(gf2x_ternary_fft_info_srcptr o, gf2x_ternary_fft_ptr tr, const unsigned long * a, size_t bits_a, size_t M)
@@ -821,8 +833,8 @@ static void gf2x_ternary_fft_dft_inner(gf2x_ternary_fft_info_srcptr o, gf2x_tern
     size_t Np = Mp * (K / 3);	// Np >= M, Np multiple of K/3
     size_t np = W(Np);	       	// Words to store Np bits
 
-    // use the array of pointers from o
-    unsigned long **A = o->A;
+    // allocate the array of pointers. It's just temporary stuff.
+    unsigned long ** A = malloc_or_die(K * sizeof(unsigned long *));
     for (size_t i = 0; i < K; i++) A[i] = tr + 2 * i * np;
     decompose(A, a, W(bits_a), M, K, np);
     unsigned long * tmp1, * tmp2, * tmp3;
@@ -830,9 +842,10 @@ static void gf2x_ternary_fft_dft_inner(gf2x_ternary_fft_info_srcptr o, gf2x_tern
     tmp2 = o->tmp + 2 * np;
     tmp3 = o->tmp + 4 * np; /* max(2np,gf2x_toomspace(2np)) words */
     fft(A, K, Mp, Np, 1, tmp1, tmp2, tmp3, o->perm);
+    free(A);
 }
 
-static void gf2x_ternary_fft_dft_inner_split(gf2x_ternary_fft_info_srcptr o, gf2x_ternary_fft_ptr tr, const unsigned long * a, size_t bits_a, size_t M)
+static void gf2x_ternary_fft_dft_inner_split(gf2x_ternary_fft_info_srcptr o, gf2x_ternary_fft_ptr tr, const unsigned long * a, size_t bits_a, size_t M, unsigned long * buf, size_t bufsize)
 {
     size_t K = o->K;
     size_t N = K * M;
@@ -842,10 +855,10 @@ static void gf2x_ternary_fft_dft_inner_split(gf2x_ternary_fft_info_srcptr o, gf2
 
     // FIXME: This wrapping, and use of extra buffer space, should be
     // merged into decompose().
-    Copy(o->buf, a, W(bits_a));
-    Clear(o->buf, W(bits_a), o->bufsize);	// Clear upper part of a
-    wrap(o->buf, bits_a, N);
-    gf2x_ternary_fft_dft_inner(o, tr, o->buf, MIN(N, bits_a), M);
+    Copy(buf, a, W(bits_a));
+    Clear(buf, W(bits_a), bufsize);		// Clear upper part of a
+    wrap(buf, bits_a, N);
+    gf2x_ternary_fft_dft_inner(o, tr, buf, MIN(N, bits_a), M);
 }
 
 /* bits_a is a number of BITS */
@@ -865,9 +878,15 @@ void gf2x_ternary_fft_dft(gf2x_ternary_fft_info_srcptr o, gf2x_ternary_fft_ptr t
         /* there's some work to be done prior to doing the decomposition:
          * wrapping.  We need some temporary space for that.  */
 
-        gf2x_ternary_fft_dft_inner_split(o, tr, a, bits_a, m1);
+        size_t bufsize = MAX(W(bits_a), W((size_t) m1));
+
+        unsigned long * buf = malloc_or_die(bufsize * sizeof(unsigned long));
+
+        gf2x_ternary_fft_dft_inner_split(o, tr, a, bits_a, m1, buf, bufsize);
         tr += 2 * K * compute_np(m1, K);
-        gf2x_ternary_fft_dft_inner_split(o, tr, a, bits_a, m2);
+        gf2x_ternary_fft_dft_inner_split(o, tr, a, bits_a, m2, buf, bufsize);
+
+        free(buf);
     }
 }
 
@@ -916,6 +935,14 @@ void gf2x_ternary_fft_add(gf2x_ternary_fft_info_srcptr o, gf2x_ternary_fft_ptr t
     }
 }
 
+void gf2x_ternary_fft_addcompose(gf2x_ternary_fft_info_srcptr o, gf2x_ternary_fft_ptr tc, gf2x_ternary_fft_srcptr ta, gf2x_ternary_fft_srcptr tb)
+{
+    gf2x_ternary_fft_t * t = gf2x_ternary_fft_alloc(o, 1);
+    gf2x_ternary_fft_compose(o, t, ta, tb);
+    gf2x_ternary_fft_add(o, tc, tc, t);
+    gf2x_ternary_fft_free(o, t, 1);
+}
+
 void gf2x_ternary_fft_ift_inner(gf2x_ternary_fft_info_srcptr o, unsigned long * a, size_t bits_a, gf2x_ternary_fft_ptr tr, size_t M)
 {
     size_t K = o->K;
@@ -929,19 +956,18 @@ void gf2x_ternary_fft_ift_inner(gf2x_ternary_fft_info_srcptr o, unsigned long * 
     tmp2 = o->tmp + 2 * np;
     tmp3 = o->tmp + 4 * np; /* max(2np,gf2x_toomspace(2np)) words */
 
-    // use the array of pointers from o
-    unsigned long ** Ap = o->A;
-
-    /* A[i] = tr + 2 * i * np and Ap[i] = A[o->perm[i]]
-       thus Ap[i] = tr + 2 * o->perm[i] * np */
-
-    for (i = 0; i < K; i++) Ap[i] = tr + 2 * o->perm[i] * np;
-    fft(Ap, K, 3 * Np - Mp, Np, 1, tmp1, tmp2, tmp3, o->perm);
-
-    /* reuse the same array of pointers, since Ap is no longer needed */
-    unsigned long ** A = o->A;
+    // allocate the array of pointers. It's just temporary stuff.
+    unsigned long ** A = malloc_or_die(K * sizeof(unsigned long *));
     for (i = 0; i < K; i++) A[i] = tr + 2 * i * np;
+    unsigned long ** Ap = malloc_or_die(K * sizeof(unsigned long *));
+
+    for (i = 0; i < K; i++) Ap[i] = A[o->perm[i]];
+    fft(Ap, K, 3 * Np - Mp, Np, 1, tmp1, tmp2, tmp3, o->perm);
+    for (i = 0; i < K; i++) ASSERT(A[i] == Ap[o->perm[i]]);
+
+    free(Ap);
     recompose(a, W(bits_a), A, K, M, Np);
+    free(A);
 }
 
 void gf2x_ternary_fft_ift(gf2x_ternary_fft_info_srcptr o, unsigned long * c, size_t bits_c, gf2x_ternary_fft_ptr tr)
@@ -959,7 +985,7 @@ void gf2x_ternary_fft_ift(gf2x_ternary_fft_info_srcptr o, unsigned long * c, siz
         ASSERT(cn0 <= cn);
 
         size_t cn1 = W(MIN(K*m1,o->bits_a)) + W(MIN(K*m1,o->bits_b));
-        unsigned long * c1 = o->c1;
+        unsigned long * c1 = malloc_or_die(cn * sizeof(unsigned long));
         Clear(c1, I(K * m1), cn);
         gf2x_ternary_fft_ift_inner(o, c1, cn * WLEN, tr, m1);
         wrap(c1, cn1 * WLEN, K * m1);
@@ -967,21 +993,21 @@ void gf2x_ternary_fft_ift(gf2x_ternary_fft_info_srcptr o, unsigned long * c, siz
         tr += 2 * K * compute_np(m1, K);
 
         size_t cn2 = W(MIN(K*m2,o->bits_a)) + W(MIN(K*m2,o->bits_b));
-        unsigned long * c2 = o->c2;
+        unsigned long * c2 = malloc_or_die(cn * sizeof(unsigned long));
         Clear(c2, I(K * m2), cn);
         gf2x_ternary_fft_ift_inner(o, c2, cn * WLEN, tr, m2);
         wrap(c2, cn2 * WLEN, K * m2);
 
         split_reconstruct(c, c1, c2, cn0, K, m1);
+        free(c1);
+        free(c2);
     }
 }
 
 
 /* multiplies {a, an} by {b, bn} using an FFT of length K,
    and stores the result into {c, an+bn}. If an+bn is too small
-   then Toom-Cook is used.
-   Return zero iff an error occurred (for example not enough memory).
-*/
+   then Toom-Cook is used.  */
 
 // arrange so that we multiply polynomials having respectively n1 and n2
 // _BITS_ ; which means degree+1 (thus can be unsigned).
@@ -989,8 +1015,7 @@ void gf2x_ternary_fft_ift(gf2x_ternary_fft_info_srcptr o, unsigned long * c, siz
 // because this algorithm needs to know about the K value, which in turns
 // depends on proper tuning, we ask for it to be provided by the caller.
 // Negative values of K mean to use FFT2.
-int
-gf2x_ternary_fft_init(gf2x_ternary_fft_info_ptr o, size_t bits_a, size_t bits_b, ...)
+void gf2x_ternary_fft_init(gf2x_ternary_fft_info_ptr o, size_t bits_a, size_t bits_b, ...)
 {
     o->bits_a = bits_a;
     o->bits_b = bits_b;
@@ -1035,7 +1060,7 @@ gf2x_ternary_fft_init(gf2x_ternary_fft_info_ptr o, size_t bits_a, size_t bits_b,
         o->M = 0;
         o->tmp = NULL;
         o->perm = NULL;
-        return 1;
+        return;
     }
 
     /* We also have to allocate the temporary space used by this FFT */
@@ -1045,49 +1070,10 @@ gf2x_ternary_fft_init(gf2x_ternary_fft_info_ptr o, size_t bits_a, size_t bits_b,
     if (i < 2 * np)
 	i = 2 * np;
     size_t ltmp = 4 * np + i;
-    size_t cn = W(2 * o->K * o->M);
-    o->bufsize = MAX(nwa, nwb);
-    o->bufsize = MAX(o->bufsize, W((size_t) o->M));
-
-    size_t tot_alloc;
-    unsigned char *tot;
-    tot_alloc = ltmp * sizeof(unsigned long) /* o->tmp */
-      + o->K * sizeof(size_t)                /* o->perm */
-      + 2 * cn * sizeof(unsigned long)       /* o->c1, o->c2 */
-      + 3 * gf2x_ternary_fft_alloc_size (o, 1)      /* o->ta, o->tb, o->tc */
-      + o->K * sizeof(unsigned long*)        /* o->A */
-      + o->bufsize * sizeof(unsigned long);  /* o->buf */
-
-    tot = malloc (tot_alloc);
-    if (tot == NULL)
-      return 0; /* not enough memory */
-
-    o->tmp = (unsigned long*) tot;
-    tot += ltmp * sizeof(unsigned long);
-
-    o->perm = (size_t *) tot;
-    tot += o->K * sizeof(size_t);
+    o->tmp = (unsigned long *) malloc_or_die(ltmp * sizeof(unsigned long));
+    o->perm = (size_t *) malloc_or_die(o->K * sizeof(size_t));
     bitrev(0, 0, o->K, 1, o->perm);
-
-    o->c1 = (unsigned long*) tot;
-    tot += cn * sizeof(unsigned long);
-    o->c2 = (unsigned long*) tot;
-    tot += cn * sizeof(unsigned long);
-
-    o->ta = (gf2x_ternary_fft_ptr) tot;
-    tot += gf2x_ternary_fft_alloc_size (o, 1);
-    o->tb = (gf2x_ternary_fft_ptr) tot;
-    tot += gf2x_ternary_fft_alloc_size (o, 1);
-    o->tc = (gf2x_ternary_fft_ptr) tot;
-    tot += gf2x_ternary_fft_alloc_size (o, 1);
-
-    o->A = (unsigned long**) tot;
-    tot += o->K * sizeof(unsigned long*);
-
-    o->buf = (unsigned long*) tot;
-
     va_end(ap);
-    return 1;
 }
 
 void gf2x_ternary_fft_init_similar(gf2x_ternary_fft_info_ptr o, size_t bits_a, size_t bits_b, gf2x_ternary_fft_info_srcptr other)
@@ -1104,18 +1090,7 @@ void gf2x_ternary_fft_clear(gf2x_ternary_fft_info_ptr o)
 {
     if (o->K) {
         free(o->tmp);
-        /* the current situation is that all of these are within a big
-         * fat malloc, and need not be freed separately. This very
-         * probably won't stay, though...
         free(o->perm);
-        free(o->c1);
-        free(o->c2);
-        free (o->ta);
-        free (o->tb);
-        free (o->tc);
-        free (o->A);
-        free (o->buf);
-         */
     }
     memset(o, 0, sizeof(gf2x_ternary_fft_info_t));
 }
@@ -1135,9 +1110,7 @@ void gf2x_mul_fft(unsigned long *c, const unsigned long *a, size_t an,
 	    const unsigned long *b, size_t bn, long K)
 {
     gf2x_ternary_fft_info_t o;
-
-    if (gf2x_ternary_fft_init(o, an * WLEN, bn * WLEN, K) == 0)
-      abort (); /* not enough memory? */
+    gf2x_ternary_fft_init(o, an * WLEN, bn * WLEN, K);
 
     if (o->K == 0) {
 	printf("gf2x_mul_fft: arguments (%zu, %zu) too small\n", an, bn);
@@ -1148,13 +1121,20 @@ void gf2x_mul_fft(unsigned long *c, const unsigned long *a, size_t an,
          */
         abort();
     }
+    gf2x_ternary_fft_ptr ta = gf2x_ternary_fft_alloc(o, 1);
+    gf2x_ternary_fft_ptr tb = gf2x_ternary_fft_alloc(o, 1);
+    gf2x_ternary_fft_ptr tc = gf2x_ternary_fft_alloc(o, 1);
 
-    gf2x_ternary_fft_dft(o, o->ta, a, an * WLEN);
-    gf2x_ternary_fft_dft(o, o->tb, b, bn * WLEN);
+    gf2x_ternary_fft_dft(o, ta, a, an * WLEN);
+    gf2x_ternary_fft_dft(o, tb, b, bn * WLEN);
 
-    gf2x_ternary_fft_compose(o, o->tc, o->ta, o->tb);
+    gf2x_ternary_fft_compose(o, tc, ta, tb);
 
-    gf2x_ternary_fft_ift(o, c, (an+bn)*WLEN, o->tc);
+    gf2x_ternary_fft_ift(o, c, (an+bn)*WLEN, tc);
+
+    gf2x_ternary_fft_free(o, ta, 1);
+    gf2x_ternary_fft_free(o, tb, 1);
+    gf2x_ternary_fft_free(o, tc, 1);
 
     gf2x_ternary_fft_clear(o);
 }
