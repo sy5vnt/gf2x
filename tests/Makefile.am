@@ -100,8 +100,11 @@ C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
 TERNARY=-DENGINE_TERNARY
 TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 
-# TODO: auto-generate this for all variants !
-#
+# The list of tests is auto-generated with perl, and edited afterwards.
+# The edits are:
+#  - add if/endif
+#  - link check_ternaryns with libternary (since this is the same
+#  library, really).
 # -- begin pattern --
 # check_PROGRAMS+=check_ARG0
 # check_ARG0_SOURCES=$(general_fftcheck_sources)
@@ -149,7 +152,7 @@ SYNTHESIZED_TESTS+=   \
 check_PROGRAMS+=check_ternaryns
 check_ternaryns_SOURCES=$(general_fftcheck_sources)
 check_ternaryns_CFLAGS=$(AM_CFLAGS) $(TERNARY_NS)
-check_ternaryns_LDADD=$(top_builddir)/fft/libternaryns.la
+check_ternaryns_LDADD=$(top_builddir)/fft/libternary.la
 SYNTHESIZED_TESTS+=   \
     check_ternaryns_1000_1_c28bc2e3.fft            \
     check_ternaryns_1000_2_77db95cc.fft            \
@@ -160,6 +163,7 @@ SYNTHESIZED_TESTS+=   \
     check_ternaryns_100000_1_fca70ced.fft          \
     check_ternaryns_100000_2_cd1293a5.fft          \
     check_ternaryns_100000_3_91e7d307.fft
+if ENABLE_FFT_INTERFACE
 check_PROGRAMS+=check_cantor64
 check_cantor64_SOURCES=$(general_fftcheck_sources)
 check_cantor64_CFLAGS=$(AM_CFLAGS) $(C64)
@@ -272,6 +276,7 @@ SYNTHESIZED_TESTS+=   \
     check_cantor128gmt_100000_1_fca70ced.fft          \
     check_cantor128gmt_100000_2_cd1293a5.fft          \
     check_cantor128gmt_100000_3_91e7d307.fft
+endif
 # -- end generated code --
 
 TEST_EXTENSIONS += .fft

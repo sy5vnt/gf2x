@@ -69,7 +69,7 @@ AC_ARG_ENABLE([fft-interface],
               [AS_HELP_STRING([--enable-fft-interface],
                 [compile with the optional fft interface (default is no)])],
                 [],[])
-AM_CONDITIONAL([ENABLE_GF2X_FFT],[test "x$enable_fft_interface" = xyes])
+AM_CONDITIONAL([ENABLE_FFT_INTERFACE],[test "x$enable_fft_interface" = xyes])
 
 AC_PROG_CC
 AC_PROG_CXX

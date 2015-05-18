@@ -29,7 +29,7 @@ ACLOCAL_AMFLAGS=-I config --install
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 
 FFT_SOURCES=fft/gf2x-ternary-fft.c
-if ENABLE_GF2X_FFT
+if ENABLE_FFT_INTERFACE
 AM_CPPFLAGS += -I$(srcdir)/mpfq
 FFT_SOURCES+=fft/gf2x-fake-fft.c
 FFT_SOURCES+=fft/gf2x-cantor-fft.c
@@ -44,7 +44,7 @@ endif
 
 
 lib_LTLIBRARIES=libgf2x.la
-if ENABLE_GF2X_FFT
+if ENABLE_FFT_INTERFACE
 # default which gets shipped
 libgf2x_la_CFLAGS=$(AM_CFLAGS) -DCANTOR_BASE_FIELD_SIZE=128
 endif
