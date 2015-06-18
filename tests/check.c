@@ -53,8 +53,6 @@ int print_crc = 0;
 /* n32bitwords is a number of 32-bit words ; k is a matrix dimension */
 int test(int n32bitwords, int d)
 {
-    unsigned long **f, **g, **h;
-
     int nwords = n32bitwords;
 #if GF2X_WORDSIZE == 64
     nwords = nwords / 2 + (nwords & 1);
@@ -62,9 +60,9 @@ int test(int n32bitwords, int d)
 
     /* now nwords is a number of unsigned longs */
 
-    f = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
-    g = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
-    h = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
+    unsigned long ** f = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
+    unsigned long ** g = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
+    unsigned long ** h = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
 
     for(int i = 0 ; i < d ; i++)
         for(int j = 0 ; j < d ; j++) {
@@ -180,49 +178,7 @@ int main(int argc, char **argv)
     if (n32bitwords < 0)
         usage_and_die(argv);
 
-    /* In the specification here, n32bitwords is a number of 32-bit
-     * words. However, the tuning table makes sense for full words.
-     */
-    {
-#ifdef ENGINE_TERNARY
-        int nwords = n32bitwords;
-#if GF2X_WORDSIZE == 64
-        nwords = nwords / 2 + (nwords & 1);
-#endif
-        int64_t T_FFT_TAB[][2] = GF2X_MUL_FFT_TABLE;
-        long max_ix = sizeof(T_FFT_TAB)/sizeof(T_FFT_TAB[0]);
-        int j;
-#ifdef ARTIFICIAL_NON_SPLIT_VERSION
-        /* remove completely the FFT2 setups */
-        j = 0;
-        for(int i = 0 ; i < max_ix ; i++) {
-            if (T_FFT_TAB[i][1] > 0) {
-                T_FFT_TAB[j][0] = T_FFT_TAB[i][0];
-                T_FFT_TAB[j][1] = T_FFT_TAB[i][1];
-                j++;
-            }
-        }
-        max_ix = j;
-#endif
-        /* artificial: use FFT always */
-        assert(T_FFT_TAB[0][0] == 1);
-        if (T_FFT_TAB[0][1] == 1) T_FFT_TAB[0][1] = 3;
-        /* also for intermediary steps */
-        j = 0;
-        for(int i = 0 ; i < max_ix ; i++) {
-            if (T_FFT_TAB[i][1] != 1) {
-                T_FFT_TAB[j][0] = T_FFT_TAB[i][0];
-                T_FFT_TAB[j][1] = T_FFT_TAB[i][1];
-                j++;
-            }
-        }
-        max_ix = j;
-        int i;
-        for (i = 0; T_FFT_TAB[i + 1][0] <= nwords && i + 1 < max_ix; i++);
-        /* now T_FFT_TAB[i][0] <= nwords < T_FFT_TAB[i+1][0] */
-        init_extra_arg = T_FFT_TAB[i][1];
-#endif  /* ENGINE_TERNARY */
-    }
+    set_extra_arg_from_n32bitwords(n32bitwords, 0);
 
     test(n32bitwords, k);
 

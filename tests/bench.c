@@ -24,19 +24,21 @@
    Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
    02110-1301, USA.
 */
-
+#define _ISOC99_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/resource.h>
-#include <gmp.h>		// for random
+#include <math.h>		// for random
 
 #include "gf2x.h"
 #include "gf2x/gf2x-config.h"
+#include "gf2x/gf2x-impl.h"
 #include "gf2x/gf2x-thresholds.h"
 
+#include "test-tools.h"
 #include "check-and-bench-common.h"
 
 #ifdef  MULCOUNT
@@ -53,18 +55,97 @@ void usage_and_die(char **argv)
     exit(1);
 }
 
+/* we are talking numbers of words here */
+void bench(int nwords, int dim, int quick, long supplied)
+{
+    size_t n32bitwords = nwords;
+#if GF2X_WORDSIZE == 64
+    n32bitwords *= 2;
+#endif
+
+    int d = quick ? 1 : dim;
+
+    unsigned long ** f = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
+    unsigned long ** g = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
+    unsigned long ** h = (unsigned long**) malloc(d*d*sizeof(unsigned long*));
+
+    for(int i = 0 ; i < d ; i++)
+        for(int j = 0 ; j < d ; j++) {
+            f[i*d+j] = (unsigned long *) malloc(nwords * sizeof(unsigned long));
+            g[i*d+j] = (unsigned long *) malloc(nwords * sizeof(unsigned long));
+            h[i*d+j] = (unsigned long *) malloc(2 * nwords * sizeof(unsigned long));
+        }
+
+    uint32_t start=0x32104567UL;
+    uint32_t ratio=0x76540123UL;
+
+    uint32_t v = start;
+    for(int i = 0 ; i < d ; i++)
+        for(int j = 0 ; j < d ; j++) {
+            v = fill(f[i*d+j], n32bitwords, v, ratio);
+        }
+    for(int i = 0 ; i < d ; i++)
+        for(int j = 0 ; j < d ; j++) {
+            v = fill(g[i*d+j], n32bitwords, v, ratio);
+        }
+
+
+    int rep;
+
+#ifdef  MULCOUNT
+    mulcount=0;
+#endif
+
+    time_total = 0;
+    time_dft = 0;
+    time_ift = 0;
+    time_conv = 0;
+
+    set_extra_arg_from_n32bitwords(n32bitwords, supplied);
+
+    long order = 0;
+    for(rep = 0 ; time_total < 0.5 ; rep++) {
+        order = ENGINE_mul(h, f, nwords, g, nwords, d);
+    }
+
+    double mmul_ft = ((double) dim/d) * ((double) dim/d);
+    double mmul_cv = ((double) dim/d) * ((double) dim/d) * ((double) dim/d);
+    printf("%d %f %f %f %f %ld %d\n",
+            nwords,
+            quick ? NAN : ((double) time_total / rep),
+            mmul_ft * time_dft / 2.0 / rep,
+            mmul_ft * time_ift / rep,
+            mmul_cv * time_conv/ rep,
+            order,
+            mulcount
+          );
+    fflush(stdout);
+
+    for(int i = 0 ; i < d ; i++)
+        for(int j = 0 ; j < d ; j++) {
+            free(f[i*d+j]);
+            free(g[i*d+j]);
+            free(h[i*d+j]);
+        }
+    free(h);
+    free(g);
+    free(f);
+}
+
 /* usage:
  *   ./bench nmin nmax [step]
  */
 
 int main(int argc, char **argv)
 {
-    int nmin = 0, nmax = 0, n;
+    int nmin = 0, nmax = 0;
     int step = 1;
     double factor = 1.0;
     int additive = 1;
-    unsigned long *f, *g, *h;
     int i;
+    long supplied = 0;
+    int d = 1;
+    int quick = 0;
 
     for(i = 1 ; i < argc ; i++) {
         if (strcmp(argv[i], "-h") == 0) usage_and_die(argv);
@@ -81,8 +162,16 @@ int main(int argc, char **argv)
 	    step = atoi(argv[++i]);
             continue;
         }
+        if (i < argc - 1 && strcmp(argv[i], "-d") == 0) {
+	    d = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(argv[i], "-q") == 0) {
+            quick=1;
+            continue;
+        }
         if (i < argc - 1 && strcmp(argv[i], "-o") == 0) {
-            init_extra_arg = atoi(argv[++i]);
+            supplied = atol(argv[++i]);
             continue;
         }
         if (!nmin) {
@@ -109,112 +198,17 @@ int main(int argc, char **argv)
 	usage_and_die(argv);
     }
 
-    f = (unsigned long *) malloc(nmax * sizeof(unsigned long));
-    g = (unsigned long *) malloc(nmax * sizeof(unsigned long));
-    h = (unsigned long *) malloc(2 * nmax * sizeof(unsigned long));
-
-    uint32_t start=0x32104567UL;
-    uint32_t ratio=0x76540123UL;
-    uint32_t v = start;
-
-    /* we really care about the number of words here, not about how
-     * consistent this is depending on whether we're talking 32- or
-     * 64- bits.
-     */
-    size_t n32 = nmax;
-#if GF2X_WORDSIZE == 64
-    n32 *= 2;
-#endif
-
-    uint32_t v = start;
-
-    v = fill(f, n32, v, ratio);
-    v = fill(g, n32, v, ratio);
-
-#ifdef ENGINE_TERNARY
-    int automatic_tuning = (init_extra_arg == 0);
-#endif
-
-    n = nmin;
-    while (n <= nmax) {
-	int rep;
-#ifdef  MULCOUNT
-        mulcount=0;
-#endif
-
-        time_total = 0;
-        time_dft = 0;
-        time_ift = 0;
-        time_conv = 0;
-
-#ifdef ENGINE_TERNARY
-        if (automatic_tuning) {
-#ifdef ARTIFICIAL_NON_SPLIT_VERSION
-            int64_t T_FFT_TAB[][2] = {
-                { 1, 1 },
-                { 7572, 243 },
-                { 29064, 729 },
-                { 82703, 2187 },
-                { 275719, 6561 },
-                { 806528, 19683 }, };
-#else
-            int64_t T_FFT_TAB[][2] = GF2X_MUL_FFT_TABLE;
-#endif
-            long ix, K;
-            long max_ix = sizeof(T_FFT_TAB)/sizeof(T_FFT_TAB[0]);
-            for (ix = 0; T_FFT_TAB[ix + 1][0] <= n && ix + 1 < max_ix; ix++);
-            /* now T_FFT_TAB[ix][0] <= n < T_FFT_TAB[ix+1][0] */
-            K = T_FFT_TAB[ix][1];
-            init_extra_arg = K;
+    for(int n = nmin ; n < nmax ; ) {
+        bench(n, d, quick, supplied);
+        if (additive)
+            n += step;
+        else {
+            int new_n = (int) (((double) n) * factor);
+            if (new_n <= n)
+                n++;
+            else
+                n = new_n;
         }
-#endif
-
-	long order = ENGINE_mul(h, f, n, g, n);
-
-	if (time_total == 0)
-	    rep = 1000;
-	else {
-	    rep = 200 / time_total;	// to make about 0.2 sec.
-	    if (rep < 2)
-		rep = 2;
-	}
-
-	//printf("benching n = %d, repeating %d\n", n, rep);
-        if (time_total < 0.5) {
-            for (i = 0; i < rep; ++i)
-                ENGINE_mul(h, f, n, g, n);
-        } else {
-            rep = 1; // be content with our first timing.
-        }
-        printf("%d %f %f %f %f %ld %d\n",
-                n,
-                (double) time_total / rep,
-                (double) time_dft / 2.0 / rep,
-                (double) time_ift / rep,
-                (double) time_conv/ rep,
-                order,
-                mulcount
-                );
-        fprintf(stderr, "%d %f %f %f %f %ld %d\n",
-                n,
-                (double) time_total / rep,
-                (double) time_dft / 2.0 / rep,
-                (double) time_ift / rep,
-                (double) time_conv/ rep,
-                order,
-                mulcount
-                );
-	fflush(stdout);
-	fflush(stderr);
-	if (additive)
-	    n += step;
-	else {
-	    int new_n = (int) (((double) n) * factor);
-	    if (new_n <= n)
-		n++;
-	    else
-		n = new_n;
-	}
     }
 
     return 0;

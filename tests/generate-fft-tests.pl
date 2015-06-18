@@ -70,6 +70,10 @@ while (<>) {
 
 my $pat=join('',@pattern);
 for my $arg (@arguments) {
+    if ($arg =~ /^(if|endif)/) {
+        $$target .= "$arg\n";
+        next;
+    }
     my @args=split(' ', $arg);
     my $i = 0;
     my $y = $pat;

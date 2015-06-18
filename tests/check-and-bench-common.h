@@ -28,11 +28,13 @@
 #ifndef CHECK_AND_BENCH_COMMON_H_
 #define CHECK_AND_BENCH_COMMON_H_
 
+#include "gf2x/gf2x-config-export.h"
+#include "gf2x/gf2x-impl-export.h"
+
 extern int time_total;
 extern int time_dft;
 extern int time_conv;
 extern int time_ift;
-extern long init_extra_arg;
 
 #if defined(ENGINE_CANTOR)
 #include "gf2x-cantor-fft.h"
@@ -86,6 +88,8 @@ extern "C" {
 #endif
 
 long ENGINE_mul(unsigned long ** H, unsigned long ** F, size_t Fl, unsigned long ** G, size_t Gl, int n);
+
+void set_extra_arg_from_n32bitwords(size_t n32 GF2X_MAYBE_UNUSED, long supplied);
 
 #ifdef __cplusplus
 }

@@ -102,7 +102,6 @@ TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 
 # The list of tests is auto-generated with perl, and edited afterwards.
 # The edits are:
-#  - add if/endif
 #  - link check_ternaryns with libternary (since this is the same
 #  library, really).
 # -- begin pattern --
@@ -125,6 +124,7 @@ TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 # -- begin arguments --
 #  ternary $(TERNARY)
 #  ternaryns $(TERNARY_NS)
+# if ENABLE_FFT_INTERFACE
 #  cantor64 $(C64)
 #  cantor64nt $(C64nt)
 #  cantor64gm $(C64gm)
@@ -133,12 +133,17 @@ TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 #  cantor128nt $(C128nt)
 #  cantor128gm $(C128gm)
 #  cantor128gmt $(C128gmt)
+# endif
 # -- end arguments --
 # -- begin generated code --
 check_PROGRAMS+=check_ternary
 check_ternary_SOURCES=$(general_fftcheck_sources)
 check_ternary_CFLAGS=$(AM_CFLAGS) $(TERNARY)
 check_ternary_LDADD=$(top_builddir)/fft/libternary.la
+check_PROGRAMS+=bench_ternary
+bench_ternary_SOURCES=bench.c check-and-bench-common.c test-tools.c
+bench_ternary_CFLAGS=$(AM_CFLAGS) $(TERNARY)
+bench_ternary_LDADD=$(top_builddir)/fft/libternary.la
 SYNTHESIZED_TESTS+=   \
     check_ternary_1000_1_c28bc2e3.fft            \
     check_ternary_1000_2_77db95cc.fft            \

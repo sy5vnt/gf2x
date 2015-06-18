@@ -40,7 +40,7 @@
 #include "test-tools.h"
 #include "check-and-bench-common.h"
 
-long init_extra_arg = ENGINE_EXTRA_ARG_DEFAULT;
+static long init_extra_arg = ENGINE_EXTRA_ARG_DEFAULT;
 
 // cputime in millisec.
 static int cputime()
@@ -49,7 +49,6 @@ static int cputime()
     getrusage(0, &rus);
     return rus.ru_utime.tv_sec * 1000 + rus.ru_utime.tv_usec / 1000;
 }
-
 
 int time_total;
 int time_dft;
@@ -87,12 +86,12 @@ long ENGINE_mul(unsigned long ** H, unsigned long ** F, size_t Fl, unsigned long
     t=cputime(); time_conv -= t;
     for(int i = 0 ; i < n ; i++)
         for(int j = 0 ; j < n ; j++) {
-            ENGINE_compose(order, 
+            ENGINE_compose(order,
                     ENGINE_get(order, h, i*n+j),
                     ENGINE_get_const(order, (ENGINE_srcptr) f, i*n/*+k*/),
                     ENGINE_get_const(order, (ENGINE_srcptr) g, /*k*n+*/j));
             for(int k = 1 ; k < n ; k++)
-                ENGINE_addcompose(order, 
+                ENGINE_addcompose(order,
                         ENGINE_get(order, h, i*n+j),
                         ENGINE_get_const(order, (ENGINE_srcptr) f, i*n+k),
                         ENGINE_get_const(order, (ENGINE_srcptr) g, k*n+j));
@@ -118,3 +117,48 @@ long ENGINE_mul(unsigned long ** H, unsigned long ** F, size_t Fl, unsigned long
     return res;
 }
 
+void set_extra_arg_from_n32bitwords(size_t n32 GF2X_MAYBE_UNUSED, long supplied)
+{
+    if (supplied) {
+        init_extra_arg = supplied;
+        return;
+    }
+#ifdef ENGINE_TERNARY
+    int nwords = n32;
+#if GF2X_WORDSIZE == 64
+    nwords = nwords / 2 + (nwords & 1);
+#endif
+    int64_t T_FFT_TAB[][2] = GF2X_MUL_FFT_TABLE;
+    long max_ix = sizeof(T_FFT_TAB)/sizeof(T_FFT_TAB[0]);
+    int j;
+#ifdef ARTIFICIAL_NON_SPLIT_VERSION
+    /* remove completely the FFT2 setups */
+    j = 0;
+    for(int i = 0 ; i < max_ix ; i++) {
+        if (T_FFT_TAB[i][1] > 0) {
+            T_FFT_TAB[j][0] = T_FFT_TAB[i][0];
+            T_FFT_TAB[j][1] = T_FFT_TAB[i][1];
+            j++;
+        }
+    }
+    max_ix = j;
+#endif
+    /* artificial: use FFT always */
+    assert(T_FFT_TAB[0][0] == 1);
+    if (T_FFT_TAB[0][1] == 1) T_FFT_TAB[0][1] = 3;
+    /* also for intermediary steps */
+    j = 0;
+    for(int i = 0 ; i < max_ix ; i++) {
+        if (T_FFT_TAB[i][1] != 1) {
+            T_FFT_TAB[j][0] = T_FFT_TAB[i][0];
+            T_FFT_TAB[j][1] = T_FFT_TAB[i][1];
+            j++;
+        }
+    }
+    max_ix = j;
+    int i;
+    for (i = 0; T_FFT_TAB[i + 1][0] <= nwords && i + 1 < max_ix; i++);
+    /* now T_FFT_TAB[i][0] <= nwords < T_FFT_TAB[i+1][0] */
+    init_extra_arg = T_FFT_TAB[i][1];
+#endif  /* ENGINE_TERNARY */
+}
