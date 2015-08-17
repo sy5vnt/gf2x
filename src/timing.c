@@ -28,15 +28,15 @@
 #include "gf2x/gf2x-config.h"
 
 #include <sys/types.h>    /* for cputime */
-#ifdef HAVE_SYS_RESOURCE_H_
+#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h> /* for cputime */
-#endif  /* HAVE_SYS_RESOURCE_H_ */
+#endif  /* HAVE_SYS_RESOURCE_H */
 #include <stdint.h>
 #include "timing.h"
 
 uint64_t microseconds()
 {
-#ifdef HAVE_SYS_RESOURCE_H_
+#ifdef HAVE_SYS_RESOURCE_H
         struct rusage res[1];
         getrusage(RUSAGE_SELF,res);
         uint64_t r;
