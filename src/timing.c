@@ -25,6 +25,8 @@
    02110-1301, USA.
 */
 
+#include "gf2x/gf2x-config.h"
+
 #include <sys/types.h>    /* for cputime */
 #ifdef HAVE_SYS_RESOURCE_H_
 #include <sys/resource.h> /* for cputime */
