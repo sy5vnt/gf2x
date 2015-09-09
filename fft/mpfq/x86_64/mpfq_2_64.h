@@ -944,8 +944,8 @@ void mpfq_2_64_mul_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t
 #ifdef HAVE_GF2X
     gf2x_mul1(t, s1, s2);
 #elif defined(HAVE_PCLMUL)      /* !HAVE_GF2X */
-    __m128i ss1 = _mm_setr_epi64(s1[0], 0);
-    __m128i ss2 = _mm_setr_epi64(s2[0], 0);
+    __m128i ss1 = _mm_setr_epi64((__m64) s1[0], (__m64) 0LL);
+    __m128i ss2 = _mm_setr_epi64((__m64) s2[0], (__m64) 0LL);
     _mm_storeu_si128((__m128i *)(t),  _mm_clmulepi64_si128(ss1, ss2, 0));
 #else
        unsigned long hi, lo;
