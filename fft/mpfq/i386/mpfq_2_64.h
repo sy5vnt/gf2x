@@ -1653,7 +1653,7 @@ int mpfq_2_64_poly_deg(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_src_poly w)
     if (w->size == 0)
         return -1;
     int deg = w->size-1;
-    mpfq_2_64_elt temp;	/* spurious uninit warning sometimes */
+    mpfq_2_64_elt temp;
     mpfq_2_64_init(K, &temp);
     mpfq_2_64_vec_getcoeff(K, temp, w->c, deg);
     int comp=mpfq_2_64_cmp_ui(K, temp, 0);
@@ -1873,6 +1873,7 @@ void mpfq_2_64_poly_xgcd(mpfq_2_64_dst_field k MAYBE_UNUSED, mpfq_2_64_dst_poly 
     mpfq_2_64_poly a,b,u,v,w,x,q,r;
     mpfq_2_64_elt c;
     mpfq_2_64_init(k,&c);
+    mpfq_2_64_set_ui(k,c,0);        /* placate gcc */
     int da0=mpfq_2_64_poly_deg(k,a0), db0=mpfq_2_64_poly_deg(k,b0), dega;
     if (db0==-1) {
      if (da0==-1) {

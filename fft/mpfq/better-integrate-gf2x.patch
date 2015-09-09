@@ -399,7 +399,7 @@ diff --git a/fft/mpfq/x86_64/mpfq_2_128.h b/fft/mpfq/x86_64/mpfq_2_128.h
 index bbb1866..f701c33 100644
 --- a/fft/mpfq/x86_64/mpfq_2_128.h
 +++ b/fft/mpfq/x86_64/mpfq_2_128.h
-@@ -11,9 +11,12 @@
+@@ -11,9 +11,15 @@
  #include <assert.h>
  #include <stdint.h>
  #include <ctype.h>
@@ -408,6 +408,9 @@ index bbb1866..f701c33 100644
  #include <stdio.h>
 +#ifdef  HAVE_GF2X
 +#include "gf2x.h"
++#endif
++#ifdef HAVE_PCLMUL
++#include <wmmintrin.h>
 +#endif
 +
  #include "assert.h"
@@ -451,7 +454,7 @@ diff --git a/fft/mpfq/x86_64/mpfq_2_64.h b/fft/mpfq/x86_64/mpfq_2_64.h
 index 4cfb9c2..44698b4 100644
 --- a/fft/mpfq/x86_64/mpfq_2_64.h
 +++ b/fft/mpfq/x86_64/mpfq_2_64.h
-@@ -11,9 +11,12 @@
+@@ -11,9 +11,15 @@
  #include <assert.h>
  #include <stdint.h>
  #include <ctype.h>
@@ -461,16 +464,23 @@ index 4cfb9c2..44698b4 100644
 +#ifdef  HAVE_GF2X
 +#include "gf2x.h"
 +#endif
++#ifdef HAVE_PCLMUL
++#include <wmmintrin.h>
++#endif
 +
  #include "assert.h"
  #ifdef	MPFQ_LAST_GENERATED_TAG
  #undef	MPFQ_LAST_GENERATED_TAG
-@@ -935,6 +938,9 @@ void mpfq_2_64_elt_ur_add(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_
+@@ -935,6 +938,13 @@ void mpfq_2_64_elt_ur_add(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_
  static inline
  void mpfq_2_64_mul_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t, mpfq_2_64_src_elt s1, mpfq_2_64_src_elt s2)
  {
 +#ifdef HAVE_GF2X
 +    gf2x_mul1(t, s1, s2);
++#elif defined(HAVE_PCLMUL)      /* !HAVE_GF2X */
++    __m128i ss1 = _mm_setr_epi64(s1[0], 0);
++    __m128i ss2 = _mm_setr_epi64(s2[0], 0);
++    _mm_storeu_si128((__m128i *)(t),  _mm_clmulepi64_si128(ss1, ss2, 0));
 +#else
         unsigned long hi, lo;
         unsigned long A[16];
