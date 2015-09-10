@@ -960,8 +960,9 @@ void mpfq_2_64_elt_ur_add(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_
 
 /* *Mpfq::gf2n::mul::code_for_mul_ur */
 #ifndef HAVE_GF2X
+/* include something not too dumb, although we don't really care */
 static inline void
-gf2x_mul1 (unsigned long *c, unsigned long a, unsigned long b)
+mpfq_2_64_gf2x_mul1 (unsigned long *c, unsigned long a, unsigned long b)
 {
    unsigned long hi, lo, tmp, A[16];
    A[0]  = 0;         A[1]  = a;         A[2]  = A[1] << 1; A[3]  = A[2] ^ a;
@@ -984,16 +985,16 @@ gf2x_mul1 (unsigned long *c, unsigned long a, unsigned long b)
    tmp = -((a >> 25) & 1); tmp &= ((b & 0x80808080) >> 7); hi = hi ^ tmp;
    c[0] = lo; c[1] = hi;
 }
-static inline void gf2x_mul2(unsigned long *c, const unsigned long *a,
+static inline void mpfq_2_64_gf2x_mul2(unsigned long *c, const unsigned long *a,
 			     const unsigned long *b)
 {
     unsigned long t;
     unsigned long u[2];
 
-    gf2x_mul1(c, a[0], b[0]);
-    gf2x_mul1(c + 2, a[1], b[1]);
+    mpfq_2_64_gf2x_mul1(c, a[0], b[0]);
+    mpfq_2_64_gf2x_mul1(c + 2, a[1], b[1]);
     t = c[1] ^ c[2];
-    gf2x_mul1(u, a[0] ^ a[1], b[0] ^ b[1]);
+    mpfq_2_64_gf2x_mul1(u, a[0] ^ a[1], b[0] ^ b[1]);
     c[1] = c[0] ^ u[0] ^ t;
     c[2] = c[3] ^ u[1] ^ t;
 }
@@ -1002,7 +1003,7 @@ static inline void gf2x_mul2(unsigned long *c, const unsigned long *a,
 static inline
 void mpfq_2_64_mul_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t, mpfq_2_64_src_elt s1, mpfq_2_64_src_elt s2)
 {
-    gf2x_mul2(t, s1, s2);
+    mpfq_2_64_gf2x_mul2(t, s1, s2);
 }
 
 /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
