@@ -124,17 +124,17 @@ LEXLE3(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__,X,Y,Z)
 #endif
 
 #if GNUC_VERSION_ATLEAST(3,4,0)
-#define clzl(x)         __builtin_clzl(x)
+#define mpfq_clzl(x)         __builtin_clzl(x)
 #define HAVE_clzl
 #endif
 
 #if GNUC_VERSION_ATLEAST(3,4,0)
-#define ctzl(x)         __builtin_ctzl(x)
+#define mpfq_ctzl(x)         __builtin_ctzl(x)
 #define HAVE_ctzl
 #endif
 
 #if GNUC_VERSION_ATLEAST(3,4,0)
-#define parityl(x)      __builtin_parityl(x)
+#define mpfq_parityl(x)      __builtin_parityl(x)
 #define HAVE_parityl
 #endif
 
@@ -156,7 +156,7 @@ LEXLE3(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__,X,Y,Z)
 
 #ifndef HAVE_clzl
 /* provide slow fallbacks */
-static inline int clzl(unsigned long x)
+static inline int mpfq_clzl(unsigned long x)
 {
         static const int t[4] = { 2, 1, 0, 0 };
         int a = 0;
@@ -176,16 +176,16 @@ static inline int clzl(unsigned long x)
 #endif
 
 #ifndef HAVE_ctzl
-static inline int ctzl(unsigned long x)
+static inline int mpfq_ctzl(unsigned long x)
 {
-	return GMP_LIMB_BITS - clzl(x & - x);
+	return GMP_LIMB_BITS - mpfq_clzl(x & - x);
 }
 #define HAVE_ctzl
 #define HAVE_ctzl_fallback
 #endif
 
 #ifndef HAVE_parityl
-static inline int parityl(unsigned long x)
+static inline int mpfq_parityl(unsigned long x)
 {
 	static const int t[4] = { 0, 1, 1, 0, };
 #if (GMP_LIMB_BITS == 64)
@@ -201,21 +201,21 @@ static inline int parityl(unsigned long x)
 #define HAVE_parityl_fallback
 #endif
 
-static inline int clzlx(unsigned long * x, int n)
+static inline int mpfq_clzlx(unsigned long * x, int n)
 {
 	int r = 0;
 	for( ; n > 0 && MPFQ_UNLIKELY(!x[n-1]) ; --n) r+=GMP_LIMB_BITS;
 	if (n == 0) return r;
-	r += clzl(x[n-1]);
+	r += mpfq_clzl(x[n-1]);
 	return r;
 }
 
-static inline int ctzlx(unsigned long * x, int n)
+static inline int mpfq_ctzlx(unsigned long * x, int n)
 {
 	int r = 0;
 	for( ; n > 0 && MPFQ_UNLIKELY(!*x) ; --n,++x) r+=GMP_LIMB_BITS;
 	if (n == 0) return r;
-	r += ctzl(*x);
+	r += mpfq_ctzl(*x);
 	return r;
 }
 
