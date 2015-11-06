@@ -961,7 +961,7 @@ void mpfq_2_64_elt_ur_add(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_
 static inline
 void mpfq_2_64_mul_ur(mpfq_2_64_dst_field K MAYBE_UNUSED, mpfq_2_64_dst_elt_ur t, mpfq_2_64_src_elt s1, mpfq_2_64_src_elt s2)
 {
-    mpfq_2_64_gf2x_mul2(t, s1, s2);
+    gf2x_mul2(t, s1, s2);
 }
 
 /* *Mpfq::gf2n::squaring::code_for_sqr_ur */

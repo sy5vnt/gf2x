@@ -149,7 +149,7 @@ index 143b97e..4be62f6 100644
 -#undef SHR
 -#undef SHLD
 -#undef SHRD
-+    mpfq_2_128_gf2x_mul4(t, s1, s2);
++    gf2x_mul4(t, s1, s2);
  }
  
  /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
@@ -260,7 +260,7 @@ index 08f4cf7..d234625 100644
 -#undef SHR
 -#undef SHLD
 -#undef SHRD
-+    mpfq_2_64_gf2x_mul2(t, s1, s2);
++    gf2x_mul2(t, s1, s2);
  }
  
  /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
