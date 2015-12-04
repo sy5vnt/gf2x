@@ -1500,7 +1500,7 @@ void gf2x_cantor_fft_ift(
 
 gf2x_cantor_fft_ptr gf2x_cantor_fft_alloc(const gf2x_cantor_fft_info_t p, size_t n)
 {
-    return (Kelt *) malloc((n << p->k) * sizeof(Kelt));
+    return (Kelt *) malloc((n+(n << p->k)) * sizeof(Kelt));
 }
 void gf2x_cantor_fft_free(
         const gf2x_cantor_fft_info_t p GF2X_MAYBE_UNUSED,
@@ -1511,15 +1511,15 @@ void gf2x_cantor_fft_free(
 }
 gf2x_cantor_fft_srcptr gf2x_cantor_fft_get_const(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_srcptr x, size_t k)
 {
-    return x + (k << p->k);
+    return x + (k << p->k) + k;
 }
 gf2x_cantor_fft_ptr gf2x_cantor_fft_get(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, size_t k)
 {
-    return x + (k << p->k);
+    return x + (k << p->k) + k;
 }
 void gf2x_cantor_fft_zero(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr x, size_t n)
 {
-    memset(x, 0, (n << p->k) * sizeof(Kelt));
+    memset(x, 0, ((n << p->k) + n) * sizeof(Kelt));
 }
 void gf2x_cantor_fft_init_similar(gf2x_cantor_fft_info_ptr o, size_t bits_a, size_t bits_b, gf2x_cantor_fft_info_srcptr other GF2X_MAYBE_UNUSED)
 {
