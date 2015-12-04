@@ -761,10 +761,6 @@ static inline void reduceSi(unsigned int k, Kelt * f, Kelt beta)
             Kadd(f[index], f[index], fi);
         }
         Kmul(coeff, fi, beta);
-#ifdef  DOUBLE_MUL_FOR_TIMING_ONLY
-        asm volatile("# HELLO RED"::"r"(fi),"r"(coeff):"memory");
-        Kmul(coeff, fi, beta);
-#endif
         Kadd(f[i - K1], f[i - K1], coeff);
     }
 
@@ -832,10 +828,6 @@ static inline void interpolateSi(unsigned int k, Kelt * f, Kelt beta)
             Kadd(f[index], f[index], fi);
         }
         Kmul(coeff, fi, beta);
-#ifdef  DOUBLE_MUL_FOR_TIMING_ONLY
-        asm volatile("# HELLO INT"::"r"(fi),"r"(coeff):"memory");
-        Kmul(coeff, fi, beta);
-#endif
         Kadd(f[i - K1], f[i - K1], coeff);
     }
 }
@@ -1380,20 +1372,29 @@ void gf2x_cantor_fft_compose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr
 {
     for (size_t j = 0; j < transform_datasize(p) ; j++) {
         Kmul(y[j], x1[j], x2[j]);
-#ifdef  DOUBLE_MUL_FOR_TIMING_ONLY
-        asm volatile("# HELLO COMP"::"r"(x1),"r"(y):"memory");
-        Kmul(y[j], x1[j], x2[j]);
-#endif
     }
 }
+
+void gf2x_cantor_fft_addcompose_n(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr * x1, gf2x_cantor_fft_srcptr * x2, size_t n)
+{
+    Kelt er;
+    Kelt_ur e, s;
+    for (size_t j = 0; j < transform_datasize(p) ; j++) {
+        Kelt_ur_set_zero(s);
+        for(size_t k = 0 ; k < n ; k++) {
+            Kmul_ur(e, x1[k][j], x2[k][j]);
+            Kelt_ur_add(s, s, e);
+        }
+        Kreduce(er, s);
+        Kadd(y[j], y[j], er);
+    }
+}
+
 void gf2x_cantor_fft_addcompose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
-    Kelt e;
-    for (size_t j = 0; j < transform_datasize(p) ; j++) {
-        Kmul(e, x1[j], x2[j]);
-        Kadd(y[j], y[j], e);
-    }
+    gf2x_cantor_fft_addcompose_n(p, y, &x1, &x2, 1);
 }
+
 void gf2x_cantor_fft_add(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
 {
     for (size_t j = 0; j < transform_datasize(p) ; j++) {
