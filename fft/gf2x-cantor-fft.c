@@ -1378,8 +1378,28 @@ void gf2x_cantor_fft_compose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr
 void gf2x_cantor_fft_addcompose_n(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr * x1, gf2x_cantor_fft_srcptr * x2, size_t n)
 {
     Kelt er;
-    Kelt_ur e, s;
-    for (size_t j = 0; j < transform_datasize(p) ; j++) {
+#if 0
+    /* strategy 1: run all pointers simultaneously, and run many
+     * simultaneous accumulators */
+#define ACCUMULATE      256
+    size_t j;
+    for (j = 0; j + ACCUMULATE - 1 < transform_datasize(p) ; j+= ACCUMULATE) {
+        Kelt_ur e[ACCUMULATE], s[ACCUMULATE];
+        for(int t = 0 ; t < ACCUMULATE ; t++)
+            Kelt_ur_set_zero(s[t]);
+        for(size_t k = 0 ; k < n ; k++) {
+            for(int t = 0 ; t < ACCUMULATE ; t++) {
+                Kmul_ur(e[t], x1[k][j+t], x2[k][j+t]);
+                Kelt_ur_add(s[t], s[t], e[t]);
+            }
+        }
+        for(int t = 0 ; t < ACCUMULATE ; t++) {
+            Kreduce(er, s[t]);
+            Kadd(y[j+t], y[j+t], er);
+        }
+    }
+    for (; j < transform_datasize(p) ; j++) {
+        Kelt_ur e, s;
         Kelt_ur_set_zero(s);
         for(size_t k = 0 ; k < n ; k++) {
             Kmul_ur(e, x1[k][j], x2[k][j]);
@@ -1388,6 +1408,44 @@ void gf2x_cantor_fft_addcompose_n(const gf2x_cantor_fft_info_t p, gf2x_cantor_ff
         Kreduce(er, s);
         Kadd(y[j], y[j], er);
     }
+#else
+    /* strategy 2: run only a fixed number of pointers at the same time.
+     * We do more reductions, but control how fewer we do. 
+     */
+#define SIMULTANEOUS    8
+    size_t k;
+    for(k = 0 ; k + SIMULTANEOUS - 1 < n ; k += SIMULTANEOUS) {
+        for(size_t j = 0 ; j < transform_datasize(p) ; j++) {
+            Kelt_ur s;
+            Kelt_ur_set_zero(s);
+            for(size_t r = 0 ; r < SIMULTANEOUS ; r++) {
+                Kelt_ur e;
+                Kmul_ur(e, x1[r][j], x2[r][j]);
+                Kelt_ur_add(s, s, e);
+            }
+            Kreduce(er, s);
+            Kadd(y[j], y[j], er);
+        }
+        x1 += SIMULTANEOUS;
+        x2 += SIMULTANEOUS;
+    }
+    for( ; k < n ; k ++) {
+        for(size_t j = 0 ; j < transform_datasize(p) ; j++) {
+            Kelt_ur s;
+            Kelt_ur_set_zero(s);
+            {
+                size_t r = 0;
+                Kelt_ur e;
+                Kmul_ur(e, x1[r][j], x2[r][j]);
+                Kelt_ur_add(s, s, e);
+            }
+            Kreduce(er, s);
+            Kadd(y[j], y[j], er);
+        }
+        x1 ++;
+        x2 ++;
+    }
+#endif
 }
 
 void gf2x_cantor_fft_addcompose(const gf2x_cantor_fft_info_t p, gf2x_cantor_fft_ptr y, gf2x_cantor_fft_srcptr x1, gf2x_cantor_fft_srcptr x2)
