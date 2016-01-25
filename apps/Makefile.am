@@ -1,5 +1,5 @@
 
-AM_CPPFLAGS = -I$(top_srcdir) -T$(top_builddir) -std=c++11
+AM_CPPFLAGS = -I$(top_srcdir) -T$(top_builddir) -fopenmp -std=c++11
 
 check_PROGRAMS=factor
 factor_SOURCES=factor.cpp halfgcd.cpp

@@ -904,7 +904,7 @@ main (int argc, char *argv[])
 #pragma omp master
   printf ("Using %d thread(s)\n", omp_get_num_threads ());
 
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
   for (input_s = s0; input_s < s1; input_s++)
         {
           int divisible, skip;
