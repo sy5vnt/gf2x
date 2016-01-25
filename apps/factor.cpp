@@ -21,38 +21,31 @@
 
 /* Finds smallest irreducible factor of trinomial over GF(2) */
 
-#define VERSION 1.72
+#define VERSION 2.00
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h> /* for CHAR_BIT */
 #include <NTL/GF2XFactoring.h>
 #include <NTL/ZZXFactoring.h>
+#include <NTL/version.h>
 #include <signal.h>
 #include <string.h>
+#include <assert.h>
+#include <omp.h>
 
 #include "halfgcd.hpp"
 
 NTL_CLIENT
 
-/* Usage: factor [options] r < file [see usage() function for options]
-   where file contains lines of the form
+/* Usage: factor [options] -s0 s0 -s1 s1 r [see usage() function for options]
 
-      s nnn
-   or s u.
-
-   "s nnn" means that x^r+x^s+1 has a factor of degree nnn,
-   and this is output as is. In fact anything except "s uxxx" is output as is
-   and "s uxxx" is treated like "s u".
-
-   "s u" means that the status of x^r+x^s+1 is unknown;
-   it is checked and "s k px..y" is output if it has a factor of degree k
+   Check every trinomial x^r+x^s+1 for s0 <= s < s1, with 0 < s0 and s1 <= r,
+   and "s k px..y" is output if it has a factor of degree k
    (the factor is x..y in hex encoding);
    otherwise "s irreducible" (or "s primitive") is output.
    If the "-z" option is used then "s u" may be output (in this case
    we need to check the trinomial with another program, e.g. irred).
-
-   r and s should satisfy r > s > 0.
 */
 
 #define BITS_PER_LONG2 (2*NTL_BITS_PER_LONG)
@@ -666,7 +659,7 @@ void init_h (vec_GF2X& h, long k, long m, const GF2XModulus& F,
 void
 usage ()
 {
-  fprintf (stderr, "Usage: factor [options] r < file\n");
+  fprintf (stderr, "Usage: factor [options] r\n");
   fprintf (stderr, "Options:\n");
   fprintf (stderr, "   -b d    - omit hex encoding of factor if degree < d\n");
   fprintf (stderr, "   -f f    - use interval bounds of f^j (default is f=1);\n");
@@ -682,93 +675,43 @@ usage ()
   fprintf (stderr, "   -skip d - skip degrees <= d (input trinomials are known to have no\n");
   fprintf (stderr, "             factor of degree <= d)\n");
   fprintf (stderr, "   -maxd d - skip degrees > d\n");
-  fprintf (stderr, "   -t      - print cumulative times for GCD etc at end\n");
   fprintf (stderr, "   -v      - verbose\n");
   fprintf (stderr, "   -z q1   - output 'u' if number of blocks of length m would be > q1\n");
   fprintf (stderr, "             (default is 'infinity')\n");
+  fprintf (stderr, "   -s0 s0  - start with x^r + x^s0 + 1, default 1\n");
+  fprintf (stderr, "   -s1 s1  - ends with x^r + x^(s1-1) + 1, default floor(r/2)+1\n");
+  fprintf (stderr, "   -mt n   - use n threads (default 1)\n");
   exit (1);
-}
-
-/* copied from GMP-ECM, main.c */
-static long last_degree = 0;
-static long last_s = 0;
-static int exit_asap_signalnr = 0; /* Remembers which signal we received */
-
-void
-signal_handler (int sig)
-{
-  fprintf (stderr, "Interrupted s=%ld after degree %ld\n",
-           last_s, last_degree);
-  fflush (stderr);
-  if (sig == SIGINT || sig == SIGTERM)
-    {
-      exit_asap_signalnr = sig;
-      /* If one of these two signals arrives again, we'll let the default
-         handler take over,  which will usually terminate the process
-         immediately. */
-      signal (SIGINT, SIG_DFL);
-      signal (SIGTERM, SIG_DFL);
-    }
-}
-
-void
-save_state (long s, long k2)
-{
-  last_s = s;
-  last_degree = k2;
 }
 
 int
 main (int argc, char *argv[])
 {
-  long r, rhigh, maxd = LONG_MAX, k = 0, k1, k2, s, ss, i, q, r3;
-  long m = 0, k0 = 0, b0 = 2, q0 = 4, q1 = 0, q2 = 0;
+  long r; /* degree of trinomials */
+  long maxd = LONG_MAX; /* skip degrees > maxd */
+  long m = 0, k0 = 0, b0 = 2, q0 = 4, q1 = 0;
   long skipd = 0, fineDDFtol;
-  long tkt = 0;
-  int fineDDF, flip, swan;
-  char c, *fact;
   double f = 1.0; /* scaling factor, default 1.0 */
-  double f0;
+  long s0 = 1, s1 = 0;
 
-  int verbose = 0, verbose_t = 0, primitive = 0, choose_m = 0;
-  int usefastsqr;
+  int verbose = 0, primitive = 0, choose_m = 0;
 
-  double CanZass_t, GCD_t, SqrMul_t, Exp_t, Total_t;
-  double SqrMul_kt1, SqrMul_kt2;
-  double GCD_kt1, GCD_kt2;
-
-  /* to catch interrupts */
-  signal (SIGINT, &signal_handler);
-  signal (SIGTERM, &signal_handler);
+  int mt = 1;
 
   /* print whole command line */
-  for (i = 0; i < argc; i++)
+  for (int i = 0; i < argc; i++)
     fprintf (stderr, "%s ", argv[i]);
   fprintf (stderr, "\n");
 
   fprintf (stderr, "This is factor version %1.2f\n", VERSION);
-
-  CanZass_t = (double) 0.0;
-  GCD_t = (double) 0.0;
-  SqrMul_t = (double) 0.0;
-  Exp_t = (double) 0.0;
-  Total_t = (double) 0.0;
-  SqrMul_kt1 = (double) 0.0;
-  SqrMul_kt2 = (double) 0.0;
-  GCD_kt1 = (double) 0.0;
-  GCD_kt2 = (double) 0.0;
+  fprintf (stderr, "based on NTL version %s (%d.%d.%d)\n",
+	   NTL_VERSION, NTL_MAJOR_VERSION, NTL_MINOR_VERSION, NTL_REVISION);
 
   while (argc > 1 && argv[1][0] == '-')
     {
       if (strcmp (argv[1], "-v") == 0)
         {
           verbose ++;
-          argc --;
-          argv ++;
-        }
-      else if (strcmp (argv[1], "-t") == 0)
-        {
-          verbose_t = 1;
           argc --;
           argv ++;
         }
@@ -831,6 +774,24 @@ main (int argc, char *argv[])
           argv += 2;
           argc -= 2;
         }
+      else if (argc > 2 && strcmp (argv[1], "-s0") == 0)
+        {
+          s0 = atoi (argv[2]);
+          argv += 2;
+          argc -= 2;
+        }
+      else if (argc > 2 && strcmp (argv[1], "-s1") == 0)
+        {
+          s1 = atoi (argv[2]);
+          argv += 2;
+          argc -= 2;
+        }
+      else if (argc > 2 && strcmp (argv[1], "-mt") == 0)
+        {
+          mt = atoi (argv[2]);
+          argv += 2;
+          argc -= 2;
+        }
       else
         {
           fprintf (stderr, "Error, invalid option: %s\n", argv[1]);
@@ -849,6 +810,13 @@ main (int argc, char *argv[])
       exit (1);
     }
 
+  if (s1 == 0)
+    s1 = (r / 2) + 1;
+
+  /* check s0 and s1 */
+  assert (0 < s0 && s0 < r);
+  assert (0 < s1 && s1 <= r);
+
   if ((primitive) && (!ProbPrime(r, 2)))
     {
       fprintf (stderr,
@@ -866,10 +834,12 @@ main (int argc, char *argv[])
 
   if (m == 0)
     {
-      choose_m = (r > 10000);	 // Later try to find optimal m
+      choose_m = (r > 1000);	 // Later try to find optimal m
       for ( ; (2 << m) < r; m++) // Reasonable though probably not optimal.
 	;
     }
+  /* we cannot determine m at runtime if mt > 1 */
+  assert (choose_m == 0 || mt == 1);
 
   if (r < 17) 			// Tiny case, this avoids a problem
     m = 1;			// with e.g. r = 11, s = 1.
@@ -884,7 +854,7 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  if (f < (double)1.0)
+  if (f < (double) 1.0)
     {
       fprintf (stderr, "Error, f < 1.0\n");
       exit (1);
@@ -899,6 +869,7 @@ main (int argc, char *argv[])
   if (q1 == 0)
     q1 = r;				// Effectively infinity
 
+  long r3;
   for (r3 = 0; r3*r3*r3 < r; r3++) ;	// r3 = r^(1/3)
   fineDDFtol = 2*r3*r3;			// 2*r^(2/3)
 
@@ -915,49 +886,38 @@ main (int argc, char *argv[])
       fflush (stdout);
     }
 
-  fact = (char*) malloc ((2 + (r / 4)) * sizeof (char));
-
   /* since all degree k factors divide x^(2^k)-x, if x^r+x^s+1 has a degree
      k factor, then so has x^r+x^(s+2^k-1)+1, thus if 2^k-1 <= floor(r/2)-1,
      i.e. 2^(k+1) <= r, then we can save some computations */
 
-  long j, l;
+  long j, l, input_s;
 
-  while (1)
+  /* NTL is thread-safe up from version 7 */
+  if (mt > 1 && NTL_MAJOR_VERSION < 7)
     {
-      s = -1;		/* In case no positive integer found */
-      if (scanf ("%ld ", &s) == EOF)
-        break;
+      fprintf (stderr, "Error, use NTL version >= 7 with multiple threads\n");
+      exit (1);
+    }
 
-      c = getchar ();
+  omp_set_num_threads (mt);
+#pragma omp parallel
+#pragma omp master
+  printf ("Using %d thread(s)\n", omp_get_num_threads ());
 
-      if (c != 'u') 	/* just copies rest of line */
-        {
-          if (s != -1)
-            printf ("%ld ", s);
-	  printf ("%c", c);
-
-          do
-            {
-              c = getchar ();
-	      putchar (c);
-            }
-          while (c != '\n');
-        }
-      else /* unknown status */
+#pragma omp parallel for
+  for (input_s = s0; input_s < s1; input_s++)
         {
           int divisible, skip;
-	  double ts;
+	  long s = input_s;
+	  long ss, rhigh, k = 0, k1, k2, q, q2 = 0;
+	  int fineDDF, flip, swan;
+	  char *fact;
+	  double f0;
+	  int usefastsqr;
 
-	  ts = GetTime ();
+	  fact = (char*) malloc ((2 + (r / 4)) * sizeof (char));
+
 	  skip = 0;
-	  tkt++;		/* count trinomials not skipped */
-          do
-            {
-              c = getchar ();	/* discard rest of line */
-            }
-          while (c != '\n');
-          scanf ("\n");
 
 	  GF2X p;
 	  SetCoeff(p, r);
@@ -1105,8 +1065,6 @@ main (int argc, char *argv[])
 	  fineDDF = 0;  /* 0 as long as GCDs are trivial */
 	  for (a = 1; (deg (a) == 0 && k2 < rhigh) || fineDDF != 0;)
 	    {
-              save_state (ss, k2);
-
 	      if (fineDDF == 0)
 		k = k2 + 1; /* next degree to check */
 	      else /* fineDDF mode */
@@ -1147,7 +1105,6 @@ main (int argc, char *argv[])
                       SetCoeff (c, s % K, coeff (c, s % K) == 0);
                       st = GetTime ();
                       GCD (a, a, c);
-		      GCD_t += (GetTime () - st);
                       if (verbose)
                         {
                           printf ("gcd took %f sec\n", GetTime () - st);
@@ -1166,11 +1123,8 @@ main (int argc, char *argv[])
 		  /* initialize h-table */
 		  if (k == k0 + 1)
 		    {
-		      if (fineDDF == 0)
-		        GCD_kt1 += (double) 1.0; // have to do one GCD
 		      st = GetTime ();
 		      init_h (h, k, m, F, r, s, usefastsqr);
-                      Exp_t += (GetTime () - st);
 		      if (verbose)
 			printf ("Exponentiation took %f\n", GetTime () - st);
 		    }
@@ -1221,9 +1175,9 @@ main (int argc, char *argv[])
 		  else
 		    {
 		    st = GetTime ();
+		    long i;
 		    for (i = k; i + m - 1 <= k2 ; i += m) /* do i .. i+m-1 */
 		      {
-                    	SqrMul_kt2 += (double)m; // Count m^2 squares as m
 		        c = 1;
 		        for (j = 0; j < m; j++)
 			  {
@@ -1256,7 +1210,6 @@ main (int argc, char *argv[])
                           fastmulmod (a, a, c, F, r, s);
 		      }
                     st = GetTime () - st;
-                    SqrMul_t += st;
 
 		    if (verbose)
                       {
@@ -1277,8 +1230,6 @@ main (int argc, char *argv[])
                       {
                         st = GetTime ();
                         FastGCD(a, a, p);
-			GCD_t += (GetTime () - st);
-			GCD_kt2 += (double)1.0;		// Count FastGCD calls
                         if (verbose)
                           {
                             printf ("   gcd took %f\n", GetTime () - st);
@@ -1289,8 +1240,8 @@ main (int argc, char *argv[])
 			    /* check for GCD error */
 			    if (deg(a) < k)
 			      {
-			      printf ("Error: GCD degree %ld < %ld\n",
-			      	deg(a), k);
+			      printf ("Error: GCD degree %ld<%ld for s=%ld\n",
+				      deg(a), k, input_s);
 			      exit (1);
 			      }
 			    /* exit the loop if we isolated a single factor
@@ -1322,11 +1273,10 @@ main (int argc, char *argv[])
 		  vec_pair_GF2X_long factors;
 		  st = GetTime ();
 		  CanZass (factors, a, 0);
-		  CanZass_t += GetTime () - st;
 		  long i0 = 0;
 		  // find lexicographically least factor of smallest degree
 		  // (except if flipped)
-		  for (i = 1; i < factors.length(); i++)
+		  for (long i = 1; i < factors.length(); i++)
 		    if (lex_less(factors[i].a, factors[i0].a, flip))
 		      i0 = i;
 		  a = factors[i0].a; // the lex least factor of smallest
@@ -1337,7 +1287,8 @@ main (int argc, char *argv[])
 		  k1 = deg(a);       // the smallest degree
 		  if (k1 < k)
 		    {
-		    printf ("Error: GCD degree %ld < %ld \n", k1, k);
+		    printf ("Error: GCD degree %ld < %ld for s=%ld\n",
+			    k1, k, input_s);
 		    exit (1);
 		    }
 		}
@@ -1345,9 +1296,10 @@ main (int argc, char *argv[])
                 print_hex (fact, a, flip);
 	    }
 
+#pragma omp critical
+	  {
           if (!divisible || k1 == r)
             {
-              SqrMul_kt1 += (double) (rhigh-k0);	// best possible
               if (skip)
                 printf ("%ld u\n", ss);
               else if (primitive)
@@ -1357,8 +1309,6 @@ main (int argc, char *argv[])
             }
           else
             {
-              if (k1 > k0)
-                SqrMul_kt1 += (double) (k1-k0);		// best possible
               if (k1 != 0)
                 printf ("%ld %ld", ss, k1);
               else
@@ -1367,35 +1317,10 @@ main (int argc, char *argv[])
 	        printf (" p%s", fact);
 	      printf("\n");
             }
-	  Total_t += (GetTime () - ts);
+	  }
+	  fflush (stdout);
+	  free (fact);
         }
-      fflush (stdout);
-    }
-
-  free (fact);
-
-  if (verbose_t && (GCD_kt2 > (double) 0.0) && (Total_t > (double) 0.0))
-    {
-      printf ("Normal end of run for r = %ld, m = %ld, version %1.2f\n",
-        r, m, VERSION);
-      printf ("Total Exp time        %f = %2.2f %%\n",
-	       Exp_t, 100.0*Exp_t/Total_t);
-      printf ("Total Sqr/Mul time    %f = %2.2f %%\n",
-	       SqrMul_t, 100.0*SqrMul_t/Total_t);
-      printf ("Total GCD time        %f = %2.2f %%\n",
-	       GCD_t, 100.0*GCD_t/Total_t);
-      printf ("Total CanZass time    %f = %2.2f %%\n",
-	       CanZass_t, 100.0*CanZass_t/Total_t);
-      printf ("Total computation     %f\n", Total_t);
-      if (tkt > 0)
-        printf ("Time/trinomial        %f for %ld trinomials\n",
-        	 Total_t/tkt, tkt);
-      printf ("Efficiency of Sqr/Mul %f\n", SqrMul_kt1/SqrMul_kt2);
-      printf ("Efficiency of GCD     %f\n", GCD_kt1/GCD_kt2);
-      printf ("Overall efficiency    %f\n",
-        (Exp_t + GCD_t*(GCD_kt1/GCD_kt2) + SqrMul_t*(SqrMul_kt1/SqrMul_kt2))/
-        (Exp_t + GCD_t + SqrMul_t + CanZass_t));
-    }
 
   return 0;
 }

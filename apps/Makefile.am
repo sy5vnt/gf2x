@@ -1,9 +1,10 @@
 
-AM_CPPFLAGS = -I$(top_srcdir) -T$(top_builddir)
+AM_CPPFLAGS = -I$(top_srcdir) -T$(top_builddir) -std=c++11
 
 check_PROGRAMS=factor
 factor_SOURCES=factor.cpp halfgcd.cpp
 noinst_HEADERS=halfgcd.hpp
+factor_LDFLAGS=-fopenmp
 factor_LDADD=../libgf2x.la -lntl -lgmp
 
 LOG_COMPILER=$(SHELL) 2>/dev/null
