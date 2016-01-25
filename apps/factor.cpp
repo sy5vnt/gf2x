@@ -704,8 +704,7 @@ main (int argc, char *argv[])
   fprintf (stderr, "\n");
 
   fprintf (stderr, "This is factor version %1.2f\n", VERSION);
-  fprintf (stderr, "based on NTL version %s (%d.%d.%d)\n",
-	   NTL_VERSION, NTL_MAJOR_VERSION, NTL_MINOR_VERSION, NTL_REVISION);
+  fprintf (stderr, "based on NTL version %s\n", NTL_VERSION);
 
   while (argc > 1 && argv[1][0] == '-')
     {
@@ -890,7 +889,7 @@ main (int argc, char *argv[])
      k factor, then so has x^r+x^(s+2^k-1)+1, thus if 2^k-1 <= floor(r/2)-1,
      i.e. 2^(k+1) <= r, then we can save some computations */
 
-  long j, l, input_s;
+  long input_s;
 
   /* NTL is thread-safe up from version 7 */
   if (mt > 1 && NTL_MAJOR_VERSION < 7)
@@ -908,7 +907,7 @@ main (int argc, char *argv[])
   for (input_s = s0; input_s < s1; input_s++)
         {
           int divisible, skip;
-	  long s = input_s;
+	  long s = input_s, j, l;
 	  long ss, rhigh, k = 0, k1, k2, q, q2 = 0;
 	  int fineDDF, flip, swan;
 	  char *fact;
