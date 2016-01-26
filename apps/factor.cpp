@@ -1041,7 +1041,7 @@ main (int argc, char *argv[])
 	    fastmulmod (htemp, htemp, htemp, F, r, s);
 	    timem = GetTime ();
 	    for (jt = 0; (GetTime() - timem) < (double)1.0; jt++)
-	      fastmulmod (htemp, htemp, htemp, F, r, s);
+	      fastmulmod (htemp, htemp, htemp2, F, r, s);
 	    timem = (GetTime () - timem)/(double)jt;
 	    // Prefer even m to avoid copying overhead
 	    mopt = 2*(long)((double)0.5*sqrt(timem/times) + (double)0.5);
