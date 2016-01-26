@@ -6,8 +6,8 @@ AM_CPPFLAGS = -I$(top_srcdir) -T$(top_builddir) -fopenmp -std=c++11 -I$(NTL)/inc
 check_PROGRAMS=factor
 factor_SOURCES=factor.cpp halfgcd.cpp
 noinst_HEADERS=halfgcd.hpp
-factor_LDFLAGS=-fopenmp -L$(NTL)/lib
-factor_LDADD=../libgf2x.la -lntl -lgmp
+factor_LDFLAGS=-fopenmp
+factor_LDADD=../libgf2x.la $(NTL)/lib/libntl.a -lgmp
 
 LOG_COMPILER=$(SHELL) 2>/dev/null
 TESTS=check-factor-000.sh check-factor-001.sh	\
