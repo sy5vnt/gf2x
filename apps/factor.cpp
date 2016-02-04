@@ -692,7 +692,7 @@ main (int argc, char *argv[])
   long m = 0, k0 = 0, b0 = 2, q0 = 4, q1 = 0;
   long skipd = 0, fineDDFtol;
   double f = 1.0; /* scaling factor, default 1.0 */
-  long s0 = 1, s1 = 0;
+  long s0 = 1, s1 = 1;
 
   int verbose = 0, primitive = 0, choose_m = 0;
 
@@ -809,9 +809,6 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  if (s1 == 0)
-    s1 = (r / 2) + 1;
-
   /* check s0 and s1 */
   assert (0 < s0 && s0 < r);
   assert (0 < s1 && s1 <= r);
@@ -889,8 +886,6 @@ main (int argc, char *argv[])
      k factor, then so has x^r+x^(s+2^k-1)+1, thus if 2^k-1 <= floor(r/2)-1,
      i.e. 2^(k+1) <= r, then we can save some computations */
 
-  long input_s;
-
   /* NTL is thread-safe up from version 7 */
   if (mt > 1 && NTL_MAJOR_VERSION < 7)
     {
@@ -898,15 +893,35 @@ main (int argc, char *argv[])
       exit (1);
     }
 
+  /* prepare inputs */
+  long *todo, ntodo = 0;
+  todo = (long*) malloc (r * sizeof (long));
+  /* fill todo[] with entries in [s0, s1-1] */
+  for (long s = s0; s < s1; s++)
+    todo[ntodo++] = s;
+  /* read entries from stdin (only when s0 >= s1) */
+  if (ntodo == 0)
+    while (1)
+      {
+	long s;
+	int ret = scanf ("%ld", &s);
+	if (ret != 1)
+	  break;
+	assert (0 < s && s < r);
+	todo[ntodo++] = s;
+	assert (ntodo <= r);
+      }
+
   omp_set_num_threads (mt);
 #pragma omp parallel
 #pragma omp master
   printf ("Using %d thread(s)\n", omp_get_num_threads ());
 
 #pragma omp parallel for schedule(dynamic)
-  for (input_s = s0; input_s < s1; input_s++)
+  for (long idx = 0; idx < ntodo; idx++)
         {
-          int divisible, skip;
+	  long input_s = todo[idx];
+	  int divisible, skip;
 	  long s = input_s, j, l;
 	  long ss, rhigh, k = 0, k1, k2, q, q2 = 0;
 	  int fineDDF, flip, swan;
@@ -1320,6 +1335,8 @@ main (int argc, char *argv[])
 	  fflush (stdout);
 	  free (fact);
         }
+
+  free (todo);
 
   return 0;
 }
