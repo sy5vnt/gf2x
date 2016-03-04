@@ -21,7 +21,9 @@
 
 /* Finds smallest irreducible factor of trinomial over GF(2) */
 
-#define VERSION 2.00
+#define VERSION 2.01
+
+#define USE_PDEP
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +35,9 @@
 #include <string.h>
 #include <assert.h>
 #include <omp.h>
+#ifdef USE_PDEP
+#include <x86intrin.h> /* for _pdep_u64 */
+#endif
 
 #include "halfgcd.hpp"
 
@@ -50,7 +55,7 @@ NTL_CLIENT
 
 #define BITS_PER_LONG2 (2*NTL_BITS_PER_LONG)
 
-void fastsqr(GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
+void fastsqr_old(GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
 
 /* Returns b = a*a mod (x^r + x^s + 1)
 
@@ -393,6 +398,214 @@ void fastsqr(GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
   }
 
 #endif
+
+void
+print_gf2x (GF2X& a)
+{
+  _ntl_ulong *ap = a.xrep.elts();
+  for (long j = 0; j <= deg(a); j++)
+    if (ap[j / 64] >> (j % 64) & 1)
+      printf ("+x^%lu", j);
+  printf ("\n");
+}
+
+#ifdef USE_PDEP
+/* b <- a^2 mod (x^r + x^s + 1)
+   Assumes r and s are odd, and NTL_BITS_PER_LONG = 64.
+   Assumes r-s >= 128.
+   Destroys the value in a.
+ */
+void
+fastsqr_pdep (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
+{
+  assert (r & 1);
+  assert (s & 1);
+  assert (NTL_BITS_PER_LONG == 64);
+// #define DEBUG
+#ifdef DEBUG
+  unsigned char *copy_a = (unsigned char*) malloc (r * sizeof (unsigned char));
+  for (long j = 0; j < r; j++)
+    copy_a[j] = coeff(a,j) == 1 ? 1 : 0;
+#endif
+
+  unsigned long smax = (r + 63) / 64; /* ceil(r/64) */
+
+  unsigned long j, sa = a.xrep.length ();    /* size in words */
+  if (sa < smax)
+    a.xrep.SetLength (smax);	/* Always use length smax for a */
+
+  _ntl_ulong *ap = a.xrep.elts();
+  for (j = a.xrep.length(); j < smax; j++)
+    ap[j] = 0;  	/* Clear high words of a if necessary */
+
+  b.xrep.SetLength (smax);
+
+  unsigned long alpha = (r - 1) / 2;
+  unsigned long delta = (r - s) / 2;
+#ifdef DEBUG
+  for (long j = r - 1; j > alpha; j--)
+    copy_a[j - delta] ^= copy_a[j];
+#endif
+
+  assert (delta >= 64); /* to avoid word-overlap between b_j and b_{j+delta} */
+
+  /* first loop (Section 4.1 of "A fast algorithm ...", Math. Comp., 2002):
+
+     for j <- r-1 downto alpha+1 do
+        b_{j - delta} <- b_{j - delta} xor b_j
+
+     for j <- r-1-delta downto alpha+1-delta do
+        b_j <- b_j xor b_{j+delta}
+  */
+  unsigned long jmin, jmax, deltaq, deltar;
+  jmin = (alpha + 1 - delta) / 64;  /* floor((alpha+1-delta)/64 */
+  jmax = (r - 1 - delta) / 64;      /* floor((r-1-delta)/64 */
+  deltaq = delta / 64;
+  deltar = delta % 64;
+  assert (jmax + deltaq < smax);
+  assert (jmin + deltaq >= 1);
+  /* separate case for j = jmax, since jmax + deltaq + 1 might
+     equal smax */
+  ap[jmax] ^= ap[jmax + deltaq] >> deltar;
+  if (jmax + deltaq + 1 < smax && deltar != 0)
+    ap[jmax] ^= ap[jmax + deltaq + 1] << (64 - deltar);
+  if (deltar != 0)
+    {
+      for (j = jmax - 1; j > jmin; j--)
+	{
+	  /* add the 64 - deltar least significant bits of ap[j + deltaq],
+	     after shift right by deltar */
+	  ap[j] ^= ap[j + deltaq] >> deltar;
+	  /* add the deltar least significant bits of ap[j + deltaq + 1],
+	     after shift left by 64-deltar */
+	  ap[j] ^= ap[j + deltaq + 1] << (64 - deltar);
+	}
+    }
+  else /* special case for deltar = 0 */
+    {
+      for (j = jmax - 1; j > jmin; j--)
+	ap[j] ^= ap[j + deltaq];
+    }
+  /* separate case for j = jmin, we should only modify bits x..64 where
+     x = (alpha+1-delta) % 64 */
+  unsigned long x = (alpha + 1 - delta) % 64;
+  _ntl_ulong mask = (~0UL >> x) << x;
+  ap[jmin] ^= mask & (ap[jmin + deltaq] >> deltar);
+  if (deltar != 0)
+    ap[jmin] ^= mask & (ap[jmin + deltaq + 1] << (64 - deltar));
+
+  /* truncate the upper bits */
+  ap[r / 64] &= (1UL << (r % 64)) - 1UL;
+
+  a.normalize();
+#ifdef DEBUG
+  for (j = 0; j < r; j++)
+    if (copy_a[j] != ((ap[j/64] >> (j%64)) & 1))
+      {
+	printf ("coeff %lu of a wrong: expected %d got %d\n",
+		j, copy_a[j], (ap[j/64] >> (j%64)) & 1);
+	exit (1);
+      }
+  unsigned char *copy_b = (unsigned char*) malloc (r * sizeof (unsigned char));
+  copy_b[0] = ap[0] & 1;
+  for (long j = 1; j <= alpha; j++)
+    {
+      copy_b[2*j-1] = (ap[(j+alpha)/64] >> ((j+alpha)%64)) & 1;
+      copy_b[2*j] = (ap[j/64] >> (j%64)) & 1;
+    }
+#endif
+
+  /* now we have the bits of the result interleaved in 'a' (cf "A fast ..."):
+     b_0 b_2 b_4 b_6 ... b_{r-1} b_1 b_3 b_5 b_7 ... b_{r-2} */
+  jmax = (alpha + 1) / 64; /* floor(((r-1)/2+1)/64) */
+  deltar = (alpha + 1) % 64;
+  _ntl_ulong *bp = b.xrep.elts(), even, odd;
+  if (deltar != 0)
+    {
+      for (j = 0; j < jmax; j++)
+	{
+	  even = ap[j];
+	  odd = (ap[j + jmax] >> deltar) ^ (ap[j + jmax + 1] << (64 - deltar));
+	  bp[2 * j] = _pdep_u64 (even, 0x5555555555555555) ^
+	    _pdep_u64 (odd, 0xaaaaaaaaaaaaaaaa);
+	  bp[2 * j + 1] = _pdep_u64 (even >> 32, 0x5555555555555555) ^
+	    _pdep_u64 (odd >> 32, 0xaaaaaaaaaaaaaaaa);
+	}
+    }
+  else /* case deltar = 0 */
+    {
+      for (j = 0; j < jmax; j++)
+	{
+	  even = ap[j];
+	  odd = ap[j + jmax];
+	  bp[2 * j] = _pdep_u64 (even, 0x5555555555555555) ^
+	    _pdep_u64 (odd, 0xaaaaaaaaaaaaaaaa);
+	  bp[2 * j + 1] = _pdep_u64 (even >> 32, 0x5555555555555555) ^
+	    _pdep_u64 (odd >> 32, 0xaaaaaaaaaaaaaaaa);
+	}
+    }
+  /* special case for j = jmax */
+  even = ap[jmax];
+  odd = (2 * jmax < smax) ? ap[2 * jmax] >> deltar : 0;
+  if (2 * jmax + 1 < smax && deltar != 0)
+    odd ^= ap[2 * jmax + 1] << (64 - deltar);
+  if (2 * jmax < smax)
+    bp[2 * jmax] = _pdep_u64 (even, 0x5555555555555555) ^
+      _pdep_u64 (odd, 0xaaaaaaaaaaaaaaaa);
+  if (2 * jmax + 1 < smax)
+      bp[2 * jmax + 1] = _pdep_u64 (even >> 32, 0x5555555555555555) ^
+	_pdep_u64 (odd >> 32, 0xaaaaaaaaaaaaaaaa);
+  /* truncate the upper bits */
+  bp[r / 64] &= (1UL << (r % 64)) - 1UL;
+  b.normalize();
+#ifdef DEBUG
+  for (j = 0; j < r; j++)
+    if (copy_b[j] != ((bp[j/64] >> (j%64)) & 1))
+      {
+	printf ("coeff %lu of b wrong: expected %d got %d\n",
+    j, copy_b[j], (bp[j/64] >> (j%64)) & 1);
+	exit (1);
+      }
+  free (copy_a);
+  free (copy_b);
+#endif
+}
+#endif
+
+void
+fastsqr (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
+{
+#ifndef USE_PDEP
+  return fastsqr_old (b, a, r, s);
+#else
+  return fastsqr_pdep (b, a, r, s);
+#endif
+
+#ifdef DEBUG
+  GF2X a_copy;
+  a_copy = a; /* save a */
+  fastsqr_old (b, a, r, s);
+  GF2X c;
+  a = a_copy;
+  fastsqr_pdep (c, a, r, s);
+  _ntl_ulong *bp = b.xrep.elts();
+  _ntl_ulong *cp = c.xrep.elts();
+  if (b != c)
+    {
+      cout << a << endl;
+      cout << b << endl;
+      cout << c << endl;
+      printf ("error\n");
+      exit (1);
+    }
+  for (unsigned long j = 0; j < (r + 63) / 64; j++)
+    if (bp[j] != cp[j])
+      {
+	printf ("j=%lu bp[j]=%lu cp[j]=%lu\n", j, bp[j], cp[j]);
+	exit (1);
+      }
+#endif
+}
 
 void fastrem (GF2X& a, _ntl_ulong r, _ntl_ulong s)
 
