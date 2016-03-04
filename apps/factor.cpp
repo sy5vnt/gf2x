@@ -1190,9 +1190,13 @@ main (int argc, char *argv[])
 		    {
 		    st = GetTime ();
 		    long i;
+		    /* we can't easily parallelize this loop since the h[j]
+		       are updated at each loop on i */
 		    for (i = k; i + m - 1 <= k2 ; i += m) /* do i .. i+m-1 */
 		      {
 		        c = 1;
+			/* we can't easily parallelize this loop since c is
+			   not invariant */
 		        for (j = 0; j < m; j++)
 			  {
 			    fastmulbyxmod (c, c, r, s);
