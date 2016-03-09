@@ -403,7 +403,7 @@ void
 print_gf2x (GF2X& a)
 {
   _ntl_ulong *ap = a.xrep.elts();
-  for (long j = 0; j <= deg(a); j++)
+  for (long j = 0; j < 64 * a.xrep.length(); j++)
     if (ap[j / 64] >> (j % 64) & 1)
       printf ("+x^%lu", j);
   printf ("\n");
@@ -421,12 +421,6 @@ fastsqr_pdep (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
   assert (r & 1);
   assert (s & 1);
   assert (NTL_BITS_PER_LONG == 64);
-// #define DEBUG
-#ifdef DEBUG
-  unsigned char *copy_a = (unsigned char*) malloc (r * sizeof (unsigned char));
-  for (long j = 0; j < r; j++)
-    copy_a[j] = coeff(a,j) == 1 ? 1 : 0;
-#endif
 
   unsigned long smax = (r + 63) / 64; /* ceil(r/64) */
 
@@ -435,17 +429,13 @@ fastsqr_pdep (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
     a.xrep.SetLength (smax);	/* Always use length smax for a */
 
   _ntl_ulong *ap = a.xrep.elts();
-  for (j = a.xrep.length(); j < smax; j++)
+  for (j = sa; j < smax; j++)
     ap[j] = 0;  	/* Clear high words of a if necessary */
 
   b.xrep.SetLength (smax);
 
   unsigned long alpha = (r - 1) / 2;
   unsigned long delta = (r - s) / 2;
-#ifdef DEBUG
-  for (long j = r - 1; j > alpha; j--)
-    copy_a[j - delta] ^= copy_a[j];
-#endif
 
   assert (delta >= 64); /* to avoid word-overlap between b_j and b_{j+delta} */
 
@@ -497,24 +487,6 @@ fastsqr_pdep (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
   /* truncate the upper bits */
   ap[r / 64] &= (1UL << (r % 64)) - 1UL;
 
-  a.normalize();
-#ifdef DEBUG
-  for (j = 0; j < r; j++)
-    if (copy_a[j] != ((ap[j/64] >> (j%64)) & 1))
-      {
-	printf ("coeff %lu of a wrong: expected %d got %d\n",
-		j, copy_a[j], (ap[j/64] >> (j%64)) & 1);
-	exit (1);
-      }
-  unsigned char *copy_b = (unsigned char*) malloc (r * sizeof (unsigned char));
-  copy_b[0] = ap[0] & 1;
-  for (long j = 1; j <= alpha; j++)
-    {
-      copy_b[2*j-1] = (ap[(j+alpha)/64] >> ((j+alpha)%64)) & 1;
-      copy_b[2*j] = (ap[j/64] >> (j%64)) & 1;
-    }
-#endif
-
   /* now we have the bits of the result interleaved in 'a' (cf "A fast ..."):
      b_0 b_2 b_4 b_6 ... b_{r-1} b_1 b_3 b_5 b_7 ... b_{r-2} */
   jmax = (alpha + 1) / 64; /* floor(((r-1)/2+1)/64) */
@@ -558,52 +530,28 @@ fastsqr_pdep (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
   /* truncate the upper bits */
   bp[r / 64] &= (1UL << (r % 64)) - 1UL;
   b.normalize();
-#ifdef DEBUG
-  for (j = 0; j < r; j++)
-    if (copy_b[j] != ((bp[j/64] >> (j%64)) & 1))
-      {
-	printf ("coeff %lu of b wrong: expected %d got %d\n",
-    j, copy_b[j], (bp[j/64] >> (j%64)) & 1);
-	exit (1);
-      }
-  free (copy_a);
-  free (copy_b);
-#endif
 }
 #endif
 
 void
 fastsqr (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
 {
-#ifndef USE_PDEP
-  return fastsqr_old (b, a, r, s);
-#else
-  return fastsqr_pdep (b, a, r, s);
-#endif
+#if 0 /* debug code */
+  GF2X copy_a = a, c;
 
-#ifdef DEBUG
-  GF2X a_copy;
-  a_copy = a; /* save a */
   fastsqr_old (b, a, r, s);
-  GF2X c;
-  a = a_copy;
+  a = copy_a;
   fastsqr_pdep (c, a, r, s);
-  _ntl_ulong *bp = b.xrep.elts();
-  _ntl_ulong *cp = c.xrep.elts();
   if (b != c)
     {
-      cout << a << endl;
-      cout << b << endl;
-      cout << c << endl;
-      printf ("error\n");
+      printf ("error for r=%lu s=%lu\n", r, s);
+      printf ("a="); print_gf2x (copy_a);
+      printf ("fastsqr_old:  "); print_gf2x (b);
+      printf ("fastsqr_pdep: "); print_gf2x (c);
       exit (1);
     }
-  for (unsigned long j = 0; j < (r + 63) / 64; j++)
-    if (bp[j] != cp[j])
-      {
-	printf ("j=%lu bp[j]=%lu cp[j]=%lu\n", j, bp[j], cp[j]);
-	exit (1);
-      }
+#else
+  return fastsqr_pdep (b, a, r, s);
 #endif
 }
 
