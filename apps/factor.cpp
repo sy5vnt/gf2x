@@ -23,7 +23,7 @@
 
 #define VERSION 2.01
 
-#define USE_PDEP
+#define USE_PDEP /* -mbmi2 should be added to CFLAGS */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,10 +31,12 @@
 #include <NTL/GF2XFactoring.h>
 #include <NTL/ZZXFactoring.h>
 #include <NTL/version.h>
+#include <NTL/GF2XVec.h>
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
 #include <omp.h>
+#include <sys/time.h>
 #ifdef USE_PDEP
 #include <x86intrin.h> /* for _pdep_u64 */
 #endif
@@ -42,6 +44,14 @@
 #include "halfgcd.hpp"
 
 NTL_CLIENT
+
+double
+WctTime (void)
+{
+    struct timeval tv[1];
+    gettimeofday (tv, NULL);
+    return (double)tv->tv_sec + (double)tv->tv_usec*1.0e-6;
+}
 
 /* Usage: factor [options] -s0 s0 -s1 s1 r [see usage() function for options]
 
@@ -551,7 +561,11 @@ fastsqr (GF2X& b, GF2X& a, _ntl_ulong r, _ntl_ulong s)
       exit (1);
     }
 #else
+#ifdef USE_PDEP
   return fastsqr_pdep (b, a, r, s);
+#else
+  return fastsqr_old (b, a, r, s);
+#endif
 #endif
 }
 
@@ -757,7 +771,7 @@ void copy_h (vec_GF2X& hold, vec_GF2X& h, long m)
 void init_h (vec_GF2X& h, long k, long m, const GF2XModulus& F,
  	_ntl_ulong r, _ntl_ulong s, int usefs)
 
-/* initialize h[j] to sum (x^(s*2^k), 0 <= s < 2^m, hw(s)=j+1),
+/* initialize h[j] to sum ((x^(2^k))^s, 0 <= s < 2^m, hw(s)=j+1),
    for 0 <= j < m */
 
 {
@@ -843,6 +857,24 @@ usage ()
   fprintf (stderr, "   -s1 s1  - ends with x^r + x^(s1-1) + 1, default floor(r/2)+1\n");
   fprintf (stderr, "   -mt n   - use n threads (default 1)\n");
   exit (1);
+}
+
+/* a <- C[0] * C[1] * ... * C[z-1] mod F := (x^r+x^s+1) */
+static void
+accumulate (GF2X& a, GF2XVec& C, const GF2XModulus& F, long r, long s)
+{
+  long z = C.length();
+
+  /* invariant: z is the number of cells C[0]...C[z-1] to accumulate in a */
+  while (z > 1)
+    {
+      /* uncomment this pragma when only one trinomial has to be checked */
+#pragma omp parallel for schedule(static)
+      for (long j = 0; j < z/2; j++)
+	fastmulmod (C[j], C[j], C[z-1-j], F, r, s);
+      z = (z + 1) / 2;
+    }
+  fastmulmod (a, a, C[0], F, r, s);
 }
 
 int
@@ -1078,7 +1110,8 @@ main (int argc, char *argv[])
 #pragma omp master
   printf ("Using %d thread(s)\n", omp_get_num_threads ());
 
-#pragma omp parallel for schedule(dynamic)
+  /* uncomment this pragma when several trinomials are checked in parallel */
+  // #pragma omp parallel for schedule(dynamic)
   for (long idx = 0; idx < ntodo; idx++)
         {
 	  long input_s = todo[idx];
@@ -1350,35 +1383,16 @@ main (int argc, char *argv[])
 		  else
 		    {
 		    st = GetTime ();
+		    double wct = WctTime ();
 		    long i;
 		    /* we can't easily parallelize this loop since the h[j]
 		       are updated at each loop on i */
-		    for (i = k; i + m - 1 <= k2 ; i += m) /* do i .. i+m-1 */
+		    GF2XVec C;
+		    C.SetSize ((k2 - k + m) / m,
+			       (r + NTL_BITS_PER_LONG - 1) / NTL_BITS_PER_LONG);
+		    long z = 0;
+		    for (i = k; i + m - 1 <= k2 ; i += m, z++) /* i .. i+m-1 */
 		      {
-		        c = 1;
-			/* we can't easily parallelize this loop since c is
-			   not invariant */
-		        for (j = 0; j < m; j++)
-			  {
-			    fastmulbyxmod (c, c, r, s);
-			    add (c, c, h[j]);
-			    if (usefastsqr)
-			      {			// Can use fastsqr here
-			      for (l = 0; l < m/2; l++)
-			        {
-			        fastsqr (htemp, h[j], r, s);
-			        fastsqr (h[j], htemp, r, s);
-			        }
-			      if (m&1)		// Last square if m odd
-			        {
-			        fastsqr (htemp, h[j], r, s);
-			        h[j] = htemp;	// Copy result to h[j]
-			        }
-			      }
-			    else		// Have to use SqrMod here
-			      for (l = 0; l < m; l++)
-			        SqrMod (h[j], h[j], F);
-			  }
                         if (i + m - 1 <= skipd)
                           {
                             if (verbose >= 2)
@@ -1386,14 +1400,51 @@ main (int argc, char *argv[])
                                       i, i + m - 1);
                           }
                         else
-                          fastmulmod (a, a, c, F, r, s);
+			  {
+			    C[z] = 1; /* s_{0,m} = 1 */
+			    /* first compute the polynomial p_m(X,x) from head of
+			       page 51 in "A multi-level blocking distinct-degree
+			       factorization algorithm" */
+			    for (j = 0; j < m; j++)
+			      {
+				fastmulbyxmod (C[z], C[z], r, s);
+				add (C[z], C[z], h[j]);
+			      }
+			  }
+
+			/* update the h[j] values */
+			for (j = 0; j < m; j++)
+			  {
+			    if (usefastsqr)
+			      {			// Can use fastsqr here
+				for (l = 0; l < m/2; l++)
+				  {
+				    fastsqr (htemp, h[j], r, s);
+				    fastsqr (h[j], htemp, r, s);
+				  }
+				if (m&1)		// Last square if m odd
+				  {
+				    fastsqr (htemp, h[j], r, s);
+				    h[j] = htemp;	// Copy result to h[j]
+				  }
+			      }
+			    else		// Have to use SqrMod here
+			      for (l = 0; l < m; l++)
+			        SqrMod (h[j], h[j], F);
+			  }
 		      }
+
+		    assert (z == (k2 - k + m) / m);
+
+		    /* accumulate the C[z] values */
+		    accumulate (a, C, F, r, s);
                     st = GetTime () - st;
 
 		    if (verbose)
                       {
-                        printf ("   squares/products took %f, per term %f\n",
-                                st, st/(double)(q*m));
+			double wt = WctTime () - wct;
+                        printf ("   squares/products took %.1f (wct %.1f), per term %.3f (wct %.3f)\n",
+                                st, wt, st/(double)(q*m), wt/(double)(q*m));
                         fflush (stdout);
                       }
 
