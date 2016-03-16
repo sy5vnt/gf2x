@@ -41,6 +41,11 @@
 #include "gf2x/gf2x-impl.h"
 #include "gf2x-ternary-fft.h"
 
+/* define USE_GMP if you want to use GMP's mpn low-level routines */
+// #define USE_GMP
+#ifdef USE_GMP
+#include "gmp.h"
+#endif
 
 // #define DEBUG
 // #define DEBUG_LSHIFT
@@ -147,7 +152,7 @@ static inline void Zero(unsigned long *a, size_t n)
 static inline void Clear(unsigned long *a, size_t low, size_t high)
 {
     if (high > low)
-	memset(a + low, 0, (high - low) * sizeof(unsigned long));
+       memset (a + low, 0, (high - low) * sizeof(unsigned long));
 }
 
 /** Now the specific things */
@@ -158,11 +163,13 @@ static void AddMod(unsigned long *a, unsigned long *b, unsigned long *c,
 		   size_t n)
 {
     for (size_t i = 0; i < n; i++)
-	a[i] = b[i] ^ c[i];
+       a[i] = b[i] ^ c[i];
 }
 
 /* c <- a * x^k, return carry out, 0 <= k < WLEN */
-
+#ifdef USE_GMP
+#define Lsh mpn_lshift
+#else
 static unsigned long Lsh(unsigned long *c, unsigned long *a, size_t n, size_t k)
 {
     unsigned long t, cy = 0;
@@ -185,6 +192,7 @@ static unsigned long Lsh(unsigned long *c, unsigned long *a, size_t n, size_t k)
     }
     return cy;
 }
+#endif
 
 /* c <- c + a * x^k, return carry out, 0 <= k < WLEN */
 
@@ -212,7 +220,9 @@ static unsigned long AddLsh(unsigned long *c, unsigned long *a, size_t n,
 }
 
 /* c <- a / x^k, return carry out, 0 <= k < WLEN */
-
+#ifdef USE_GMP
+#define Rsh mpn_rshift
+#else
 static unsigned long Rsh(unsigned long *c, const unsigned long *a, size_t n,
 			 size_t k)
 {
@@ -233,6 +243,7 @@ static unsigned long Rsh(unsigned long *c, const unsigned long *a, size_t n,
     }
     return cy;
 }
+#endif
 
 /* c <- c + a / x^k, return carry out, 0 <= k < WLEN */
 
