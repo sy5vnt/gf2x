@@ -89,7 +89,7 @@ EOF
                 $fragment .= <<EOF;
 LOWLEVEL+=tune_${code}\$(EXEEXT)
 tune_${code}_CPPFLAGS=-I\$(top_builddir) -I\$(top_srcdir) -DTUNING=$size
-tune_${code}_SOURCES=$code.c
+tune_${code}_SOURCES=../lowlevel/$code.c
 nodist_tune_${code}_SOURCES=tuning_undefs_$size.h
 tune_${code}_LDADD=libtuneup-s$size.la libtiming.la ../libgf2x.la
 $code.\$(OBJEXT): tuning_undefs_$size.h
