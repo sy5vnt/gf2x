@@ -123,9 +123,9 @@ else
  CHECK_SSSE3_SUPPORT()
  CHECK_SSE41_SUPPORT()
  CHECK_PCLMUL_SUPPORT()
- if test "$ac_compiler_gnu = yes" && test "x$has_CFLAGS_from_env" = xno ; then
-  echo "Adding -march=native -mtune=native to CFLAGS"
-  CFLAGS="$CFLAGS -march=native -mtune=native"
+ if test "x$has_CFLAGS_from_env" = xno ; then
+  CHECK_MARCH_NATIVE_SUPPORT()
+  CHECK_MTUNE_NATIVE_SUPPORT()
  fi
 fi
 

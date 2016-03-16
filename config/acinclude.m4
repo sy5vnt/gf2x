@@ -492,6 +492,63 @@ AC_DEFUN([CHECK_PCLMUL_SUPPORT],[
  fi
 ])# CHECK_PCLMUL_SUPPORT
 
+AC_DEFUN([HELLO_WORLD_EXAMPLE],[AC_LANG_SOURCE([
+#include <stdio.h>
+
+int main() {
+    printf("hello\n");
+    return 0;
+}
+])])
+
+
+AC_DEFUN([CHECK_MARCH_NATIVE_SUPPORT],[
+ ac_save_CFLAGS=$CFLAGS
+ special_double_setting="yes, via -march=x86-64 -march=native"
+ AC_CACHE_CHECK([whether $CC understands -march=native], [gf2x_cv_cc_supports_march_native],[
+  gf2x_cv_cc_supports_march_native=no
+  CFLAGS="$ac_save_CFLAGS -march=native"
+  AC_COMPILE_IFELSE(
+      [HELLO_WORLD_EXAMPLE()],
+      [
+      gf2x_cv_cc_supports_march_native=yes
+      ],
+      [
+      CFLAGS="$ac_save_CFLAGS -march=x86-64 -march=native"
+      AC_COMPILE_IFELSE(
+          [HELLO_WORLD_EXAMPLE()],
+          [
+          gf2x_cv_cc_supports_march_native="$special_double_setting"
+          ],
+          [AC_MSG_RESULT(no)])
+      ]
+  )
+  CFLAGS=$ac_save_CFLAGS
+  ])
+  if test "$gf2x_cv_cc_supports_march_native" = "$special_double_setting" ;then
+    CFLAGS="$CFLAGS -march=x86-64 -march=native"
+  elif test "$gf2x_cv_cc_supports_march_native" = "yes" ;then
+    CFLAGS="$CFLAGS -march=native"
+  fi
+])# CHECK_MARCH_NATIVE_SUPPORT
+
+AC_DEFUN([CHECK_MTUNE_NATIVE_SUPPORT],[
+ ac_save_CFLAGS=$CFLAGS
+ AC_CACHE_CHECK([whether $CC understands -mtune=native], [gf2x_cv_cc_supports_mtune_native],[
+  gf2x_cv_cc_supports_mtune_native=no
+  CFLAGS="$ac_save_CFLAGS -mtune=native"
+  AC_COMPILE_IFELSE(
+      [HELLO_WORLD_EXAMPLE()],
+      [
+      gf2x_cv_cc_supports_mtune_native=yes
+      ])
+  CFLAGS=$ac_save_CFLAGS
+  ])
+  if test "$gf2x_cv_cc_supports_mtune_native" = "yes" ;then
+    CFLAGS="$CFLAGS -mtune=native"
+  fi
+])# CHECK_MTUNE_NATIVE_SUPPORT
+
 
 # It is necessary to make all tests. We do encounter in the wild binutils
 # (openbsd binutils 2.15, namely) which are buggy with ssse3, and that
