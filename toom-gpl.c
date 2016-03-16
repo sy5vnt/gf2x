@@ -34,6 +34,12 @@
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
 
+/* define USE_GMP if you want to use the GMP low-level routines */
+// #define USE_GMP
+#ifdef USE_GMP
+#include "gmp.h"
+#endif
+
 /* We need gf2x_addmul_1_n */
 #include "gf2x/gf2x-small.h"
 
@@ -80,16 +86,21 @@ unsigned long AddLsh1(unsigned long *c, const unsigned long *a,
 
 /* c <- x * c, return carry out */
 static
-unsigned long Lsh1(unsigned long *c, long n, unsigned long cy)
+unsigned long Lsh1 (unsigned long *c, long n)
 {
+#ifndef USE_GMP
     unsigned long t;
     long i;
+    unsigned long cy = 0;
     for (i = 0; i < n; i++) {
 	t = (c[i] << 1) | cy;
 	cy = c[i] >> (GF2X_WORDSIZE - 1);
 	c[i] = t;
     }
     return cy;
+#else
+    return mpn_lshift (c, c, n, 1);
+#endif
 }
 
 /* c <- a + cy, return carry out (0 for n > 0, cy for n=0) */
@@ -321,10 +332,10 @@ void gf2x_mul_tc3(unsigned long *c, const unsigned long *a,
 /*    W4 = (b2*y+b1)*y */
     cy = AddLsh1(W0, a + k, a + 2 * k, r);	/* a1 + x a2 */
     cy = Add1(W0 + r, a + k + r, k - r, cy);
-    W0[k] = (cy << 1) ^ Lsh1(W0, k, 0);	/* x a1 + x^2 a2 */
+    W0[k] = (cy << 1) ^ Lsh1(W0, k);	/* x a1 + x^2 a2 */
     cy = AddLsh1(W4 + 2, b + k, b + 2 * k, r);
     cy = Add1(W4 + 2 + r, b + k + r, k - r, cy);
-    W4[2 + k] = (cy << 1) ^ Lsh1(W4 + 2, k, 0);	/* x b1 + x^2 b2 */
+    W4[2 + k] = (cy << 1) ^ Lsh1(W4 + 2, k);	/* x b1 + x^2 b2 */
 
     /* using W4[2+k] requires that k+3 words are available at W4=c+4k.
        Since c contains 2n=4k+2r words, then W4 contains 2r words, thus
