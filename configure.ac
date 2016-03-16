@@ -24,8 +24,14 @@
 #  Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 
-
 AC_INIT([gf2x], [1.2])
+
+if test "x$CFLAGS" != x ; then
+ has_CFLAGS_from_env=yes
+else
+ has_CFLAGS_from_env=no
+fi
+
 : ${CFLAGS=-g -O4}
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -117,6 +123,10 @@ else
  CHECK_SSSE3_SUPPORT()
  CHECK_SSE41_SUPPORT()
  CHECK_PCLMUL_SUPPORT()
+ if test "$ac_compiler_gnu = yes" && test "x$has_CFLAGS_from_env" = xno ; then
+  echo "Adding -march=native -mtune=native to CFLAGS"
+  CFLAGS="$CFLAGS -march=native -mtune=native"
+ fi
 fi
 
 : ${ABI='default'}
