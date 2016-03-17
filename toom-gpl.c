@@ -142,13 +142,15 @@ static unsigned long DivOnePlusX2(unsigned long * c, long n)
     long i;
 
     for (i = 0; i < n; i++) {
-	t ^= c[i];
-	t ^= t << 2;
-	t ^= t << 4;
-	t ^= t << 8;
-	t ^= t << 16;
+        t ^= c[i];   /* t + c[i] */
+        /* FIXME: the following could be computed with
+           gf2x_mul1 (&t, t, 0x5555555555555555UL) */
+	t ^= t << 2; /* (t + c[i]) * (1 + x^2) */
+	t ^= t << 4; /* (t + c[i]) * (1 + x^2 + ... + x^6) */
+	t ^= t << 8; /* (t + c[i]) * (1 + x^2 + ... + x^14) */
+	t ^= t << 16; /* (t + c[i]) * (1 + x^2 + ... + x^30) */
 #if (GF2X_WORDSIZE == 64)
-	t ^= t << 32;
+	t ^= t << 32; /* (t + c[i]) * (1 + x^2 + ... + x^62) */
 #elif (GF2X_WORDSIZE != 32)
 #error "GF2X_WORDSIZE should be 32 or 64"
 #endif
@@ -190,6 +192,24 @@ unsigned long Rsh1Add(unsigned long *c, const unsigned long *b, long n)
 	t = c[i] ^ b[i];
 	cy <<= GF2X_WORDSIZE - 1;
 	c[i] = (t >> 1) | cy;
+	cy = t;
+    }
+    return cy;
+}
+
+/* c <- ( c + b )/x + a, return carry */
+static unsigned long
+Rsh1Adda (unsigned long *c, const unsigned long *b, const unsigned long *a,
+          long n)
+{
+    unsigned long cy = 0, t;
+
+    long i;
+
+    for (i = n - 1; i >= 0; i--) {
+        t = c[i] ^ b[i];
+	cy <<= GF2X_WORDSIZE - 1;
+	c[i] = (t >> 1) ^ cy ^ a[i];
 	cy = t;
     }
     return cy;
@@ -436,11 +456,10 @@ void gf2x_mul_tc3(unsigned long *c, const unsigned long *a,
 /* W2 = ( ( W2 + W0 )/y  + W3 + W4*(y^3+1) ) / (y+1) */
 /* \\W2 = ( W2 + W0 + W3*y + W4*(y^4+y) ) / (y^2+y) */
     /* W2 has 2k words + at most 3 bits (stored in cy), W0 has 2k words */
-    Rsh1Add(W2, W0, 2 * k);
-    W2[2 * k - 1] |= cy << (GF2X_WORDSIZE - 1);
+    Rsh1Adda (W2, W0, W3, 2 * k);
+    W2[2 * k - 1] ^= cy << (GF2X_WORDSIZE - 1);
     /* now W2 has at most 2k words + 3 bits (cy >> 1), but since the final
        results will have 2k words only, we can ignore cy. */
-    Add(W2, W2, W3, 2 * k);
     cy = AddLsh13(W2, W4, 2 * r);
     if (r != k)
 	W2[2 * r] ^= cy;
