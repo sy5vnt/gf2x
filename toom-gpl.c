@@ -59,6 +59,18 @@ void Add (unsigned long *c, const unsigned long *a, const unsigned long *b,
 	c[i] = a[i] ^ b[i];
 }
 
+/* {d,n} <- {a,n} + {b,n} + {c,k} with k <= n */
+static void
+Add2 (unsigned long *d, const unsigned long *a, const unsigned long *b,
+      long n, const unsigned long *c, long k)
+{
+  long i;
+  for (i = 0; i < k; i++)
+    d[i] = a[i] ^ b[i] ^ c[i];
+  for (; i < n; i++)
+    d[i] = a[i] ^ b[i];
+}
+
 /* c <- c + a + b */
 static
 void Add3(unsigned long *c, const unsigned long *a, const unsigned long *b,
@@ -69,7 +81,8 @@ void Add3(unsigned long *c, const unsigned long *a, const unsigned long *b,
 	c[i] ^= a[i] ^ b[i];
 }
 
-/* c <- a + x * b, return carry out */
+/* c <- a + x * b, return carry out.
+   Warning: c might overlap with b. */
 static
 unsigned long AddLsh1(unsigned long *c, const unsigned long *a,
 		      const unsigned long *b, long n)
@@ -84,23 +97,24 @@ unsigned long AddLsh1(unsigned long *c, const unsigned long *a,
     return cy;
 }
 
-/* c <- x * c, return carry out */
+/* c <- x * {a, n} + x^2 * {b, r} with r <= n, return carry out.
+   c should not overlap with a nor b. */
 static
-unsigned long Lsh1 (unsigned long *c, long n)
+unsigned long AddLsh12a (unsigned long *c, const unsigned long *a, long n,
+                         const unsigned long *b, long r)
 {
-#ifndef USE_GMP
-    unsigned long t;
+    unsigned long cy = 0UL;
     long i;
-    unsigned long cy = 0;
-    for (i = 0; i < n; i++) {
-	t = (c[i] << 1) | cy;
-	cy = c[i] >> (GF2X_WORDSIZE - 1);
-	c[i] = t;
+    for (i = 0; i < r; i++) {
+      c[i] = (a[i] << 1) ^ (b[i] << 2) ^ cy;
+      cy = a[i] >> (GF2X_WORDSIZE - 1) ^ b[i] >> (GF2X_WORDSIZE - 2);
     }
+    for (; i < n; i++)
+      {
+        c[i] = (a[i] << 1) ^ cy;
+        cy = a[i] >> (GF2X_WORDSIZE - 1);
+      }
     return cy;
-#else
-    return mpn_lshift (c, c, n, 1);
-#endif
 }
 
 /* c <- a + cy, return carry out (0 for n > 0, cy for n=0) */
@@ -330,18 +344,14 @@ void gf2x_mul_tc3(unsigned long *c, const unsigned long *a,
 /* W4 = (b2*y^2+b1*y) */
 /*    W0 = (a2*y+a1)*y */
 /*    W4 = (b2*y+b1)*y */
-    cy = AddLsh1(W0, a + k, a + 2 * k, r);	/* a1 + x a2 */
-    cy = Add1(W0 + r, a + k + r, k - r, cy);
-    W0[k] = (cy << 1) ^ Lsh1(W0, k);	/* x a1 + x^2 a2 */
-    cy = AddLsh1(W4 + 2, b + k, b + 2 * k, r);
-    cy = Add1(W4 + 2 + r, b + k + r, k - r, cy);
-    W4[2 + k] = (cy << 1) ^ Lsh1(W4 + 2, k);	/* x b1 + x^2 b2 */
+    W0[k] = AddLsh12a (W0, a + k, k, a + 2 * k, r); /* x * a1 + x^2 * a2 */
+    W4[2 + k] = AddLsh12a (W4 + 2, b + k, k, b + 2 * k, r); /* x * b1 + x^2 b2 */
 
     /* using W4[2+k] requires that k+3 words are available at W4=c+4k.
        Since c contains 2n=4k+2r words, then W4 contains 2r words, thus
        we need k+3 <= 2r. This is true for n >= 17.
        Also true for n = 9, 12, 14, 15 but timing tests show that
-       Toom3Mul not the fastest routine for such small n. */
+       this is not the fastest routine for such small n. */
 
     ASSERT(k + 3 <= 2 * r);
 
@@ -349,10 +359,8 @@ void gf2x_mul_tc3(unsigned long *c, const unsigned long *a,
 
 /* W3 = ((a2+a1)+a0)    */
 /* W2 = ((b2+b1)+b0)    */
-    Add(c + k + 1, a, a + k, k);
-    Add(c + k + 1, c + k + 1, a + 2 * k, r);	/* a0 + a1 + a2 */
-    Add(W2 + 2, b, b + k, k);
-    Add(W2 + 2, W2 + 2, b + 2 * k, r);	/* b0 + b1 + b2 */
+    Add2 (c + k + 1, a, a + k, k, a + 2 * k, r); /* a0 + a1 + a2 */
+    Add2 (W2 + 2, b, b + k, k, b + 2 * k, r);    /* b0 + b1 + b2 */
 /* W1 = W2 * W3                \\ C(1) */
 
     /* {c, k+1}: x*a1+x^2*a2, {c+k+1, k}: a0+a1+a2, {c+2k+2,k}: b0+b1+b2,
