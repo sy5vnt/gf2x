@@ -114,6 +114,7 @@ EXTRA_DIST += ../lowlevel/gen_bb_mul_code.c
 #*   test mul4clk
 #*   test mul5clk_c
 #*   test mul5k3
+#*   test mul5clk2
 #*   test mul6clk2
 #*   test mul7cl
 #*   test mul7k3
@@ -666,6 +667,19 @@ TESTS += check_mul5k3
 check_mul5k3_CPPFLAGS=-I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/gf2x -DSOURCEFILE=\"../lowlevel/mul5k3.c\" -DTESTING_SIZE=5
 check_mul5k3_LDADD=../libgf2x.la
 check_mul5k3_SOURCES=check_small_size.c
+
+
+LOWLEVEL+=tune_mul5clk2$(EXEEXT)
+tune_mul5clk2_CPPFLAGS=-I$(top_builddir) -I$(top_srcdir) -DTUNING=5
+tune_mul5clk2_SOURCES=../lowlevel/mul5clk2.c
+nodist_tune_mul5clk2_SOURCES=tuning_undefs_5.h
+tune_mul5clk2_LDADD=libtuneup-s5.la libtiming.la ../libgf2x.la
+mul5clk2.$(OBJEXT): tuning_undefs_5.h
+check_PROGRAMS+=check_mul5clk2
+TESTS += check_mul5clk2
+check_mul5clk2_CPPFLAGS=-I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/gf2x -DSOURCEFILE=\"../lowlevel/mul5clk2.c\" -DTESTING_SIZE=5
+check_mul5clk2_LDADD=../libgf2x.la
+check_mul5clk2_SOURCES=check_small_size.c
 
 
 LOWLEVEL+=tune_mul6clk2$(EXEEXT)
