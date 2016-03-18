@@ -41,12 +41,6 @@
 #include "gf2x/gf2x-impl.h"
 #include "gf2x-ternary-fft.h"
 
-/* define USE_GMP if you want to use GMP's mpn low-level routines */
-// #define USE_GMP
-#ifdef USE_GMP
-#include "gmp.h"
-#endif
-
 // #define DEBUG
 // #define DEBUG_LSHIFT
 // #define DEBUG_MULMOD
@@ -180,10 +174,6 @@ Lsh (unsigned long *c, unsigned long *a, size_t n, size_t k)
     ASSERT(c <= a || a + n <= c);
     ASSERT(k > 0);
 
-#ifdef USE_GMP
-    /* mpn_lshift requires k > 0 */
-    return mpn_lshift (c, a, n, k);
-#else
     unsigned long t, cy = 0;
     for (size_t i = 0; i < n; i++) {
 	t = (a[i] << k) | cy;
@@ -191,7 +181,6 @@ Lsh (unsigned long *c, unsigned long *a, size_t n, size_t k)
 	c[i] = t;
     }
     return cy;
-#endif
 }
 
 /* c <- c + a * x^k, return carry out, 0 <= k < WLEN */
@@ -231,10 +220,6 @@ Rsh (unsigned long *c, const unsigned long *a, size_t n, size_t k)
 
     ASSERT(k > 0);
 
-#ifdef USE_GMP
-    /* mpn_rshift requires k > 0 */
-    return mpn_rshift (c, a, n, k);
-#else
     unsigned long t, cy = 0;
     for (size_t i = n; i-- ; ) {
 	t = (a[i] >> k) | cy;
@@ -242,7 +227,6 @@ Rsh (unsigned long *c, const unsigned long *a, size_t n, size_t k)
 	c[i] = t;
     }
     return cy;
-#endif
 }
 
 /* c <- c + a / x^k, return carry out, 0 <= k < WLEN */

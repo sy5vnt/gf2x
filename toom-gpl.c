@@ -34,12 +34,6 @@
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
 
-/* define USE_GMP if you want to use the GMP low-level routines */
-// #define USE_GMP
-#ifdef USE_GMP
-#include "gmp.h"
-#endif
-
 /* We need gf2x_addmul_1_n */
 #include "gf2x/gf2x-small.h"
 
