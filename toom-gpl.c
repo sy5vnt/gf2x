@@ -1190,7 +1190,7 @@ void gf2x_mul_tc3w (unsigned long *c, const unsigned long *a, const unsigned lon
   stk += 4*k2;	  			// 4 temporaries of size k2
 
   long j;
-  unsigned long s, u2, v2;
+  unsigned long s;
 
 // In the comments y = x**w where w = wordlength = NTL_BITS_PER_LONG
 // y can be thought of as a w-bit shift operator.
@@ -1217,26 +1217,29 @@ void gf2x_mul_tc3w (unsigned long *c, const unsigned long *a, const unsigned lon
   W0[0] = W4[0] = 0;
   W0[1] = a1[0];
   W4[1] = b1[0];				// No a2, b2 here
-  W5[0] = a0[0] ^ a1[0] ^ (u2 = a2[0]);
-  W2[0] = b0[0] ^ b1[0] ^ (v2 = b2[0]);
-  for (j = 1; j < r; j++)			// Next r-1 iterations
+  W5[0] = a0[0] ^ a1[0] ^ a2[0];
+  W2[0] = b0[0] ^ b1[0] ^ b2[0];
+  W5[1] = a0[1] ^ a1[1] ^ a2[1];
+  W2[1] = b0[1] ^ b1[1] ^ b2[1];
+  for (j = 2; j < r; j++)			// Next r-1 iterations
     {						// This is the usual case
-    unsigned long u1, v1;
-    W0[j+1] = (u1 = a1[j]) ^ u2;		// Size(a1) = Size(b1) = k
-    W4[j+1] = (v1 = b1[j]) ^ v2;
-    W5[j] = a0[j] ^ u1 ^ (u2 = a2[j]);		// Size(a2) = Size(b2) = r
-    W2[j] = b0[j] ^ v1 ^ (v2 = b2[j]);
+    W0[j] = a1[j-1] ^ a2[j-2];		// Size(a1) = Size(b1) = k
+    W4[j] = b1[j-1] ^ b2[j-2];
+    W5[j] = a0[j] ^ a1[j] ^ a2[j];		// Size(a2) = Size(b2) = r
+    W2[j] = b0[j] ^ b1[j] ^ b2[j];
     }
-  for (; j < k; j++)				// Last iterations for W5, W2
+  /* the following loop runs at most twice, since k <= r + 2 */
+  for (; j < k; j++)
     {
-    W0[j+1] = a1[j];				// Omit a2, b2 here
-    W4[j+1] = b1[j];
-    W5[j] = a0[j] ^ a1[j];			// Size(W5) := k
-    W2[j] = b0[j] ^ b1[j]; 			// Size(W2) := k;
+    W0[j] = a1[j-1] ^ a2[j-2];
+    W4[j] = b1[j-1] ^ b2[j-2];
+    W5[j] = a0[j] ^ a1[j];
+    W2[j] = b0[j] ^ b1[j];
     }
-  W0[k+1] = W4[k+1] = 0;			// In case r == k
-  W0[r+1] ^= a2[r-1];				// Size(W0) := kd+2
-  W4[r+1] ^= b2[r-1];				// Size(W4) := kd+2
+  W0[k] = a1[k-1] ^ ((k-2 < r) ? a2[k-2] : 0);
+  W4[k] = b1[k-1] ^ ((k-2 < r) ? b2[k-2] : 0);
+  W0[k+1] = (k-1 < r) ? a2[k-1] : 0;
+  W4[k+1] = (k-1 < r) ? b2[k-1] : 0;
 
 // Recursive calls mixed with further evaluation
 // There are 5 recursive calls with sizes at most k+2.
