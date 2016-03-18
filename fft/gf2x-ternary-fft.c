@@ -689,9 +689,10 @@ static void split_reconstruct(unsigned long * c, unsigned long * c1, unsigned lo
 
 // Now extract the result. First do a partial word bit-by-bit.
 
+#if defined(DEBUG) || !defined(NDEBUG)
     size_t m2 = m1 - 1;
-
     size_t n2 = K * m2;		// n2 smallest possible multiple of K
+#endif
     size_t n1 = K * m1;		// next possible multiple of K
     size_t j;
 
@@ -744,12 +745,14 @@ static void split_reconstruct(unsigned long * c, unsigned long * c1, unsigned lo
     }
 #endif
 
+#ifndef NDEBUG
     t = c2[0] ^ c1[0] ^ (c1[n2 / WLEN] >> n2 % WLEN) ^
 	((c1[n2 / WLEN + 1] << 1) << (WLEN - 1 - n2 % WLEN));
     if (t != 0) {
 	fprintf(stderr, "Consistency check failed in gf2x_mul_fft2, low word %lx\n", t);
         abort();
     }
+#endif
 
     Copy(c, c1, cn);	// Copy result
 }
