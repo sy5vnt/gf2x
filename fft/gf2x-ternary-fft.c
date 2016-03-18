@@ -160,6 +160,15 @@ static void AddMod(unsigned long *a, unsigned long *b, unsigned long *c,
        a[i] = b[i] ^ c[i];
 }
 
+/* a <- b + c + d */
+static void
+AddMod3 (unsigned long *a, unsigned long *b, unsigned long *c,
+         unsigned long *d, size_t n)
+{
+  for (size_t i = 0; i < n; i++)
+    a[i] = b[i] ^ c[i] ^ d[i];
+}
+
 /* c <- a * x^k, return carry out, 0 <= k < WLEN */
 static unsigned long
 Lsh (unsigned long *c, unsigned long *a, size_t n, size_t k)
@@ -518,21 +527,24 @@ static void fft(unsigned long **A, uint64_t K, uint64_t j, size_t Np, size_t str
 #define a A[3*i*stride]
 #define b A[(3*i+1)*stride]
 #define c A[(3*i+2)*stride]
+    unsigned long *t4 = malloc (twonp * sizeof (unsigned long)); /* extra */
     for (i = 0; i < k; i++) {
 	ii = p[3 * stride * i];	/* bitrev(i,K/3) = bitrev(3*stride*i,K) */
+        /* a <- a + b * w^(ii*j) + c * w^(2*ii*j)
+           b <- a + b * w^((ii + K / 3) * j) + c * w^((2 * ii + 2 * K / 3) * j
+           c <- a + b ^ w^((ii+2*K/3) * j) + c * w^((2 * ii + 4 * K / 3) * j)
+         */
 	Lshift(t1, b, ii * j, Np);	/* t1 = w^ii*b */
 	Lshift(t2, b, (ii + 2 * K / 3) * j, Np);	/* t2 = w^(ii+2K/3)*b */
 	Lshift(t3, b, (ii + K / 3) * j, Np);
-	AddMod(b, a, t3, twonp);
-	Lshift(t3, c, (2 * ii + 2 * K / 3) * j, Np);
-	AddMod(b, b, t3, twonp);
-	Lshift(t3, c, (2 * ii + 4 * K / 3) * j, Np);
-	AddMod(t2, t2, t3, twonp);
+	Lshift(t4, c, (2 * ii + 2 * K / 3) * j, Np);
+        AddMod3(b, a, t3, t4, twonp);
+	Lshift(t4, c, (2 * ii + 4 * K / 3) * j, Np);
 	Lshift(t3, c, 2 * ii * j, Np);	/* t3 = w^(2ii)*c */
-	AddMod(c, a, t2, twonp);
-	AddMod(a, a, t1, twonp);
-	AddMod(a, a, t3, twonp);
+        AddMod3(c, a, t2, t4, twonp);
+        AddMod3(a, a, t1, t3, twonp);
     }
+    free (t4);
 #undef a
 #undef b
 #undef c
