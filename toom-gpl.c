@@ -244,21 +244,35 @@ unsigned long DivOnePlusX(unsigned long *c, long n)
 {
     unsigned long t = 0;
     long i;
-
-    for (i = 0; i < n; i++) {
-	t ^= c[i];
-	t ^= t << 1;
-	t ^= t << 2;
-	t ^= t << 4;
-	t ^= t << 8;
-	t ^= t << 16;
 #if (GF2X_WORDSIZE == 64)
-	t ^= t << 32;
-#elif (GF2X_WORDSIZE != 32)
+    /* mask[t] = t * (1 + x + x^2 + ... + x^(GF2X_WORDSIZE-1)) */
+    unsigned long mask[2] = {0UL, 0xFFFFFFFFFFFFFFFFUL};
+#elif (GF2X_WORDSIZE == 32)
+    unsigned long mask[2] = {0UL, 0xFFFFFFFFUL};
+#else
 #error "GF2X_WORDSIZE should be 32 or 64"
 #endif
-	c[i] = t;
-	t >>= (GF2X_WORDSIZE - 1);
+
+    for (i = 0; i < n; i++) {
+        /* invariant: t < 2 */
+#ifndef GF2X_HAVE_PCLMUL_SUPPORT
+        unsigned long u;
+        /* u <- c[i] * (1 + x + x^2 + ... + x^(GF2X_WORDSIZE-1)) */
+        u = c[i] ^ (c[i] << 1);
+	u ^= u << 2;
+	u ^= u << 4;
+	u ^= u << 8;
+	u ^= u << 16;
+#if (GF2X_WORDSIZE == 64)
+	u ^= u << 32;
+#endif
+        c[i] = u ^ mask[t];
+#else /* use pclmul */
+        unsigned long cc[2];
+        gf2x_mul1 (cc, c[i], 0xFFFFFFFFFFFFFFFFUL);
+        c[i] = cc[0] ^ mask[t];
+#endif
+	t = c[i] >> (GF2X_WORDSIZE - 1);
     }
     return t;
 }
