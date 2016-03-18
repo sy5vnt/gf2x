@@ -167,13 +167,9 @@ static void AddMod(unsigned long *a, unsigned long *b, unsigned long *c,
 }
 
 /* c <- a * x^k, return carry out, 0 <= k < WLEN */
-#ifdef USE_GMP
-#define Lsh mpn_lshift
-#else
-static unsigned long Lsh(unsigned long *c, unsigned long *a, size_t n, size_t k)
+static unsigned long
+Lsh (unsigned long *c, unsigned long *a, size_t n, size_t k)
 {
-    unsigned long t, cy = 0;
-
     if (k == 0) {
 	if (c != a)
 	    Copy(c, a, n);
@@ -182,17 +178,21 @@ static unsigned long Lsh(unsigned long *c, unsigned long *a, size_t n, size_t k)
 
     /* {c, n} and {a, n} should not overlap */
     ASSERT(c <= a || a + n <= c);
-
     ASSERT(k > 0);
 
+#ifdef USE_GMP
+    /* mpn_lshift requires k > 0 */
+    return mpn_lshift (c, a, n, k);
+#else
+    unsigned long t, cy = 0;
     for (size_t i = 0; i < n; i++) {
 	t = (a[i] << k) | cy;
 	cy = a[i] >> (WLEN - k);
 	c[i] = t;
     }
     return cy;
-}
 #endif
+}
 
 /* c <- c + a * x^k, return carry out, 0 <= k < WLEN */
 
@@ -220,14 +220,9 @@ static unsigned long AddLsh(unsigned long *c, unsigned long *a, size_t n,
 }
 
 /* c <- a / x^k, return carry out, 0 <= k < WLEN */
-#ifdef USE_GMP
-#define Rsh mpn_rshift
-#else
-static unsigned long Rsh(unsigned long *c, const unsigned long *a, size_t n,
-			 size_t k)
+static unsigned long
+Rsh (unsigned long *c, const unsigned long *a, size_t n, size_t k)
 {
-    unsigned long t, cy = 0;
-
     if (k == 0) {
 	if (c != a)
 	    Copy(c, a, n);
@@ -236,14 +231,19 @@ static unsigned long Rsh(unsigned long *c, const unsigned long *a, size_t n,
 
     ASSERT(k > 0);
 
+#ifdef USE_GMP
+    /* mpn_rshift requires k > 0 */
+    return mpn_rshift (c, a, n, k);
+#else
+    unsigned long t, cy = 0;
     for (size_t i = n; i-- ; ) {
 	t = (a[i] >> k) | cy;
 	cy = a[i] << (WLEN - k);
 	c[i] = t;
     }
     return cy;
-}
 #endif
+}
 
 /* c <- c + a / x^k, return carry out, 0 <= k < WLEN */
 
@@ -266,22 +266,6 @@ static unsigned long AddRsh(unsigned long *c, unsigned long *a, size_t n,
     }
     return cy;
 }
-
-#if 0
-// unused
-/* c <- x^j * a / x^k */
-
-static unsigned long LshRsh(unsigned long *c, unsigned long *a, size_t n,
-			    size_t j, size_t k)
-{
-    ASSERT(n >= 0);
-    if (j > k)
-	Lsh(c, a, n, j - k);
-    else
-	Rsh(c, a, n, k - j);
-}
-
-#endif
 
 #if (defined(DEBUG) || defined(DEBUG_LSHIFT) || defined(DEBUG_MULMOD))
 
