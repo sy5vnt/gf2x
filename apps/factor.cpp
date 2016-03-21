@@ -839,6 +839,7 @@ usage ()
   fprintf (stderr, "   -b d    - omit hex encoding of factor if degree < d\n");
   fprintf (stderr, "   -f f    - use interval bounds of f^j (default is f=1);\n");
   fprintf (stderr, "             if f=1 then intervals increase linearly in size\n");
+  fprintf (stderr, "             if f=0 then intervals do not increase\n");
   fprintf (stderr, "   -m m    - use double-blocking size of m\n");
   				// default is as for s if r small, or try to
   				// estimate if r large
@@ -1040,12 +1041,6 @@ main (int argc, char *argv[])
   if (m > r / 2)
     {
       fprintf (stderr, "Error, m = %ld greater than r/2\n", m);
-      exit (1);
-    }
-
-  if (f < (double) 1.0)
-    {
-      fprintf (stderr, "Error, f < 1.0\n");
       exit (1);
     }
 
@@ -1339,7 +1334,9 @@ main (int argc, char *argv[])
 
 		  if (fineDDF == 0)
 		    {
-		      if (f > (double) 1.0)
+		      if (f == 0.0)
+			q = q0; /* no increase */
+		      else if (f > (double) 1.0)
 		 	q = (long) (f0 * (double) q0 + (double) 0.5); // round
 		      else
 		        q = q + q0;		// linear increase if f = 1
@@ -1436,6 +1433,16 @@ main (int argc, char *argv[])
 
 		    assert (z == (k2 - k + m) / m);
 
+		    if (k2 <= skipd)
+		      {
+                        if (verbose)
+                          {
+                            printf ("   skip products\n");
+                            fflush (stdout);
+                          }
+			goto gcds;
+		      }
+
 		    /* accumulate the C[z] values */
 		    accumulate (a, C, F, r, s);
                     st = GetTime () - st;
@@ -1448,6 +1455,7 @@ main (int argc, char *argv[])
                         fflush (stdout);
                       }
 
+		    gcds:
                     if (k2 <= skipd)
                       {
                         if (verbose)
