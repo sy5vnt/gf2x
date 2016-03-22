@@ -111,7 +111,7 @@ short gf2x_best_utoom(unsigned long n GF2X_MAYBE_UNUSED)
  sp(7) <= 19.
 
  It is assumed that KarMul is called for n < 8 <= GF2X_MUL_TOOMW_THRESHOLD
- and requires space KarMulMem(n) <= 4*ceil(n/2) + KarMulMem(ceil(n/2)),
+ and requires space KarMulMem(n) <= 3*ceil(n/2) + KarMulMem(ceil(n/2)),
  KarMulMem(7) <= 19.  The memory for Toom3Mul and Toom4Mul is no larger
  than that for Toom3WMul.
 
@@ -132,7 +132,7 @@ long gf2x_toomspace(long n)
 {
     long sp;
     long low = (GF2X_MUL_KARA_THRESHOLD < GF2X_MUL_TOOMW_THRESHOLD) ?
-	GF2X_MUL_KARA_THRESHOLD : GF2X_MUL_TOOMW_THRESHOLD;
+      GF2X_MUL_KARA_THRESHOLD : GF2X_MUL_TOOMW_THRESHOLD;
     if (n < low)
 	return 0;
     sp = 19;			// KarMulMem (7) <= 19
@@ -173,17 +173,20 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
 
 #if GPL_CODE_PRESENT
     switch (gf2x_best_toom(n)) {
-    case 0:
+    case GF2X_SELECT_KARA:
 	gf2x_mul_kara(c, a, b, n, stk);
 	break;
-        /* 1 2 3 are GPL'ed code */
-    case 1:
+    case GF2X_SELECT_KARAX:
+	gf2x_mul_karax(c, a, b, n, stk);
+	break;
+        /* TC3, TC3W, TC4 are GPL'ed code */
+    case GF2X_SELECT_TC3:
 	gf2x_mul_tc3(c, a, b, n, stk);
 	break;
-    case 2:
+    case GF2X_SELECT_TC3W:
 	gf2x_mul_tc3w(c, a, b, n, stk);
 	break;
-    case 3:
+    case GF2X_SELECT_TC4:
 	gf2x_mul_tc4(c, a, b, n, stk);
 	break;
     }
