@@ -57,7 +57,7 @@ void gf2x_mul_basecase(unsigned long * c, const unsigned long * a,
 	case 8: gf2x_mul8(c, a, b); return;
 	case 9: gf2x_mul9(c, a, b); return;
 	default:
-	    fprintf(stderr, "basecase.c: ran off end of switch\n"
+	    fprintf (stderr, "gf2x_mul_basecase: ran off end of switch\n"
 		    "na=nb=%ld ; decrease GF2X_MUL_KARA_THRESHOLD\n", na);
             abort();
 	}

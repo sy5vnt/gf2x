@@ -38,9 +38,10 @@
 
 /* These flags are for internal use */
 #define	GF2X_SELECT_KARA	0	/* do not change ! */
-#define	GF2X_SELECT_TC3		1
-#define	GF2X_SELECT_TC3W	2
-#define	GF2X_SELECT_TC4		3
+#define	GF2X_SELECT_KARAX	1
+#define	GF2X_SELECT_TC3		2
+#define	GF2X_SELECT_TC3W	3
+#define	GF2X_SELECT_TC4		4
 #define	GF2X_SELECT_UNB_DFLT	0
 #define	GF2X_SELECT_UNB_TC3U	1	/* do not change ! */
 
@@ -62,6 +63,8 @@ extern void gf2x_mul_basecase(unsigned long * c, const unsigned long * a,
 extern void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
 			const unsigned long *b, long n, unsigned long *stk);
 extern void gf2x_mul_kara(unsigned long *c, const unsigned long *a, const unsigned long *b,
+			long n, unsigned long *stk);
+extern void gf2x_mul_karax(unsigned long *c, const unsigned long *a, const unsigned long *b,
 			long n, unsigned long *stk);
 #if GPL_CODE_PRESENT
 extern void gf2x_mul_tc3(unsigned long *c, const unsigned long *a, const unsigned long *b,

@@ -84,6 +84,7 @@
 #include "timing.h"
 #include "tuning-common.h"
 
+#define MINI_GF2X_MUL_KARAX_THRESHOLD 	2
 #define MINI_GF2X_MUL_TOOM_THRESHOLD 	17
 #define MINI_GF2X_MUL_TOOMW_THRESHOLD	8
 #define MINI_GF2X_MUL_TOOM4_THRESHOLD	30
@@ -94,6 +95,7 @@
 
 const char * gf2x_toom_select_string[] = {
     [GF2X_SELECT_KARA] = "TC2",
+    [GF2X_SELECT_KARAX] = "TC2X",
     [GF2X_SELECT_TC3]  = "TC3",
     [GF2X_SELECT_TC3W] = "TC3W",
     [GF2X_SELECT_TC4]  = "TC4",
@@ -110,7 +112,7 @@ void tunetoom(long tablesz)
 {
     long high, n;
     int k;
-    double T3[1], TK[1], TW[1], T4[1];
+    double T3[1], TK[1], TKX[1], TW[1], T4[1];
     double mint;
     unsigned long *a, *b, *c, *d, *t;
 
@@ -131,15 +133,23 @@ void tunetoom(long tablesz)
     d = (unsigned long *) malloc(2 * high * sizeof(unsigned long));
     t = (unsigned long *) malloc(gf2x_toomspace(high) * sizeof(unsigned long));
 
-    for (n = BESTMIN + 1; n <= high; ) {
+    int count = 0;
+    for (n = BESTMIN + 1; n <= high;) {
+      if (count++ % 10 == 0)
+          printf ("     TC2      TC2X     TC3      TC3W     TC4      best\n");
 	srandom(1);
-	TK[0] = T3[0] = TW[0] = T4[0] = 0.0;
+	TK[0] = TKX[0] = T3[0] = TW[0] = T4[0] = 0.0;
 	printf("%ld ", n);
 	fflush(stdout);
 	random_wordstring(a, n);
 	random_wordstring(b, n);
 	if (n >= GF2X_MUL_KARA_THRESHOLD)
 	    TIME(TK[0], gf2x_mul_kara(c, a, b, n, t));
+	if (n >= GF2X_MUL_KARAX_THRESHOLD)
+          {
+	    TIME(TKX[0], gf2x_mul_karax(d, a, b, n, t));
+            check(a, n, b, n, "Kara", c, "TC2X", d);
+          }
 	if (n >= MINI_GF2X_MUL_TOOM_THRESHOLD) {
 	    TIME(T3[0], gf2x_mul_tc3(d, a, b, n, t));
 	    check(a, n, b, n, "Kara", c, "TC3", d);
@@ -152,10 +162,14 @@ void tunetoom(long tablesz)
 	    TIME(T4[0], gf2x_mul_tc4(d, a, b, n, t));
 	    check(a, n, b, n, "Kara", c, "TC4", d);
 	}
-	printf("TC2:%1.2e TC3:%1.2e TC3W:%1.2e TC4:%1.2e ",
-	       TK[0], T3[0], TW[0], T4[0]);
+	printf ("%1.2e %1.2e %1.2e %1.2e %1.2e ",
+                TK[0], TKX[0], T3[0], TW[0], T4[0]);
 	mint = TK[0];
 	k = GF2X_SELECT_KARA;
+	if ((TKX[0] < mint) && (n >= MINI_GF2X_MUL_KARAX_THRESHOLD)) {
+	    mint = TKX[0];
+	    k = GF2X_SELECT_KARAX;
+	}
 	if ((T3[0] < mint) && (n >= MINI_GF2X_MUL_TOOM_THRESHOLD)) {
 	    mint = T3[0];
 	    k = GF2X_SELECT_TC3;
@@ -168,7 +182,7 @@ void tunetoom(long tablesz)
 	    mint = T4[0];
 	    k = GF2X_SELECT_TC4;
 	}
-	printf("best:%1.2e %s\n", mint, gf2x_toom_select_string[k]);
+	printf("%1.2e %s\n", mint, gf2x_toom_select_string[k]);
         fprintf(rp, "toom %ld %d\n", n, k);
 	fflush(stdout);
         long nn = MAX(n * mulstep, n + 1);
