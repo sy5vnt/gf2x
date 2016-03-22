@@ -30,16 +30,33 @@
 
 #include <stdio.h>
 #include <string.h> /* for memcpy() */
+#include <alloca.h>
 
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
 
+/* assuming x is 64-bit aligned (result of malloc on a 64-bit machine),
+   return 0 if x is 128-bit aligned, 1 otherwise */
+static inline unsigned long
+alignement_128 (const unsigned long *x)
+{
+  return ((long) x >> 3) & 1;
+}
+
+/* assuming x is 64-bit aligned (result of malloc on a 64-bit machine),
+   return x if x is 128-bit aligned, x+1 otherwise */
 static inline unsigned long*
 aligned128 (unsigned long *x)
 {
-  return (unsigned long*) (((long) x % 16 == 0) ? x : x + 1);
+  return x + alignement_128 (x);
 }
 
+/* Let spx(n) be the space requirement (in number of 128-bit words) for stk
+   in gf2x_mul_karax_internal(n), and sp(n) the space requirement (in number
+   of 64-bit words) for stk in the gf2x_mul_kara() routine:
+   (1) if 2*n < GF2X_MUL_KARAX_THRESHOLD then spx(n) <= ceil(sp(2*n)/2)
+   (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
+ */
 static void
 gf2x_mul_karax_internal (__uint128_t * c, const __uint128_t * a,
                            const __uint128_t * b, long n, __uint128_t * stk)
@@ -48,11 +65,14 @@ gf2x_mul_karax_internal (__uint128_t * c, const __uint128_t * a,
     __uint128_t *aa, *bb, *cc;
     long j, d, n2;
 
-    if (2 * n < GF2X_MUL_KARAX_THRESHOLD) {
-      gf2x_mul_kara ((unsigned long*) c, (unsigned long*) a,
-                     (unsigned long*) b, 2 * n, (unsigned long*) stk);
-      return;
-    }
+    /* since this routine is usually faster than gf2x_mul_kara, we directly
+       call gf2x_mul_basecase() here */
+    if (2 * n < GF2X_MUL_KARA_THRESHOLD)
+      {
+        gf2x_mul_basecase ((unsigned long*) c, (unsigned long*) a, 2 * n,
+                           (unsigned long*) b, 2 * n);
+	return;
+      }
 
     n2 = (n + 1) / 2;		/* ceil(n/2) */
     d = n & 1;			/* 2*n2 - n = 1 if n odd, 0 if n even */
@@ -102,19 +122,18 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
 {
     unsigned long *cc, *aa, *bb;
 
-    //    printf ("gf2x_mul_karax, n=%ld\n", n);
-    // fflush (stdout);
-
     if ((n & 1) == 0) /* n is even */
       {
         /* check if c is 16-byte aligned */
-        if ((long) c % 16 == 0)
+        if (alignement_128 (c) == 0)
           cc = c;
         else
-          cc = aligned128 (alloca ((n + 1) * sizeof (unsigned long)));
+          /* since we need an array of 2n unsigned long's that is
+             128-bit aligned, we allocate 2n+1 words */
+          cc = aligned128 (alloca ((2 * n + 1) * sizeof (unsigned long)));
 
         /* check if a is 16-byte aligned */
-        if ((long) a % 16 == 0)
+        if (alignement_128 (a) == 0)
           aa = (unsigned long*) a;
         else
           {
@@ -123,7 +142,7 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
           }
 
         /* check if b is 16-byte aligned */
-        if ((long) b % 16 == 0)
+        if (alignement_128 (b) == 0)
           bb = (unsigned long*) b;
         else
           {
@@ -140,8 +159,6 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
       }
     else /* n is odd */
       {
-        cc = aligned128 (alloca ((2 * n + 3) * sizeof (unsigned long)));
-
         aa = aligned128 (alloca ((n + 2) * sizeof (unsigned long)));
         memcpy (aa, a, n * sizeof (unsigned long));
         aa[n] = 0;
@@ -150,9 +167,10 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
         memcpy (bb, b, n * sizeof (unsigned long));
         bb[n] = 0;
         
+        cc = aligned128 (alloca ((2 * n + 3) * sizeof (unsigned long)));
         gf2x_mul_karax_internal ((__uint128_t*) cc, (__uint128_t*) aa,
                                  (__uint128_t*) bb, (n + 1) >> 1,
-                                   (__uint128_t*) aligned128 (stk));
+                                 (__uint128_t*) aligned128 (stk));
 
         memcpy (c, cc, 2 * n * sizeof (unsigned long));
       }

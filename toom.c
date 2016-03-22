@@ -42,6 +42,10 @@ short best_tab[GF2X_TOOM_TUNING_LIMIT] = GF2X_BEST_TOOM_TABLE;
 short best_utab[GF2X_TOOM_TUNING_LIMIT] = GF2X_BEST_UTOOM_TABLE;
 #endif /* GPL_CODE_PRESENT */
 
+#if GF2X_MUL_TOOM4_ALWAYS_THRESHOLD < 30
+#error "GF2X_MUL_TOOM4_ALWAYS_THRESHOLD must be >= 30"
+#endif
+
 /* Returns 0 for KarMul, 1 for Toom3Mul, 2 for Toom3WMul, 3 for Toom4Mul
    depending on which is predicted to be fastest for the given degree n.
 
@@ -58,11 +62,8 @@ short gf2x_best_toom(unsigned long n GF2X_MAYBE_UNUSED)
 
 #if GPL_CODE_PRESENT
     if (n < GF2X_MUL_TOOMW_THRESHOLD)
-	return GF2X_SELECT_KARA;		// KarMul
+        return GF2X_SELECT_KARA;                // KarMul
 
-#if GF2X_MUL_TOOM4_ALWAYS_THRESHOLD < 30
-#error "GF2X_MUL_TOOM4_ALWAYS_THRESHOLD must be >= 30"
-#endif
     if (n >= GF2X_MUL_TOOM4_ALWAYS_THRESHOLD)
 	return GF2X_SELECT_TC4;		// Toom4Mul
 
