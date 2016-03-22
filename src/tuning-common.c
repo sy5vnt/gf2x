@@ -128,6 +128,12 @@ void set_tuning_output()
     setbuf(stdout, NULL);
 }
 
+void close_tuning_output()
+{
+  if (outfile)
+    fclose (rp);
+}
+
 int handle_tuning_mulstep(int * p_argc, char *** p_argv)
 {
     if (strcmp((*p_argv)[0], "--step") == 0 || strcmp((*p_argv)[0], "-s") == 0) {

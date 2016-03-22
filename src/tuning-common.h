@@ -64,6 +64,7 @@ extern void check(const unsigned long *a, long m,
            const char * dname, const unsigned long *d);
 
 extern void set_tuning_output();
+extern void close_tuning_output();
 extern int handle_tuning_mulstep(int * p_argc, char *** p_argv);
 extern int handle_tuning_outfile(int * p_argc, char *** p_argv);
 #ifdef __cplusplus

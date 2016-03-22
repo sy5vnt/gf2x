@@ -137,10 +137,10 @@ void tunetoom(long tablesz)
     for (n = BESTMIN + 1; n <= high;) {
       if (count++ % 10 == 0)
           printf ("     TC2      TC2X     TC3      TC3W     TC4      best\n");
-	srandom(1);
 	TK[0] = TKX[0] = T3[0] = TW[0] = T4[0] = 0.0;
 	printf("%ld ", n);
 	fflush(stdout);
+	srandom(1);
 	random_wordstring(a, n);
 	random_wordstring(b, n);
 	if (n >= GF2X_MUL_KARA_THRESHOLD)
@@ -413,6 +413,8 @@ int main(int argc, char *argv[])
     tuneutoom(tabsz2);		// Tune unbalanced routines
 
     fflush(stdout);
+
+    close_tuning_output ();
 
     return 0;
 }
