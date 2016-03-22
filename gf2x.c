@@ -143,16 +143,18 @@ void gf2x_mul_r(unsigned long * c,
     }
 #endif
 
-    unsigned long sp1, sp2, sp3, sp;
-    sp1 = gf2x_toomspace(sa);	// Space for balanced TC routines
-    sp2 = gf2x_toomuspace(2 * sa);	// Space for unbalanced TC routines
-    sp3 = 2 * sa + gf2x_toomspace(sa);	// Space for unbalanced TC routines w/ lazy cut
+    unsigned long sp, sp2;
+    sp = gf2x_toomspace(sa); // Space for balanced TC routines
 
-    sp = sp1;
-    if (sp < sp2)
-        sp = sp2;
-    if (sp < sp3)
-        sp = sp3;		// Worst-case space required
+    if (sa != sb)
+      {
+        sp2 = gf2x_toomuspace(2 * sa); // Space for unbalanced TC routines
+        if (sp < sp2)
+          sp = sp2; /* worst-case required */
+        sp2 = 2 * sa + gf2x_toomspace(sa); // Space for unbalanced TC routines w/ lazy cut
+        if (sp < sp2)
+          sp = sp2; /* worst-case required */
+      }
 
     gf2x_mul_pool_t xxpool;
     struct gf2x_mul_pool_s * xpool;
