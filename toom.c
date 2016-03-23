@@ -177,9 +177,12 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
     case GF2X_SELECT_KARA:
 	gf2x_mul_kara(c, a, b, n, stk);
 	break;
+#ifdef HAVE___UINT128_T
+        /* gf2x_mul_karax is LGPL, but for simplicity we put it only here */
     case GF2X_SELECT_KARAX:
 	gf2x_mul_karax(c, a, b, n, stk);
 	break;
+#endif
         /* TC3, TC3W, TC4 are GPL'ed code */
     case GF2X_SELECT_TC3:
 	gf2x_mul_tc3(c, a, b, n, stk);

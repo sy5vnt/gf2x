@@ -84,6 +84,7 @@
 #include "timing.h"
 #include "tuning-common.h"
 
+/* those values are the minimal thresholds for each routine */
 #define MINI_GF2X_MUL_KARAX_THRESHOLD 	2
 #define MINI_GF2X_MUL_TOOM_THRESHOLD 	17
 #define MINI_GF2X_MUL_TOOMW_THRESHOLD	8
@@ -145,11 +146,13 @@ void tunetoom(long tablesz)
 	random_wordstring(b, n);
 	if (n >= GF2X_MUL_KARA_THRESHOLD)
 	    TIME(TK[0], gf2x_mul_kara(c, a, b, n, t));
-	if (n >= GF2X_MUL_KARAX_THRESHOLD)
+#ifdef HAVE___UINT128_T
+	if (n >= MINI_GF2X_MUL_KARAX_THRESHOLD)
           {
 	    TIME(TKX[0], gf2x_mul_karax(d, a, b, n, t));
             check(a, n, b, n, "Kara", c, "TC2X", d);
           }
+#endif
 	if (n >= MINI_GF2X_MUL_TOOM_THRESHOLD) {
 	    TIME(T3[0], gf2x_mul_tc3(d, a, b, n, t));
 	    check(a, n, b, n, "Kara", c, "TC3", d);
@@ -166,10 +169,12 @@ void tunetoom(long tablesz)
                 TK[0], TKX[0], T3[0], TW[0], T4[0]);
 	mint = TK[0];
 	k = GF2X_SELECT_KARA;
+#ifdef HAVE___UINT128_T
 	if ((TKX[0] < mint) && (n >= MINI_GF2X_MUL_KARAX_THRESHOLD)) {
 	    mint = TKX[0];
 	    k = GF2X_SELECT_KARAX;
 	}
+#endif
 	if ((T3[0] < mint) && (n >= MINI_GF2X_MUL_TOOM_THRESHOLD)) {
 	    mint = T3[0];
 	    k = GF2X_SELECT_TC3;

@@ -41,6 +41,8 @@
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
 
+#ifdef HAVE___UINT128_T
+
 /* assuming x is 64-bit aligned (result of malloc on a 64-bit machine),
    return 0 if x is 128-bit aligned, 1 otherwise */
 static inline unsigned long
@@ -60,7 +62,7 @@ aligned128 (unsigned long *x)
 /* Let spx(n) be the space requirement (in number of 128-bit words) for stk
    in gf2x_mul_karax_internal(n), and sp(n) the space requirement (in number
    of 64-bit words) for stk in the gf2x_mul_kara() routine:
-   (1) if 2*n < GF2X_MUL_KARAX_THRESHOLD then spx(n) <= ceil(sp(2*n)/2)
+   (1) if 2*n < GF2X_MUL_KARA_THRESHOLD then spx(n) <= ceil(sp(2*n)/2)
    (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
  */
 static void
@@ -200,3 +202,4 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
 #endif
 }
 
+#endif /* HAVE___UINT128_T */
