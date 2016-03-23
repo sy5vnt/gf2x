@@ -36,9 +36,11 @@
 
 #ifdef HAVE_ALLOCA
 #define ALLOC alloca
+#define FREE(x)
 #else
 #include <stdlib.h>
 #define ALLOC malloc
+#define FREE(x) free(x)
 #endif
 
 /* from https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Particular-Functions.html */
@@ -59,29 +61,11 @@ void *alloca (size_t);
 #ifdef HAVE_KARAX
 #include <emmintrin.h>
 
-/* assuming x is 64-bit aligned (result of malloc on a 64-bit machine),
-   return 0 if x is 128-bit aligned, 1 otherwise */
-static inline unsigned long
-alignement_128 (const unsigned long *x)
-{
-  return ((uintptr_t) x >> 3) & 1;
-}
-
-/* assuming x is 64-bit aligned (result of malloc on a 64-bit machine),
-   return x if x is 128-bit aligned, x+1 otherwise */
-static inline unsigned long*
-aligned128 (unsigned long *x)
-{
-  return x + alignement_128 (x);
-}
-
 /* Let spx(n) be the space requirement (in number of 128-bit words) for stk
    in gf2x_mul_karax_internal(n), and sp(n) the space requirement (in number
    of 64-bit words) for stk in the gf2x_mul_kara() routine:
    (1) if 2*n < GF2X_MUL_KARA_THRESHOLD then spx(n) <= ceil(sp(2*n)/2)
    (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
-
-   Assumes c, a, b, stk are 128-bit aligned.
 
    FIXME: write a 256-bit variant using AVX2:
    VPXOR: __m256i _mm256_xor_si256 ( __m256i a, __m256i b)
@@ -152,55 +136,17 @@ void
 gf2x_mul_karax (unsigned long *c, const unsigned long *a,
                 const unsigned long *b, long n, unsigned long *stk)
 {
-    unsigned long *cc, *aa, *bb, *tc = NULL, *ta = NULL, *tb = NULL;
-
     if ((n & 1) == 0) /* n is even */
-      {
-        /* check if c is 16-byte aligned */
-        if (alignement_128 (c) == 0)
-          cc = c;
-        else
-          {
-            /* since we need an array of 2n unsigned long's that is
-               128-bit aligned, we allocate 2n+1 words */
-            tc = ALLOC ((2 * n + 1) * sizeof (unsigned long));
-            cc = aligned128 (tc);
-          }
-
-        /* check if a is 16-byte aligned */
-        if (alignement_128 (a) == 0)
-          aa = (unsigned long*) a;
-        else
-          {
-            ta = ALLOC ((n + 1) * sizeof (unsigned long));
-            aa = aligned128 (ta);
-            memcpy (aa, a, n * sizeof (unsigned long));
-          }
-
-        /* check if b is 16-byte aligned */
-        if (alignement_128 (b) == 0)
-          bb = (unsigned long*) b;
-        else
-          {
-            tb = ALLOC ((n + 1) * sizeof (unsigned long));
-            bb = aligned128 (tb);
-            memcpy (bb, b, n * sizeof (unsigned long));
-          }
-        
-        gf2x_mul_karax_internal ((__m128i*) cc, (__m128i*) aa,
-                                 (__m128i*) bb, n >> 1,
-                                 (__m128i*) aligned128 (stk));
-
-        if (cc != c)
-          memcpy (c, cc, 2 * n * sizeof (unsigned long));
-      }
+      gf2x_mul_karax_internal ((__m128i*) c, (__m128i*) a,
+                               (__m128i*) b, n >> 1, (__m128i*) stk);
     else /* n is odd */
       {
-        /* we need an array of n+1 words that is 128-bit aligned for a,
+        unsigned long *cc, *aa, *bb;
+
+        /* we need an array of n+1 words for a,
            another similar for b, and another of 2n+2 words for c, thus
            in total 4n+4 words */
-        ta = ALLOC ((4 * n + 5) * sizeof (unsigned long));
-        aa = aligned128 (ta);
+        aa = ALLOC ((4 * n + 4) * sizeof (unsigned long));
         memcpy (aa, a, n * sizeof (unsigned long));
         aa[n] = 0;
 
@@ -210,20 +156,11 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
         
         cc = bb + n + 1;
         gf2x_mul_karax_internal ((__m128i*) cc, (__m128i*) aa,
-                                 (__m128i*) bb, (n + 1) >> 1,
-                                 (__m128i*) aligned128 (stk));
+                                 (__m128i*) bb, (n + 1) >> 1, (__m128i*) stk);
 
         memcpy (c, cc, 2 * n * sizeof (unsigned long));
+        FREE (aa);
       }
-
-#ifndef HAVE_ALLOCA
-    if (ta != NULL)
-      free (ta);
-    if (tb != NULL)
-      free (tb);
-    if (tc != NULL)
-      free (tc);
-#endif
 }
 
 #endif /* HAVE_KARAX */
