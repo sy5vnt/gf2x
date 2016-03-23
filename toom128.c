@@ -30,6 +30,10 @@
 
 #include <stdio.h>
 #include <string.h> /* for memcpy() */
+
+#include "gf2x.h"
+#include "gf2x/gf2x-impl.h"
+
 #ifdef HAVE_ALLOCA
 #include <alloca.h>
 #define ALLOC alloca
@@ -37,9 +41,6 @@
 #include <stdlib.h>
 #define ALLOC malloc
 #endif
-
-#include "gf2x.h"
-#include "gf2x/gf2x-impl.h"
 
 #ifdef HAVE___UINT128_T
 
@@ -64,6 +65,8 @@ aligned128 (unsigned long *x)
    of 64-bit words) for stk in the gf2x_mul_kara() routine:
    (1) if 2*n < GF2X_MUL_KARA_THRESHOLD then spx(n) <= ceil(sp(2*n)/2)
    (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
+
+   Assumes c, a, b, stk are 128-bit aligned.
  */
 static void
 gf2x_mul_karax_internal (__uint128_t *c, const __uint128_t *a,
@@ -72,11 +75,6 @@ gf2x_mul_karax_internal (__uint128_t *c, const __uint128_t *a,
     __uint128_t t;
     __uint128_t *aa, *bb, *cc;
     long j, d, n2;
-
-    /* check the input pointers are 128-bit aligned */
-    assert (alignement_128 ((unsigned long*) c) == 0);
-    assert (alignement_128 ((unsigned long*) a) == 0);
-    assert (alignement_128 ((unsigned long*) b) == 0);
 
     /* since this routine is usually faster than gf2x_mul_kara, we directly
        call gf2x_mul_basecase() here */
