@@ -139,8 +139,6 @@ else
   fi
 fi
 
-AC_CHECK_TYPES([__uint128_t])
-
 : ${ABI='default'}
 
 if test x$ABI != xdefault ; then

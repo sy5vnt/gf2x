@@ -25,7 +25,7 @@
    02110-1301, USA.
 */
 
-/* Variants of Toom-Cook using __uint128_t, copied from toom.c.
+/* Variants of Toom-Cook using SSE2 128-bit XOR, copied from toom.c.
    Those routines assume that "unsigned long" is a 64-bit type. */
 
 #include <stdio.h>
@@ -56,7 +56,8 @@
 void *alloca (size_t);
 #endif
 
-#ifdef HAVE___UINT128_T
+#ifdef HAVE_KARAX
+#include <emmintrin.h>
 
 /* assuming x is 64-bit aligned (result of malloc on a 64-bit machine),
    return 0 if x is 128-bit aligned, 1 otherwise */
@@ -82,12 +83,12 @@ aligned128 (unsigned long *x)
 
    Assumes c, a, b, stk are 128-bit aligned.
  */
+#define XOR(a,b) _mm_xor_si128(a,b)
 static void
-gf2x_mul_karax_internal (__uint128_t *c, const __uint128_t *a,
-                         const __uint128_t *b, long n, __uint128_t * stk)
+gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
+                         const __m128i *b, long n, __m128i * stk)
 {
-    __uint128_t t;
-    __uint128_t *aa, *bb, *cc;
+    __m128i *aa, *bb, *cc;
     long j, d, n2;
 
     /* since this routine is usually faster than gf2x_mul_kara, we directly
@@ -107,38 +108,41 @@ gf2x_mul_karax_internal (__uint128_t *c, const __uint128_t *a,
 
     stk = cc + n2;		/* sp(n) = 3*ceil(n/2)) + sp(ceil(n/2)) */
 
-    const __uint128_t *a1 = a + n2;	/* a[n2] */
-    const __uint128_t *b1 = b + n2;	/* b[n2] */
-    __uint128_t *c1 = c + n2;		/* c[n2]   */
-    __uint128_t *c2 = c1 + n2;	/* c[2*n2] */
-    __uint128_t *c3 = c2 + n2;	/* c[3*n2] */
+    const __m128i *a1 = a + n2;	/* a[n2] */
+    const __m128i *b1 = b + n2;	/* b[n2] */
+    __m128i *c1 = c + n2;	/* c[n2]   */
+    __m128i *c2 = c1 + n2;	/* c[2*n2] */
+    __m128i *c3 = c2 + n2;	/* c[3*n2] */
 
     gf2x_mul_karax_internal (c, a, b, n2, stk);	/* Low */
 
     gf2x_mul_karax_internal (c2, a1, b1, n2 - d, stk);	/* High */
 
-    for (j = 0; j < n2 - d; j++) {
-	aa[j] = a[j] ^ a1[j];
-	bb[j] = b[j] ^ b1[j];
-	cc[j] = c1[j] ^ c2[j];
-    }
-    for (; j < n2; j++) {	/* Only when n odd */
+    for (j = 0; j < n2 - d; j++)
+      {
+        aa[j] = XOR (a[j], a1[j]);
+        bb[j] = XOR (b[j], b1[j]);
+        cc[j] = XOR (c1[j], c2[j]);
+      }
+    for (; j < n2; j++)
+      {	/* Only when n odd */
 	aa[j] = a[j];
 	bb[j] = b[j];
-	cc[j] = c1[j] ^ c2[j];
+	cc[j] = XOR (c1[j], c2[j]);
     }
 
     gf2x_mul_karax_internal (c1, aa, bb, n2, stk);	/* Middle */
 
-    for (j = 0; j < n2 - 2 * d; j++) {
-	t = cc[j];
-	c1[j] ^= t ^ c[j];
-	c2[j] ^= t ^ c3[j];
-    }
-    for (; j < n2; j++) {	/* Only when n odd */
-	c1[j] ^= cc[j] ^ c[j];
-	c2[j] ^= cc[j];
-    }
+    for (j = 0; j < n2 - 2 * d; j++)
+      {
+	c1[j] = XOR (c1[j], XOR (cc[j], c[j]));
+	c2[j] = XOR (c2[j], XOR (cc[j], c3[j]));
+      }
+    for (; j < n2; j++)
+      {	/* Only when n odd */
+	c1[j] = XOR (c1[j], XOR (cc[j], c[j]));
+	c2[j] = XOR (c2[j], cc[j]);
+      }
 }
 
 void
@@ -180,9 +184,9 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
             memcpy (bb, b, n * sizeof (unsigned long));
           }
         
-        gf2x_mul_karax_internal ((__uint128_t*) cc, (__uint128_t*) aa,
-                                 (__uint128_t*) bb, n >> 1,
-                                 (__uint128_t*) aligned128 (stk));
+        gf2x_mul_karax_internal ((__m128i*) cc, (__m128i*) aa,
+                                 (__m128i*) bb, n >> 1,
+                                 (__m128i*) aligned128 (stk));
 
         if (cc != c)
           memcpy (c, cc, 2 * n * sizeof (unsigned long));
@@ -202,9 +206,9 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
         bb[n] = 0;
         
         cc = bb + n + 1;
-        gf2x_mul_karax_internal ((__uint128_t*) cc, (__uint128_t*) aa,
-                                 (__uint128_t*) bb, (n + 1) >> 1,
-                                 (__uint128_t*) aligned128 (stk));
+        gf2x_mul_karax_internal ((__m128i*) cc, (__m128i*) aa,
+                                 (__m128i*) bb, (n + 1) >> 1,
+                                 (__m128i*) aligned128 (stk));
 
         memcpy (c, cc, 2 * n * sizeof (unsigned long));
       }
@@ -219,4 +223,4 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
 #endif
 }
 
-#endif /* HAVE___UINT128_T */
+#endif /* HAVE_KARAX */

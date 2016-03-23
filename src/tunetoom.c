@@ -146,7 +146,7 @@ void tunetoom(long tablesz)
 	random_wordstring(b, n);
 	if (n >= GF2X_MUL_KARA_THRESHOLD)
 	    TIME(TK[0], gf2x_mul_kara(c, a, b, n, t));
-#ifdef HAVE___UINT128_T
+#ifdef HAVE_KARAX
 	if (n >= MINI_GF2X_MUL_KARAX_THRESHOLD)
           {
 	    TIME(TKX[0], gf2x_mul_karax(d, a, b, n, t));
@@ -169,7 +169,7 @@ void tunetoom(long tablesz)
                 TK[0], TKX[0], T3[0], TW[0], T4[0]);
 	mint = TK[0];
 	k = GF2X_SELECT_KARA;
-#ifdef HAVE___UINT128_T
+#ifdef HAVE_KARAX
 	if ((TKX[0] < mint) && (n >= MINI_GF2X_MUL_KARAX_THRESHOLD)) {
 	    mint = TKX[0];
 	    k = GF2X_SELECT_KARAX;

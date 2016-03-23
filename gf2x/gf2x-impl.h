@@ -67,7 +67,8 @@ extern void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
 			const unsigned long *b, long n, unsigned long *stk);
 extern void gf2x_mul_kara(unsigned long *c, const unsigned long *a, const unsigned long *b,
 			long n, unsigned long *stk);
-#ifdef HAVE___UINT128_T
+#if GF2X_HAVE_SSE2_SUPPORT && (GF2X_WORDSIZE == 64)
+#define HAVE_KARAX
 extern void gf2x_mul_karax(unsigned long *c, const unsigned long *a, const unsigned long *b,
 			long n, unsigned long *stk);
 #endif
