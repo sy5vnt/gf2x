@@ -30,7 +30,13 @@
 
 #include <stdio.h>
 #include <string.h> /* for memcpy() */
+#ifdef HAVE_ALLOCA
 #include <alloca.h>
+#define ALLOC alloca
+#else
+#include <stdlib.h>
+#define ALLOC malloc
+#endif
 
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
@@ -120,7 +126,7 @@ void
 gf2x_mul_karax (unsigned long *c, const unsigned long *a,
                 const unsigned long *b, long n, unsigned long *stk)
 {
-    unsigned long *cc, *aa, *bb;
+    unsigned long *cc, *aa, *bb, *tc = NULL, *ta = NULL, *tb = NULL;
 
     if ((n & 1) == 0) /* n is even */
       {
@@ -128,16 +134,20 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
         if (alignement_128 (c) == 0)
           cc = c;
         else
-          /* since we need an array of 2n unsigned long's that is
-             128-bit aligned, we allocate 2n+1 words */
-          cc = aligned128 (alloca ((2 * n + 1) * sizeof (unsigned long)));
+          {
+            /* since we need an array of 2n unsigned long's that is
+               128-bit aligned, we allocate 2n+1 words */
+            tc = ALLOC ((2 * n + 1) * sizeof (unsigned long));
+            cc = aligned128 (tc);
+          }
 
         /* check if a is 16-byte aligned */
         if (alignement_128 (a) == 0)
           aa = (unsigned long*) a;
         else
           {
-            aa = aligned128 (alloca ((n + 1) * sizeof (unsigned long)));
+            ta = ALLOC ((n + 1) * sizeof (unsigned long));
+            aa = aligned128 (ta);
             memcpy (aa, a, n * sizeof (unsigned long));
           }
 
@@ -146,7 +156,8 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
           bb = (unsigned long*) b;
         else
           {
-            bb = aligned128 (alloca ((n + 1) * sizeof (unsigned long)));
+            tb = ALLOC ((n + 1) * sizeof (unsigned long));
+            bb = aligned128 (tb);
             memcpy (bb, b, n * sizeof (unsigned long));
           }
         
@@ -159,20 +170,33 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
       }
     else /* n is odd */
       {
-        aa = aligned128 (alloca ((n + 2) * sizeof (unsigned long)));
+        /* we need an array of n+1 words that is 128-bit aligned for a,
+           another similar for b, and another of 2n+2 words for c, thus
+           in total 4n+4 words */
+        ta = ALLOC ((4 * n + 5) * sizeof (unsigned long));
+        aa = aligned128 (ta);
         memcpy (aa, a, n * sizeof (unsigned long));
         aa[n] = 0;
 
-        bb = aligned128 (alloca ((n + 2) * sizeof (unsigned long)));
+        bb = aa + n + 1;
         memcpy (bb, b, n * sizeof (unsigned long));
         bb[n] = 0;
         
-        cc = aligned128 (alloca ((2 * n + 3) * sizeof (unsigned long)));
+        cc = bb + n + 1;
         gf2x_mul_karax_internal ((__uint128_t*) cc, (__uint128_t*) aa,
                                  (__uint128_t*) bb, (n + 1) >> 1,
                                  (__uint128_t*) aligned128 (stk));
 
         memcpy (c, cc, 2 * n * sizeof (unsigned long));
       }
+
+#ifndef HAVE_ALLOCA
+    if (ta != NULL)
+      free (ta);
+    if (tb != NULL)
+      free (tb);
+    if (tc != NULL)
+      free (tc);
+#endif
 }
 
