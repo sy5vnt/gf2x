@@ -82,6 +82,9 @@ aligned128 (unsigned long *x)
    (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
 
    Assumes c, a, b, stk are 128-bit aligned.
+
+   FIXME: write a 256-bit variant using AVX2:
+   VPXOR: __m256i _mm256_xor_si256 ( __m256i a, __m256i b)
  */
 #define XOR(a,b) _mm_xor_si128(a,b)
 static void

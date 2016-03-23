@@ -137,7 +137,11 @@ void tunetoom(long tablesz)
     int count = 0;
     for (n = BESTMIN + 1; n <= high;) {
       if (count++ % 10 == 0)
+#ifdef HAVE_KARAX
           printf ("     TC2      TC2X     TC3      TC3W     TC4      best\n");
+#else
+          printf ("     TC2      TC3      TC3W     TC4      best\n");
+#endif
 	TK[0] = TKX[0] = T3[0] = TW[0] = T4[0] = 0.0;
 	printf("%ld ", n);
 	fflush(stdout);
@@ -165,8 +169,12 @@ void tunetoom(long tablesz)
 	    TIME(T4[0], gf2x_mul_tc4(d, a, b, n, t));
 	    check(a, n, b, n, "Kara", c, "TC4", d);
 	}
+#ifdef HAVE_KARAX
 	printf ("%1.2e %1.2e %1.2e %1.2e %1.2e ",
                 TK[0], TKX[0], T3[0], TW[0], T4[0]);
+#else
+	printf ("%1.2e %1.2e %1.2e %1.2e ", TK[0], T3[0], TW[0], T4[0]);
+#endif
 	mint = TK[0];
 	k = GF2X_SELECT_KARA;
 #ifdef HAVE_KARAX
