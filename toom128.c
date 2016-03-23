@@ -67,23 +67,27 @@ void *alloca (size_t);
    (1) if 2*n < GF2X_MUL_KARA_THRESHOLD then spx(n) <= ceil(sp(2*n)/2)
    (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
 
+   The parameter 'odd' can be 0 or 1:
+   * if odd=0, then a and b have 2n words of 64 bits
+   * if odd=1, then a and b have 2n-1 words of 64 bits
+
    FIXME: write a 256-bit variant using AVX2:
    VPXOR: __m256i _mm256_xor_si256 ( __m256i a, __m256i b)
  */
 #define PXOR(a,b) _mm_xor_si128(a,b)
 static void
 gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
-                         const __m128i *b, long n, __m128i * stk)
+                         const __m128i *b, long n, __m128i * stk, int odd)
 {
     __m128i *aa, *bb, *cc;
     long j, d, n2;
 
     /* since this routine is usually faster than gf2x_mul_kara, we directly
        call gf2x_mul_basecase() here */
-    if (2 * n < GF2X_MUL_KARA_THRESHOLD)
+    if (2 * n - odd < GF2X_MUL_KARA_THRESHOLD)
       {
-        gf2x_mul_basecase ((unsigned long*) c, (unsigned long*) a, 2 * n,
-                           (unsigned long*) b, 2 * n);
+        gf2x_mul_basecase ((unsigned long*) c, (unsigned long*) a, 2 * n - odd,
+                           (unsigned long*) b, 2 * n - odd);
 	return;
       }
 
@@ -101,14 +105,28 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
     __m128i *c2 = c1 + n2;	/* c[2*n2] */
     __m128i *c3 = c2 + n2;	/* c[3*n2] */
 
-    gf2x_mul_karax_internal (c, a, b, n2, stk);	/* Low */
+    gf2x_mul_karax_internal (c, a, b, n2, stk, 0);	/* Low */
 
-    gf2x_mul_karax_internal (c2, a1, b1, n2 - d, stk);	/* High */
+    gf2x_mul_karax_internal (c2, a1, b1, n2 - d, stk, odd); /* High */
 
-    for (j = 0; j < n2 - d; j++)
+    /* {c2, n2-d} contains 2*n2-2*d-odd words of 128 bits, i.e.,
+       2*n2-2*d-odd words of 64 bits */
+
+    /* {a, n2} has n2 words of 128 bits, i.e., 2*n2 words of 64 bits
+       {a1, n2-d} has n2-d-odd/2 words of 128 bits, i.e., 2*n2-2*d-odd
+       words of 64 bits */
+
+    for (j = 0; j < n2 - d - odd; j++)
       {
         aa[j] = PXOR (a[j], a1[j]);
         bb[j] = PXOR (b[j], b1[j]);
+        cc[j] = PXOR (c1[j], c2[j]);
+      }
+    for (; j < n2 - d; j++) /* one loop only, and only when odd=1 */
+      {
+        /* zero the upper 64 bits of a1[j] and b1[j] */
+        aa[j] = PXOR (a[j], _mm_loadl_epi64 (a1 + j));
+        bb[j] = PXOR (b[j], _mm_loadl_epi64 (b1 + j));
         cc[j] = PXOR (c1[j], c2[j]);
       }
     for (; j < n2; j++)
@@ -118,7 +136,7 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
 	cc[j] = PXOR (c1[j], c2[j]);
     }
 
-    gf2x_mul_karax_internal (c1, aa, bb, n2, stk);	/* Middle */
+    gf2x_mul_karax_internal (c1, aa, bb, n2, stk, 0);	/* Middle */
 
     for (j = 0; j < n2 - 2 * d; j++)
       {
@@ -136,31 +154,8 @@ void
 gf2x_mul_karax (unsigned long *c, const unsigned long *a,
                 const unsigned long *b, long n, unsigned long *stk)
 {
-    if ((n & 1) == 0) /* n is even */
-      gf2x_mul_karax_internal ((__m128i*) c, (__m128i*) a,
-                               (__m128i*) b, n >> 1, (__m128i*) stk);
-    else /* n is odd */
-      {
-        unsigned long *cc, *aa, *bb;
-
-        /* we need an array of n+1 words for a,
-           another similar for b, and another of 2n+2 words for c, thus
-           in total 4n+4 words */
-        aa = ALLOC ((4 * n + 4) * sizeof (unsigned long));
-        memcpy (aa, a, n * sizeof (unsigned long));
-        aa[n] = 0;
-
-        bb = aa + n + 1;
-        memcpy (bb, b, n * sizeof (unsigned long));
-        bb[n] = 0;
-        
-        cc = bb + n + 1;
-        gf2x_mul_karax_internal ((__m128i*) cc, (__m128i*) aa,
-                                 (__m128i*) bb, (n + 1) >> 1, (__m128i*) stk);
-
-        memcpy (c, cc, 2 * n * sizeof (unsigned long));
-        FREE (aa);
-      }
+  gf2x_mul_karax_internal ((__m128i*) c, (__m128i*) a,
+                           (__m128i*) b, (n + 1) >> 1, (__m128i*) stk, n & 1);
 }
 
 #endif /* HAVE_KARAX */
