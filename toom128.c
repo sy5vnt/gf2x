@@ -35,11 +35,25 @@
 #include "gf2x/gf2x-impl.h"
 
 #ifdef HAVE_ALLOCA
-#include <alloca.h>
 #define ALLOC alloca
 #else
 #include <stdlib.h>
 #define ALLOC malloc
+#endif
+
+/* from https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Particular-Functions.html */
+#if HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+# define alloca __builtin_alloca
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
 #endif
 
 #ifdef HAVE___UINT128_T
