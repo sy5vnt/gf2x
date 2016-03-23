@@ -66,12 +66,17 @@ aligned128 (unsigned long *x)
    (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
  */
 static void
-gf2x_mul_karax_internal (__uint128_t * c, const __uint128_t * a,
-                           const __uint128_t * b, long n, __uint128_t * stk)
+gf2x_mul_karax_internal (__uint128_t *c, const __uint128_t *a,
+                         const __uint128_t *b, long n, __uint128_t * stk)
 {
     __uint128_t t;
     __uint128_t *aa, *bb, *cc;
     long j, d, n2;
+
+    /* check the input pointers are 128-bit aligned */
+    assert (alignement_128 ((unsigned long*) c) == 0);
+    assert (alignement_128 ((unsigned long*) a) == 0);
+    assert (alignement_128 ((unsigned long*) b) == 0);
 
     /* since this routine is usually faster than gf2x_mul_kara, we directly
        call gf2x_mul_basecase() here */
@@ -164,8 +169,8 @@ gf2x_mul_karax (unsigned long *c, const unsigned long *a,
           }
         
         gf2x_mul_karax_internal ((__uint128_t*) cc, (__uint128_t*) aa,
-                                   (__uint128_t*) bb, n >> 1,
-                                   (__uint128_t*) aligned128 (stk));
+                                 (__uint128_t*) bb, n >> 1,
+                                 (__uint128_t*) aligned128 (stk));
 
         if (cc != c)
           memcpy (c, cc, 2 * n * sizeof (unsigned long));
