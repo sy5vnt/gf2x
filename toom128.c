@@ -64,7 +64,7 @@ void *alloca (size_t);
 static inline unsigned long
 alignement_128 (const unsigned long *x)
 {
-  return ((long) x >> 3) & 1;
+  return ((uintptr_t) x >> 3) & 1;
 }
 
 /* assuming x is 64-bit aligned (result of malloc on a 64-bit machine),
@@ -86,7 +86,7 @@ aligned128 (unsigned long *x)
    FIXME: write a 256-bit variant using AVX2:
    VPXOR: __m256i _mm256_xor_si256 ( __m256i a, __m256i b)
  */
-#define XOR(a,b) _mm_xor_si128(a,b)
+#define PXOR(a,b) _mm_xor_si128(a,b)
 static void
 gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
                          const __m128i *b, long n, __m128i * stk)
@@ -123,28 +123,28 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
 
     for (j = 0; j < n2 - d; j++)
       {
-        aa[j] = XOR (a[j], a1[j]);
-        bb[j] = XOR (b[j], b1[j]);
-        cc[j] = XOR (c1[j], c2[j]);
+        aa[j] = PXOR (a[j], a1[j]);
+        bb[j] = PXOR (b[j], b1[j]);
+        cc[j] = PXOR (c1[j], c2[j]);
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
 	aa[j] = a[j];
 	bb[j] = b[j];
-	cc[j] = XOR (c1[j], c2[j]);
+	cc[j] = PXOR (c1[j], c2[j]);
     }
 
     gf2x_mul_karax_internal (c1, aa, bb, n2, stk);	/* Middle */
 
     for (j = 0; j < n2 - 2 * d; j++)
       {
-	c1[j] = XOR (c1[j], XOR (cc[j], c[j]));
-	c2[j] = XOR (c2[j], XOR (cc[j], c3[j]));
+	c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
+	c2[j] = PXOR (c2[j], PXOR (cc[j], c3[j]));
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
-	c1[j] = XOR (c1[j], XOR (cc[j], c[j]));
-	c2[j] = XOR (c2[j], cc[j]);
+	c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
+	c2[j] = PXOR (c2[j], cc[j]);
       }
 }
 
