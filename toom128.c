@@ -34,30 +34,6 @@
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
 
-#ifdef HAVE_ALLOCA
-#define ALLOC alloca
-#define FREE(x)
-#else
-#include <stdlib.h>
-#define ALLOC malloc
-#define FREE(x) free(x)
-#endif
-
-/* from https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Particular-Functions.html */
-#if HAVE_ALLOCA_H
-# include <alloca.h>
-#elif defined __GNUC__
-# define alloca __builtin_alloca
-#elif defined _AIX
-# define alloca __alloca
-#elif defined _MSC_VER
-# include <malloc.h>
-# define alloca _alloca
-#else
-# include <stddef.h>
-void *alloca (size_t);
-#endif
-
 #ifdef HAVE_KARAX
 #include <emmintrin.h>
 

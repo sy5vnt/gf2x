@@ -61,14 +61,13 @@ short gf2x_best_toom(unsigned long n GF2X_MAYBE_UNUSED)
 // would be reasonable if Toom3Mul was fastest for n = 18, 21, 24.
 
 #if GPL_CODE_PRESENT
-    if (n < GF2X_MUL_TOOMW_THRESHOLD)
-        return GF2X_SELECT_KARA;                // KarMul
+    if (n < GF2X_MUL_KARA_THRESHOLD)
+      return GF2X_SELECT_KARA;
 
-    if (n >= GF2X_MUL_TOOM4_ALWAYS_THRESHOLD)
-	return GF2X_SELECT_TC4;		// Toom4Mul
+    if (n > GF2X_TOOM_TUNING_LIMIT)
+      return GF2X_SELECT_TC4;		// Toom4Mul
 
-    /* This would be a tuning bug */
-    ASSERT (n <= GF2X_TOOM_TUNING_LIMIT);
+    /* now n <= GF2X_TOOM_TUNING_LIMIT */
 
     return best_tab[n - 1];	// Return table entry
 #else /* GPL_CODE_PRESENT */
