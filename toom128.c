@@ -127,31 +127,31 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
 
     for (j = 0; j < n2 - d - odd; j++)
       {
-        aa[j] = PXOR (a[j], a1[j]);
-        // _mm_storeu_si128 (aa + j, PXOR (a[j], a1[j]));
-        bb[j] = PXOR (b[j], b1[j]);
-        // _mm_storeu_si128 (bb + j, PXOR (b[j], b1[j]));
-        cc[j] = PXOR (c1[j], c2[j]);
-        // _mm_storeu_si128 (cc + j, PXOR (c1[j], c2[j]));
+        // aa[j] = PXOR (a[j], a1[j]);
+        _mm_storeu_si128 (aa + j, PXOR (_mm_loadu_si128 (a + j), _mm_loadu_si128 (a1 + j)));
+        // bb[j] = PXOR (b[j], b1[j]);
+        _mm_storeu_si128 (bb + j, PXOR (_mm_loadu_si128 (b + j), _mm_loadu_si128 (b1 + j)));
+        // cc[j] = PXOR (c1[j], c2[j]);
+        _mm_storeu_si128 (cc + j, PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j)));
       }
     for (; j < n2 - d; j++) /* one loop only, and only when odd=1 */
       {
         /* zero the upper 64 bits of a1[j] and b1[j] */
-        aa[j] = PXOR (a[j], _mm_loadl_epi64 (a1 + j));
-        // _mm_storeu_si128 (aa + j, PXOR (a[j], _mm_loadl_epi64 (a1 + j)));
-        bb[j] = PXOR (b[j], _mm_loadl_epi64 (b1 + j));
-        // _mm_storeu_si128 (bb + j, PXOR (b[j], _mm_loadl_epi64 (b1 + j)));
-        cc[j] = PXOR (c1[j], c2[j]);
-        // _mm_storeu_si128 (cc + j, PXOR (c1[j], c2[j]));
+        // aa[j] = PXOR (a[j], LOW(a1[j]));
+        _mm_storeu_si128 (aa + j, PXOR (_mm_loadu_si128 (a + j), _mm_loadl_epi64 (a1 + j)));
+        // bb[j] = PXOR (b[j], LOW(b1[j]));
+        _mm_storeu_si128 (bb + j, PXOR (_mm_loadu_si128 (b + j), _mm_loadl_epi64 (b1 + j)));
+        // cc[j] = PXOR (c1[j], c2[j]);
+        _mm_storeu_si128 (cc + j, PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j)));
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
-	aa[j] = a[j];
-        // _mm_storeu_si128 (aa + j, a[j]);
-	bb[j] = b[j];
-        // _mm_storeu_si128 (bb + j, b[j]);
-	cc[j] = PXOR (c1[j], c2[j]);
-        // _mm_storeu_si128 (cc + j, PXOR (c1[j], c2[j]));
+	// aa[j] = a[j];
+        _mm_storeu_si128 (aa + j, _mm_loadu_si128 (a + j));
+	// bb[j] = b[j];
+        _mm_storeu_si128 (bb + j, _mm_loadu_si128 (b + j));
+	// cc[j] = PXOR (c1[j], c2[j]);
+        _mm_storeu_si128 (cc + j, PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j)));
     }
 
     /* now we have:
@@ -171,17 +171,17 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
 
     for (j = 0; j < n2 - 2 * d - odd; j++)
       {
-	c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
-        // _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128(c1 + j), PXOR (_mm_loadu_si128 (cc + j), c[j])));
-	c2[j] = PXOR (c2[j], PXOR (cc[j], c3[j]));
-        // _mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), PXOR (cc[j], c3[j])));
+	// c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
+        _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128 (c1 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c + j))));
+	// c2[j] = PXOR (c2[j], PXOR (cc[j], c3[j]));
+        _mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c3 + j))));
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
-	c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
-        // _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128(c1 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c + j))));
-	c2[j] = PXOR (c2[j], cc[j]);
-        // _mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), cc[j]));
+	// c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
+        _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128 (c1 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c + j))));
+        // c2[j] = PXOR (c2[j], cc[j]);
+	_mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), _mm_loadu_si128 (cc + j)));
       }
 }
 
