@@ -68,8 +68,10 @@ void *alloca (size_t);
    (2) otherwise spx(n) <= 3*ceil(n/2) + spx(ceil(n/2)).
 
    The parameter 'odd' can be 0 or 1:
-   * if odd=0, then a and b have 2n words of 64 bits
-   * if odd=1, then a and b have 2n-1 words of 64 bits
+   * if odd=0, then a and b have 2n words of 64 bits, the result c has 4n
+               words of 64 bits, i.e., 2n words of 128 bits
+   * if odd=1, then a and b have 2n-1 words of 64 bits, the result c has 4n-2
+               words of 64 bits, i.e., 2n-1 words of 128 bits
 
    FIXME: write a 256-bit variant using AVX2:
    VPXOR: __m256i _mm256_xor_si256 ( __m256i a, __m256i b)
@@ -107,46 +109,79 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
 
     gf2x_mul_karax_internal (c, a, b, n2, stk, 0);	/* Low */
 
+    /* now {c, 2*n2} contains A0 * B0 */
+
     gf2x_mul_karax_internal (c2, a1, b1, n2 - d, stk, odd); /* High */
 
-    /* {c2, n2-d} contains 2*n2-2*d-odd words of 128 bits, i.e.,
-       2*n2-2*d-odd words of 64 bits */
+    /* {c2, 2*(n2-d)} contains A1 * B1 */
+
+    /* {c2, 2*(n2-d)} contains 2*(n2-d)-odd/2 words of 128 bits, i.e.,
+       4*(n2-d)-odd words of 64 bits */
+
+    /* now compute in {aa, n2} the sum A0+A1, and in {bb, n2} the sum B0+B1,
+       and in parallel in {cc, n2} the n2 low 12-bit words of A0*B0 + A1*B1 */
 
     /* {a, n2} has n2 words of 128 bits, i.e., 2*n2 words of 64 bits
-       {a1, n2-d} has n2-d-odd/2 words of 128 bits, i.e., 2*n2-2*d-odd
+       {a1, n2-d} has n2-d-odd/2 words of 128 bits, i.e., 2*(n2-d)-odd
        words of 64 bits */
 
     for (j = 0; j < n2 - d - odd; j++)
       {
         aa[j] = PXOR (a[j], a1[j]);
+        // _mm_storeu_si128 (aa + j, PXOR (a[j], a1[j]));
         bb[j] = PXOR (b[j], b1[j]);
+        // _mm_storeu_si128 (bb + j, PXOR (b[j], b1[j]));
         cc[j] = PXOR (c1[j], c2[j]);
+        // _mm_storeu_si128 (cc + j, PXOR (c1[j], c2[j]));
       }
     for (; j < n2 - d; j++) /* one loop only, and only when odd=1 */
       {
         /* zero the upper 64 bits of a1[j] and b1[j] */
         aa[j] = PXOR (a[j], _mm_loadl_epi64 (a1 + j));
+        // _mm_storeu_si128 (aa + j, PXOR (a[j], _mm_loadl_epi64 (a1 + j)));
         bb[j] = PXOR (b[j], _mm_loadl_epi64 (b1 + j));
+        // _mm_storeu_si128 (bb + j, PXOR (b[j], _mm_loadl_epi64 (b1 + j)));
         cc[j] = PXOR (c1[j], c2[j]);
+        // _mm_storeu_si128 (cc + j, PXOR (c1[j], c2[j]));
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
 	aa[j] = a[j];
+        // _mm_storeu_si128 (aa + j, a[j]);
 	bb[j] = b[j];
+        // _mm_storeu_si128 (bb + j, b[j]);
 	cc[j] = PXOR (c1[j], c2[j]);
+        // _mm_storeu_si128 (cc + j, PXOR (c1[j], c2[j]));
     }
+
+    /* now we have:
+       {c, n2} = low(A0*B0)
+       {c3, n2-2*d} = high(A1*B1)
+       {cc, n2} = high(A0*B0) + low(A1*B1) */
 
     gf2x_mul_karax_internal (c1, aa, bb, n2, stk, 0);	/* Middle */
 
-    for (j = 0; j < n2 - 2 * d; j++)
+    /* now we have:
+       {c, n2} = low(A0*B0)
+       {c1, 2*n2} = (A0+B0)*(A1+B1)
+       {c3, n2-2*d} = high(A1*B1)
+       {cc, n2} = high(A0*B0) + low(A1*B1)
+       It remains to add {cc, n2} + {c, n2} to {c1, n2},
+       and {cc, n2} + {c3, n2-2*d-odd} to {c2, n2} */
+
+    for (j = 0; j < n2 - 2 * d - odd; j++)
       {
 	c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
+        // _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128(c1 + j), PXOR (_mm_loadu_si128 (cc + j), c[j])));
 	c2[j] = PXOR (c2[j], PXOR (cc[j], c3[j]));
+        // _mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), PXOR (cc[j], c3[j])));
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
 	c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
+        // _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128(c1 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c + j))));
 	c2[j] = PXOR (c2[j], cc[j]);
+        // _mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), cc[j]));
       }
 }
 
