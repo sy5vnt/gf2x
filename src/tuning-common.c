@@ -26,6 +26,7 @@
 */
 
 #define _DEFAULT_SOURCE /* _BSD_SOURCE is deprecated */
+#define _XOPEN_SOURCE 500 /* for random() */
 #define _POSIX_C_SOURCE 200112L
 #include <stdlib.h>
 #include <stdio.h>
@@ -67,7 +68,7 @@ void random_wordstring(unsigned long *a, long n)
         /* random () returns a value between 0 and RAND_MAX = 2^31-1 */
 	a[i] = random () + (random () << 31);
         if (sizeof (long) > sizeof (int))
-          a[i] |= random () << 62;
+          a[i] |= (unsigned long) random () << 62;
       }
 }
 
