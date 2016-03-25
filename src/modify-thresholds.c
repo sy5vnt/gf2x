@@ -35,7 +35,7 @@
 
 */
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE /* _BSD_SOURCE is deprecated */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>             /* int64_t */

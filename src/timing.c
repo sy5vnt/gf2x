@@ -36,3 +36,19 @@ uint64_t microseconds()
 {
   return clock () / (CLOCKS_PER_SEC / 1000000);
 }
+
+/* returns the clock() resolution in seconds */
+double
+clock_resolution ()
+{
+  clock_t c0, c1, c2;
+  int i, iter = 100; /* with 100 iterations we expect an accuracy of 1% */
+
+  c0 = c1 = clock ();
+  for (i = 0; i < iter; i++)
+    {
+      do { c2 = clock (); } while (c2 == c1);
+      c1 = c2;
+    }
+  return (double) (c2 - c0) / iter;
+}

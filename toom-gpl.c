@@ -31,6 +31,21 @@
 #include <limits.h>
 #include <string.h>
 
+/* from https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Particular-Functions.html */
+#if HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+# define alloca __builtin_alloca
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
 
@@ -1439,10 +1454,10 @@ gf2x_mul_tc3x_internal (__m128i *c, const __m128i *a, const __m128i *b,
                         long n, __m128i *stk)
 
 {
-  assert (((uintptr_t) c % 16) == 0);
-  assert (((uintptr_t) a % 16) == 0);
-  assert (((uintptr_t) b % 16) == 0);
-  assert (((uintptr_t) stk % 16) == 0);
+  assert ((((uintptr_t) c) % 16) == 0);
+  assert ((((uintptr_t) a) % 16) == 0);
+  assert ((((uintptr_t) b) % 16) == 0);
+  assert ((((uintptr_t) stk) % 16) == 0);
 
   long k = (n + 2) / 3; 		// size of a0, a1, b0, b1
   long r = n - 2*k;			// size of a2, b2
@@ -1503,17 +1518,16 @@ gf2x_mul_tc3x_internal (__m128i *c, const __m128i *a, const __m128i *b,
 
   for (j = 0; j < k; j++)			// First k iterations
     {
-    __m128i u, v;
-    W5[j] ^= (u = W0[j]);
-    W2[j] ^= (v = W4[j]);
-    W0[j]  = u ^ a0[j];
-    W4[j]  = v ^ b0[j];
+      W5[j] ^= W0[j];
+      W2[j] ^= W4[j];
+      W0[j] ^= a0[j];
+      W4[j] ^= b0[j];
     }
 
   for (; j < kd+2; j++)				// Last 2-d iterations
     {
-    W5[j] = W0[j];				// Size(W5) := kd+2
-    W2[j] = W4[j];				// Size(W2) := kd+2
+      W5[j] = W0[j];				// Size(W5) := kd+2
+      W2[j] = W4[j];				// Size(W2) := kd+2
     }
 
   gf2x_mul_toom ((unsigned long*) W3, (unsigned long*) W2,
@@ -1530,9 +1544,8 @@ gf2x_mul_tc3x_internal (__m128i *c, const __m128i *a, const __m128i *b,
 
   for (j = 0; j < 2*k; j++)
     {						// First 2*k iterations
-    s = W2[j];
-    W3[j] ^= s;					// Size(W0) = 2*k
-    W2[j]  = s ^ W0[j];				// other sizes 2*kd + 4
+      W3[j] ^= W2[j];					// Size(W0) = 2*k
+      W2[j] ^= W0[j];				// other sizes 2*kd + 4
     }
 
   for (; j < 2*kd+4; j++)
@@ -1607,7 +1620,7 @@ gf2x_mul_tc3x_internal (__m128i *c, const __m128i *a, const __m128i *b,
     c[j+4*k] = W4[j];    			// Here c was undefined
 
   for (long j = 0; j < 2*kd + 4; j++)
-    c[j+k]   ^= W1[j];
+    c[j+k] ^= W1[j];
 
   for (long j = 0; j < 2*kd + 2; j++)
     c[j+3*k] ^= W3[j];
@@ -1627,7 +1640,7 @@ gf2x_mul_tc3x (unsigned long *c, const unsigned long *a,
   if (n & 1) /* n is odd */
     {
       aa = alloca ((4 * n + 5) * sizeof (unsigned long));
-      if ((uintptr_t) aa % 16)
+      if (((uintptr_t) aa) % 16)
         aa ++;
       /* now aa is 128-bit aligned */
       memcpy (aa, a, n * sizeof(unsigned long));
@@ -1642,16 +1655,16 @@ gf2x_mul_tc3x (unsigned long *c, const unsigned long *a,
     }
   else /* n is even */
     {
-      if ((uintptr_t) a % 16)
+      if (((uintptr_t) a % 16) == 0)
         aa = (unsigned long*) a;
       else
         {
           aa = alloca ((n + 1) * sizeof (unsigned long));
-          if ((uintptr_t) aa % 16)
+          if (((uintptr_t) aa) % 16)
             aa ++;
           memcpy (aa, a, n * sizeof(unsigned long));
         }
-      if ((uintptr_t) b % 16)
+      if (((uintptr_t) b % 16) == 0)
         bb = (unsigned long*) b;
       else
         {
@@ -1660,7 +1673,7 @@ gf2x_mul_tc3x (unsigned long *c, const unsigned long *a,
             bb ++;
           memcpy (bb, b, n * sizeof(unsigned long));
         }
-      if ((uintptr_t) c % 16)
+      if (((uintptr_t) c % 16) == 0)
         cc = c;
       else
         {

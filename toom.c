@@ -28,6 +28,7 @@
 /* General Toom_Cook multiplication, calls KarMul, Toom3Mul, Toom3WMul
    or Toom4Mul depending on which is expected to be the fastest. */
 
+#include <stdio.h>
 #include <limits.h>
 #include <string.h>
 
@@ -134,7 +135,11 @@ long gf2x_toomspace(long n)
       GF2X_MUL_KARA_THRESHOLD : GF2X_MUL_TOOMW_THRESHOLD;
     if (n < low)
 	return 0;
+#ifdef HAVE_KARAX
+    return 5 * n + 30; /* allocate an extra word for 128-bit alignement */
+#else
     return 5 * n + 29;
+#endif
 }
 
 /* Returns upper bound on space required by Toom3uMul (c, a, sa, b, stk):
@@ -183,9 +188,18 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
     case GF2X_SELECT_TC3W:
 	gf2x_mul_tc3w(c, a, b, n, stk);
 	break;
+    case GF2X_SELECT_TC3X:
+	gf2x_mul_tc3x(c, a, b, n, stk);
+	break;
     case GF2X_SELECT_TC4:
 	gf2x_mul_tc4(c, a, b, n, stk);
 	break;
+    default:
+      {
+        fprintf (stderr, "Unhandled case %d in gf2x_mul_toom\n",
+                 gf2x_best_toom(n));
+        exit (1);
+      }
     }
 #else /* GPL_CODE_PRESENT */
     gf2x_mul_kara(c, a, b, n, stk);

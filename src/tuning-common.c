@@ -25,17 +25,37 @@
    02110-1301, USA.
 */
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE /* _BSD_SOURCE is deprecated */
 #define _POSIX_C_SOURCE 200112L
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "tuning-common.h"
 
 double mulstep = 1;
 FILE * rp;
 const char * outfile = NULL;
+double MINTIME = 0.5; /* timer resolution */
+
+/* sets the clock() resolution in seconds */
+void
+set_clock_resolution ()
+{
+  clock_t c0, c1, c2;
+  int i, iter = 1000; /* with 1000 iterations we expect an accuracy of 0.1% */
+
+  c0 = c1 = clock ();
+  for (i = 0; i < iter; i++)
+    {
+      do { c2 = clock (); } while (c2 == c1);
+      c1 = c2;
+    }
+  MINTIME = (double) (c2 - c0) / (double) CLOCKS_PER_SEC;
+  fprintf (stderr, "Using MINTIME = %.2es with clock() resolution of %.2es\n",
+           MINTIME, MINTIME / (double) iter);
+}
 
 void random_wordstring(unsigned long *a, long n)
 {
@@ -91,17 +111,25 @@ void check(const unsigned long *a, long m,
            const char * dname, const unsigned long *d)
 {
     long i = 0;
+    int error = 0;
     for(i = 0 ; i < m + n ; i++) {
         if (c[i] != d[i]) {
-            fprintf(stderr,
-                    "Error: %s and %s differ for %ldx%ld at word %ld\n",
-                    cname, dname, m, n, i);
-            if (m + n < 1000) {
-                dump(a, m, b, n, c, d);
-            }
-            abort();
+            if (error++ < 10)
+              {
+                fprintf(stderr,
+                        "Error: %s and %s differ for %ldx%ld at word %ld\n",
+                        cname, dname, m, n, i);
+                fprintf (stderr, "expected %lx, got %lx\n", c[i], d[i]);
+              }
         }
     }
+    if (error)
+      {
+        if (m + n < 1000) {
+          dump(a, m, b, n, c, d);
+        }
+        abort();
+      }
 }
 
 
