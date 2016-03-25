@@ -34,7 +34,10 @@
 
 uint64_t microseconds()
 {
-  return clock () / (CLOCKS_PER_SEC / 1000000);
+  if (CLOCKS_PER_SEC < 1000000)
+    return clock () * (1000000 / CLOCKS_PER_SEC);
+  else
+    return clock () / (CLOCKS_PER_SEC / 1000000);
 }
 
 /* returns the clock() resolution in seconds */
