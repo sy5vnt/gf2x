@@ -45,6 +45,7 @@ set_clock_resolution ()
 {
   clock_t c0, c1, c2;
   int i, iter = 1000; /* with 1000 iterations we expect an accuracy of 0.1% */
+  double resolution;
 
   c0 = c1 = clock ();
   for (i = 0; i < iter; i++)
@@ -52,11 +53,10 @@ set_clock_resolution ()
       do { c2 = clock (); } while (c2 == c1);
       c1 = c2;
     }
-  MINTIME = (double) (c2 - c0) / (double) CLOCKS_PER_SEC;
-  if (MINTIME > 0.5)
-    MINTIME = 0.5;
+  resolution = (double) (c2 - c0) / (double) CLOCKS_PER_SEC;
+  MINTIME = (resolution > 0.5) ? 0.5 : resolution;
   fprintf (stderr, "Using MINTIME = %.2es with clock() resolution of %.2es\n",
-           MINTIME, MINTIME / (double) iter);
+           MINTIME, resolution / (double) iter);
 }
 
 void random_wordstring(unsigned long *a, long n)
