@@ -35,7 +35,7 @@
 #include <time.h>
 #include "tuning-common.h"
 
-double mulstep = 1;
+double mulstep = 1.0;
 FILE * rp;
 const char * outfile = NULL;
 double MINTIME = 0.5; /* timer resolution */

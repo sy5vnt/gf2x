@@ -144,7 +144,7 @@ void tunetoom(long tablesz)
     double S[256] = {0, };
     int nb[256] = {0, };
 
-    for (n = BESTMIN + 1; n <= high; n++) {
+    for (n = BESTMIN + 1; n <= high;) {
       if (count++ % 10 == 0)
 #ifdef HAVE_KARAX
           printf ("     TC2      TC2X     TC3      TC3W     TC3X      TC4      best\n");
@@ -236,7 +236,9 @@ void tunetoom(long tablesz)
 	printf("%1.2e %s\n", mint, gf2x_toom_select_string[k]);
         fprintf(rp, "toom %ld %d\n", n, k);
 	fflush(stdout);
-        best_tab[n - 1] = k;
+        long nn = MAX(n * mulstep, n + 1);
+        for( ; n < nn && n <= high ; n++)
+          best_tab[n - 1] = k;
     }
 #ifdef HAVE_KARAX
 	printf ("avg %1.2e %1.2e %1.2e %1.2e %1.2e %1.2e %1.2e\n",
@@ -360,7 +362,7 @@ void tuneutoom(long tabsz)
     t = (unsigned long *) malloc(sp * sizeof(unsigned long));
 
 
-    for (sa = BESTMINU + 1; sa <= high; sa++) {
+    for (sa = BESTMINU + 1; sa <= high; ) {
 	sb = (sa + 1) / 2;
 	random_wordstring(a, sa);
 	random_wordstring(b, sb);
@@ -384,7 +386,9 @@ void tuneutoom(long tabsz)
 	printf("best:%1.2e %s\n", mint, gf2x_utoom_select_string[k]);
 	fflush(stdout);
         fprintf(rp, "utoom %ld %d\n", sa, k);
-        best_utab[sa - 1] = k;
+        long nn = MAX(sa * mulstep, sa + 1);
+        for( ; sa < nn && sa <= high ; sa++)
+          best_utab[sa - 1] = k;
     }
 
     free(a);
@@ -425,6 +429,8 @@ int main(int argc, char *argv[])
         if (strcmp(argv[0], "--help") == 0) {
             usage(0);
         }
+        r = handle_tuning_mulstep(&argc, &argv);
+        if (r < 0) usage(1); else if (r) continue;
         r = handle_tuning_outfile(&argc, &argv);
         if (r < 0) usage(1); else if (r) continue;
 
@@ -445,6 +451,8 @@ int main(int argc, char *argv[])
         usage(1);
 
     set_clock_resolution ();
+    if (MINTIME >= 0.5 && mulstep == 1.0)
+      mulstep = 1.05;
     set_tuning_output();
 
     {
@@ -466,8 +474,8 @@ int main(int argc, char *argv[])
             ptr = progname;
         }
 
-        fprintf(rp, "info-toom \"%s %ld %ld run on %s on %s\"\n",
-                ptr,tabsz1,tabsz2,buf.nodename,date);
+        fprintf(rp, "info-toom \"%s -s %.2f %ld %ld run on %s on %s\"\n",
+                ptr,mulstep,tabsz1,tabsz2,buf.nodename,date);
     }
 
     tunetoom(tabsz1);		// Tune balanced routines
