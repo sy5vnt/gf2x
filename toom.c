@@ -180,6 +180,10 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
     case GF2X_SELECT_KARAX:
 	gf2x_mul_karax(c, a, b, n, stk);
 	break;
+        /* gf2x_mul_tc3x is copied from gf2x_mul_tc3, thus GPL only */
+    case GF2X_SELECT_TC3X:
+	gf2x_mul_tc3x(c, a, b, n, stk);
+	break;
 #endif
         /* TC3, TC3W, TC4 are GPL'ed code */
     case GF2X_SELECT_TC3:
@@ -187,9 +191,6 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
 	break;
     case GF2X_SELECT_TC3W:
 	gf2x_mul_tc3w(c, a, b, n, stk);
-	break;
-    case GF2X_SELECT_TC3X:
-	gf2x_mul_tc3x(c, a, b, n, stk);
 	break;
     case GF2X_SELECT_TC4:
 	gf2x_mul_tc4(c, a, b, n, stk);
