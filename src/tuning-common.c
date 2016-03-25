@@ -53,6 +53,8 @@ set_clock_resolution ()
       c1 = c2;
     }
   MINTIME = (double) (c2 - c0) / (double) CLOCKS_PER_SEC;
+  if (MINTIME > 0.5)
+    MINTIME = 0.5;
   fprintf (stderr, "Using MINTIME = %.2es with clock() resolution of %.2es\n",
            MINTIME, MINTIME / (double) iter);
 }
