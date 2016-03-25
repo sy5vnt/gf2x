@@ -56,8 +56,8 @@ set_clock_resolution ()
     }
   resolution = (double) (c2 - c0) / (double) CLOCKS_PER_SEC;
   MINTIME = (resolution > 0.5) ? 0.5 : resolution;
-  fprintf (stderr, "Using MINTIME = %.2es with clock() resolution of %.2es\n",
-           MINTIME, resolution / (double) iter);
+  printf ("Using MINTIME = %.2es with clock() resolution of %.2es\n",
+          MINTIME, resolution / (double) iter);
 }
 
 void random_wordstring(unsigned long *a, long n)

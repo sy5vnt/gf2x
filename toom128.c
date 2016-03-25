@@ -49,6 +49,8 @@
    * if odd=1, then a and b have 2n-1 words of 64 bits, the result c has 4n-2
                words of 64 bits, i.e., 2n-1 words of 128 bits
 
+   Assumes stk is 128-bit aligned.
+
    FIXME: write a 256-bit variant using AVX2:
    VPXOR: __m256i _mm256_xor_si256 ( __m256i a, __m256i b)
  */
@@ -105,30 +107,31 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
     for (j = 0; j < n2 - d - odd; j++)
       {
         // aa[j] = PXOR (a[j], a1[j]);
-        _mm_storeu_si128 (aa + j, PXOR (_mm_loadu_si128 (a + j), _mm_loadu_si128 (a1 + j)));
+        // aa is 128-bit aligned, thus we can use aa[j] = ...
+        aa[j] = PXOR (_mm_loadu_si128 (a + j), _mm_loadu_si128 (a1 + j));
         // bb[j] = PXOR (b[j], b1[j]);
-        _mm_storeu_si128 (bb + j, PXOR (_mm_loadu_si128 (b + j), _mm_loadu_si128 (b1 + j)));
+        bb[j] = PXOR (_mm_loadu_si128 (b + j), _mm_loadu_si128 (b1 + j));
         // cc[j] = PXOR (c1[j], c2[j]);
-        _mm_storeu_si128 (cc + j, PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j)));
+        cc[j] = PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j));
       }
     for (; j < n2 - d; j++) /* one loop only, and only when odd=1 */
       {
         /* zero the upper 64 bits of a1[j] and b1[j] */
         // aa[j] = PXOR (a[j], LOW(a1[j]));
-        _mm_storeu_si128 (aa + j, PXOR (_mm_loadu_si128 (a + j), _mm_loadl_epi64 (a1 + j)));
+        aa[j] = PXOR (_mm_loadu_si128 (a + j), _mm_loadl_epi64 (a1 + j));
         // bb[j] = PXOR (b[j], LOW(b1[j]));
-        _mm_storeu_si128 (bb + j, PXOR (_mm_loadu_si128 (b + j), _mm_loadl_epi64 (b1 + j)));
+        bb[j] = PXOR (_mm_loadu_si128 (b + j), _mm_loadl_epi64 (b1 + j));
         // cc[j] = PXOR (c1[j], c2[j]);
-        _mm_storeu_si128 (cc + j, PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j)));
+        cc[j] = PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j));
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
 	// aa[j] = a[j];
-        _mm_storeu_si128 (aa + j, _mm_loadu_si128 (a + j));
+        aa[j] = _mm_loadu_si128 (a + j);
 	// bb[j] = b[j];
-        _mm_storeu_si128 (bb + j, _mm_loadu_si128 (b + j));
+        bb[j] = _mm_loadu_si128 (b + j);
 	// cc[j] = PXOR (c1[j], c2[j]);
-        _mm_storeu_si128 (cc + j, PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j)));
+        cc[j] = PXOR (_mm_loadu_si128 (c1 + j), _mm_loadu_si128 (c2 + j));
     }
 
     /* now we have:
@@ -149,16 +152,16 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
     for (j = 0; j < n2 - 2 * d - odd; j++)
       {
 	// c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
-        _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128 (c1 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c + j))));
+        _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128 (c1 + j), PXOR (cc[j], _mm_loadu_si128 (c + j))));
 	// c2[j] = PXOR (c2[j], PXOR (cc[j], c3[j]));
-        _mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c3 + j))));
+        _mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), PXOR (cc[j], _mm_loadu_si128 (c3 + j))));
       }
     for (; j < n2; j++)
       {	/* Only when n odd */
 	// c1[j] = PXOR (c1[j], PXOR (cc[j], c[j]));
-        _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128 (c1 + j), PXOR (_mm_loadu_si128 (cc + j), _mm_loadu_si128 (c + j))));
+        _mm_storeu_si128 (c1 + j, PXOR (_mm_loadu_si128 (c1 + j), PXOR (cc[j], _mm_loadu_si128 (c + j))));
         // c2[j] = PXOR (c2[j], cc[j]);
-	_mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), _mm_loadu_si128 (cc + j)));
+	_mm_storeu_si128 (c2 + j, PXOR (_mm_loadu_si128 (c2 + j), cc[j]));
       }
 }
 
@@ -166,6 +169,8 @@ void
 gf2x_mul_karax (unsigned long *c, const unsigned long *a,
                 const unsigned long *b, long n, unsigned long *stk)
 {
+  if (((uintptr_t) stk) % 16)
+    stk ++; /* ensure stk is 128-bit aligned */
   gf2x_mul_karax_internal ((__m128i*) c, (__m128i*) a,
                            (__m128i*) b, (n + 1) >> 1, (__m128i*) stk, n & 1);
 }
