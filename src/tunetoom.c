@@ -90,6 +90,7 @@
 #define MINI_GF2X_MUL_TOOMW_THRESHOLD	8
 #define MINI_GF2X_MUL_TOOM4_THRESHOLD	30
 #define MINI_GF2X_MUL_TOOMU_THRESHOLD	33
+#define MINI_GF2X_MUL_TC3X_THRESHOLD 	16
 
 #define BESTMIN (GF2X_MUL_KARA_THRESHOLD-1)
 #define BESTMINU (GF2X_MUL_TOOMU_THRESHOLD-1)
@@ -99,6 +100,7 @@ const char * gf2x_toom_select_string[] = {
     [GF2X_SELECT_KARAX] = "TC2X",
     [GF2X_SELECT_TC3]  = "TC3",
     [GF2X_SELECT_TC3W] = "TC3W",
+    [GF2X_SELECT_TC3X] = "TC3X",
     [GF2X_SELECT_TC4]  = "TC4",
 };
 
@@ -113,7 +115,7 @@ void tunetoom(long tablesz)
 {
     long high, n;
     int k;
-    double T3[1], TK[1], TKX[1], TW[1], T4[1];
+    double T3[1], TK[1], TKX[1], TW[1], T3X[1], T4[1];
     double mint;
     unsigned long *a, *b, *c, *d, *t;
 
@@ -138,11 +140,11 @@ void tunetoom(long tablesz)
     for (n = BESTMIN + 1; n <= high;) {
       if (count++ % 10 == 0)
 #ifdef HAVE_KARAX
-          printf ("     TC2      TC2X     TC3      TC3W     TC4      best\n");
+          printf ("     TC2      TC2X     TC3      TC3W     TC3X      TC4      best\n");
 #else
           printf ("     TC2      TC3      TC3W     TC4      best\n");
 #endif
-	TK[0] = TKX[0] = T3[0] = TW[0] = T4[0] = 0.0;
+	TK[0] = TKX[0] = T3[0] = TW[0] = T3X[0] = T4[0] = 0.0;
 	printf("%ld ", n);
 	fflush(stdout);
 	srandom(1);
@@ -165,13 +167,20 @@ void tunetoom(long tablesz)
 	    TIME(TW[0], gf2x_mul_tc3w(d, a, b, n, t));
 	    check(a, n, b, n, "Kara", c, "TC3W", d);
 	}
+#ifdef HAVE_KARAX
+	if (n >= MINI_GF2X_MUL_TC3X_THRESHOLD)
+          {
+	    TIME(T3X[0], gf2x_mul_tc3x(d, a, b, n, t));
+            check(a, n, b, n, "Kara", c, "TC3X", d);
+          }
+#endif
 	if (n >= MINI_GF2X_MUL_TOOM4_THRESHOLD) {
 	    TIME(T4[0], gf2x_mul_tc4(d, a, b, n, t));
 	    check(a, n, b, n, "Kara", c, "TC4", d);
 	}
 #ifdef HAVE_KARAX
-	printf ("%1.2e %1.2e %1.2e %1.2e %1.2e ",
-                TK[0], TKX[0], T3[0], TW[0], T4[0]);
+	printf ("%1.2e %1.2e %1.2e %1.2e %1.2e %1.2e ",
+                TK[0], TKX[0], T3[0], TW[0], T3X[0], T4[0]);
 #else
 	printf ("%1.2e %1.2e %1.2e %1.2e ", TK[0], T3[0], TW[0], T4[0]);
 #endif
@@ -191,6 +200,12 @@ void tunetoom(long tablesz)
 	    mint = TW[0];
 	    k = GF2X_SELECT_TC3W;
 	}
+#ifdef HAVE_KARAX
+	if ((T3X[0] < mint) && (n >= MINI_GF2X_MUL_TC3X_THRESHOLD)) {
+	    mint = T3X[0];
+	    k = GF2X_SELECT_TC3X;
+	}
+#endif
 	if ((T4[0] < mint) && (n >= MINI_GF2X_MUL_TOOM4_THRESHOLD)) {
 	    mint = T4[0];
 	    k = GF2X_SELECT_TC4;

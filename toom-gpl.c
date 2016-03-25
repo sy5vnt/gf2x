@@ -1154,11 +1154,25 @@ void gf2x_mul_tc3w(unsigned long * c, const unsigned long * a, const unsigned lo
   c must have space for 2n words and should not overlap the inputs.
   stk must have space for sp(n) = gf2x_toomspace(n) words
 
-    sp(n) = (n lt 8) ? KarMem(7) : 8*(n/3 + 3) + sp(n/3 + 2)
+    sp(n) = (n lt 8) ? KarMem(n) : 8*(ceil(n/3) + 2) + sp(floor(n/3) + 2)
 
-  and  KarMem(7) = 19 is the space required by KarMul.
+  and  KarMem(7) = 21 is the space required by KarMul.
 
-  A simpler bound on the memory required is 5*n + 17 (equality at n = 19).
+  A simpler bound on the memory required is 5*n + 29 (equality at n = 25):
+
+  * this is true for n < 8 since KarMulMem(n) = 3*ceil(n/2) +
+    KarMulMem(ceil(n/2)), which gives KarMulMem(2)=3, KarMulMem(3)=9,
+    KarMulMem(4)=9, KarMulMem(5)=18, KarMulMem(6)=18, KarMulMem(7)=21.
+    This is always <= 5*n+29.
+    * for n >= 8:
+      sp(n) <= 8*(ceil(n/3) + 2) + sp(floor(n/3) + 2)
+            <= 8*(ceil(n/3) + 2) + 5*(floor(n/3) + 2) + 29 [induction]
+            <= 8 * (n/3 + 2/3 + 2) + 5 * (n/3 + 2) + 29
+            <= 13/3 * n + 94/3 + 29
+            = 5 * n + 29 - (2*n-94)/3
+
+      We first check by exhaustive search that for 8 <= n < 47 we have
+      sp(n) <= 5*n+29, and it follows by induction for n >= 47.
 */
 
 
@@ -1170,6 +1184,9 @@ void gf2x_mul_tc3w (unsigned long *c, const unsigned long *a, const unsigned lon
   long r = n - 2*k;			// size of a2, b2
   long d = (r < k) ? 1 : 0;		// 1 if r < k, 0 otherwise
   long kd = k - d;
+  long k2 = 2*(k+2);			// Size of 4 temporary arrays
+
+  /* k = ceil(n/3), kd = floor(n/3) */
 
   const unsigned long *a0 = a;		// Aliases for three parts of a
   const unsigned long *a1 = a + k;
@@ -1178,15 +1195,13 @@ void gf2x_mul_tc3w (unsigned long *c, const unsigned long *a, const unsigned lon
   const unsigned long *b1 = b + k;
   const unsigned long *b2 = b + 2*k;
 
-  long k2 = 2*(k+2);			// Size of temporary arrays
-
   unsigned long *W0 = c;			// Overlap W0 (size 2*k) with c
   unsigned long *W1 = stk;
   unsigned long *W2 = c + 2*k;		// Overlap W2 with c + 2*k ...
   unsigned long *W3 = W1 + k2;
   unsigned long *W4 = W3 + k2;		// But not W4 as W2 too large
   unsigned long *W5 = W4 + k2;		// W5 is synonymous with W3 in
-  					// Bodrato's mul-tc3.c
+                                        // Bodrato's mul-tc3.c
   stk += 4*k2;	  			// 4 temporaries of size k2
 
   long j;
@@ -1413,6 +1428,253 @@ void gf2x_mul_tc3w (unsigned long *c, const unsigned long *a, const unsigned lon
 }
 #endif
 
+#ifdef HAVE_KARAX
+#include <emmintrin.h>
+/* 128-bit variant, copied from gf2x_mul_tc3w, see the comments
+   in gf2x_mul_tc3w.
+   Assume all parameters are 128-bit aligned.
+ */
+static void
+gf2x_mul_tc3x_internal (__m128i *c, const __m128i *a, const __m128i *b,
+                        long n, __m128i *stk)
+
+{
+  assert (((uintptr_t) c % 16) == 0);
+  assert (((uintptr_t) a % 16) == 0);
+  assert (((uintptr_t) b % 16) == 0);
+  assert (((uintptr_t) stk % 16) == 0);
+
+  long k = (n + 2) / 3; 		// size of a0, a1, b0, b1
+  long r = n - 2*k;			// size of a2, b2
+  long d = (r < k) ? 1 : 0;		// 1 if r < k, 0 otherwise
+  long kd = k - d;
+  long k2 = 2*(k+2);			// Size of 4 temporary arrays
+
+  const __m128i *a0 = a;		// Aliases for three parts of a
+  const __m128i *a1 = a + k;
+  const __m128i *a2 = a + 2*k;
+  const __m128i *b0 = b;		// Ditto for b
+  const __m128i *b1 = b + k;
+  const __m128i *b2 = b + 2*k;
+
+  __m128i *W0 = c;			// Overlap W0 (size 2*k) with c
+  __m128i *W1 = stk;
+  __m128i *W2 = c + 2*k;		// Overlap W2 with c + 2*k ...
+  __m128i *W3 = W1 + k2;
+  __m128i *W4 = W3 + k2;		// But not W4 as W2 too large
+  __m128i *W5 = W4 + k2;		// W5 is synonymous with W3 in
+  					// Bodrato's mul-tc3.c
+  stk += 4*k2;	  			// 4 temporaries of size k2
+
+  long j;
+  __m128i s;
+
+  // W0[0] = W4[0] = 0;
+  __m128i zero = _mm_set_epi32 (0, 0, 0, 0);
+  W0[0] = W4[0] = zero;
+  W0[1] = a1[0];
+  W4[1] = b1[0];				// No a2, b2 here
+  W5[0] = a0[0] ^ a1[0] ^ a2[0];
+  W2[0] = b0[0] ^ b1[0] ^ b2[0];
+  W5[1] = a0[1] ^ a1[1] ^ a2[1];
+  W2[1] = b0[1] ^ b1[1] ^ b2[1];
+  for (j = 2; j < r; j++)			// Next r-1 iterations
+    {						// This is the usual case
+    W0[j] = a1[j-1] ^ a2[j-2];		// Size(a1) = Size(b1) = k
+    W4[j] = b1[j-1] ^ b2[j-2];
+    W5[j] = a0[j] ^ a1[j] ^ a2[j];		// Size(a2) = Size(b2) = r
+    W2[j] = b0[j] ^ b1[j] ^ b2[j];
+    }
+  /* the following loop runs at most twice, since k <= r + 2 */
+  for (; j < k; j++)
+    {
+    W0[j] = a1[j-1] ^ a2[j-2];
+    W4[j] = b1[j-1] ^ b2[j-2];
+    W5[j] = a0[j] ^ a1[j];
+    W2[j] = b0[j] ^ b1[j];
+    }
+  W0[k] = a1[k-1] ^ ((k-2 < r) ? a2[k-2] : zero);
+  W4[k] = b1[k-1] ^ ((k-2 < r) ? b2[k-2] : zero);
+  W0[k+1] = (k-1 < r) ? a2[k-1] : zero;
+  W4[k+1] = (k-1 < r) ? b2[k-1] : zero;
+
+  gf2x_mul_toom ((unsigned long*) W1, (unsigned long*) W2,
+                 (unsigned long*) W5, 2 * k, (unsigned long*) stk);
+
+  for (j = 0; j < k; j++)			// First k iterations
+    {
+    __m128i u, v;
+    W5[j] ^= (u = W0[j]);
+    W2[j] ^= (v = W4[j]);
+    W0[j]  = u ^ a0[j];
+    W4[j]  = v ^ b0[j];
+    }
+
+  for (; j < kd+2; j++)				// Last 2-d iterations
+    {
+    W5[j] = W0[j];				// Size(W5) := kd+2
+    W2[j] = W4[j];				// Size(W2) := kd+2
+    }
+
+  gf2x_mul_toom ((unsigned long*) W3, (unsigned long*) W2,
+                 (unsigned long*) W5, 2 * (kd + 2), (unsigned long*) stk);
+
+  gf2x_mul_toom ((unsigned long*) W2, (unsigned long*) W0,
+                 (unsigned long*) W4, 2 * (kd + 2), (unsigned long*) stk);
+
+  gf2x_mul_toom ((unsigned long*) W0, (unsigned long*) a0,
+                 (unsigned long*) b0, 2 * k, (unsigned long*) stk);
+
+  gf2x_mul_toom ((unsigned long*) W4, (unsigned long*) a2,
+                 (unsigned long*) b2, 2 * r, (unsigned long*) stk);
+
+  for (j = 0; j < 2*k; j++)
+    {						// First 2*k iterations
+    s = W2[j];
+    W3[j] ^= s;					// Size(W0) = 2*k
+    W2[j]  = s ^ W0[j];				// other sizes 2*kd + 4
+    }
+
+  for (; j < 2*kd+4; j++)
+    W3[j] ^= W2[j];				// Last 4 - 2*d iterations
+
+  for (j = 0; j < 2*kd + 3; j++)
+    W2[j] = W2[j+1] ^ W3[j];
+  W2[j] = W3[j];				// Size(W2) := 2*kd + 4
+
+  for (j = 0, s = zero; j < 3; j++)
+    {
+    s ^= W2[j] ^ W4[j];
+    W2[j] = s;					// first 3 iterations special
+    }
+  for (; j < 2*r; j++)
+    {
+    s ^= W2[j] ^ W4[j] ^ W4[j-3];		// next 2r-3 are usual case
+    W2[j] = s;
+    }
+
+  for (; j < 2*r+3; j++)
+    {
+    s ^= W2[j] ^ W4[j-3];			// next 3 are special
+    W2[j] = s;
+    }
+
+  for (; j < 2*kd+4; j++)
+    {
+    s ^= W2[j]; 				// last (k-r-d) == 0 or 1
+    W2[j] = s;					// Size(W2) = 2*kd + 3
+    }
+
+  for (long j = 0; j < 2*k; j++)
+    {
+    s = W0[j] ^ W1[j];
+    W1[j] = s;					// Size(W0) = Size(W1) = 2*k
+    W3[j] ^= s;					// Size(W3) = 2*kd + 4 > 2*k
+    }
+
+  for (j = 0, s = zero; j < 2*kd + 3; j++)
+    {
+    s ^= W3[j+1];
+    W3[j] = s;
+    }
+  W3[j] = zero;
+						//  <  Size(W2) == 2*kd + 4
+  for (j = 0; j < 2*r; j++)
+    {						// Usual case
+    s = W2[j];
+    W1[j] ^= s ^ W4[j];
+    W2[j]  = s ^ W3[j];
+    }
+  for (; j < 2*k; j++)
+    {						// Next 2*(k-r) iterations
+    s = W2[j];
+    W1[j] ^= s;					// No W4[j] here
+    W2[j]  = s ^ W3[j];
+    }
+  for (; j < 2*kd + 2; j++)
+    {						// Next 2*(1-d) iterations
+    s = W2[j];
+    W1[j] = s;					// Extending size of W1
+    W2[j] = s ^ W3[j];
+    }
+  for (; j < 2*kd + 4; j++)			// Last 2 iterations
+    W1[j] = W2[j];				// Size(W1) := 2*kd + 4
+                                                // Size(W2)  = 2*kd + 4
+  for (j = 0; j < 4 - 2*d; j++)			// 4 - 2*d words of W2
+    c[j+4*k] ^= W4[j];    			// overlap the W4 region
+
+  for (; j < 2*r; j++)				// Copy rest of W4
+    c[j+4*k] = W4[j];    			// Here c was undefined
+
+  for (long j = 0; j < 2*kd + 4; j++)
+    c[j+k]   ^= W1[j];
+
+  for (long j = 0; j < 2*kd + 2; j++)
+    c[j+3*k] ^= W3[j];
+}
+
+/* wrapper for gf2x_mul_tc3x_internal */
+void
+gf2x_mul_tc3x (unsigned long *c, const unsigned long *a,
+               const unsigned long *b, long n, unsigned long *stk)
+{
+  unsigned long *cc, *aa, *bb;
+
+  /* ensure stk is 128-bit aligned */
+  if ((uintptr_t) stk % 16)
+    stk ++;
+
+  if (n & 1) /* n is odd */
+    {
+      aa = alloca ((4 * n + 5) * sizeof (unsigned long));
+      if ((uintptr_t) aa % 16)
+        aa ++;
+      /* now aa is 128-bit aligned */
+      memcpy (aa, a, n * sizeof(unsigned long));
+      aa[n] = 0;
+      bb = aa + n + 1;
+      memcpy (bb, b, n * sizeof(unsigned long));
+      bb[n] = 0;
+      cc = bb + n + 1;
+      gf2x_mul_tc3x_internal ((__m128i*) cc, (__m128i*) aa,
+                              (__m128i*) bb, (n + 1) >> 1, (__m128i*) stk);
+      memcpy (c, cc, 2 * n * sizeof(unsigned long));
+    }
+  else /* n is even */
+    {
+      if ((uintptr_t) a % 16)
+        aa = (unsigned long*) a;
+      else
+        {
+          aa = alloca ((n + 1) * sizeof (unsigned long));
+          if ((uintptr_t) aa % 16)
+            aa ++;
+          memcpy (aa, a, n * sizeof(unsigned long));
+        }
+      if ((uintptr_t) b % 16)
+        bb = (unsigned long*) b;
+      else
+        {
+          bb = alloca ((n + 1) * sizeof (unsigned long));
+          if ((uintptr_t) bb % 16)
+            bb ++;
+          memcpy (bb, b, n * sizeof(unsigned long));
+        }
+      if ((uintptr_t) c % 16)
+        cc = c;
+      else
+        {
+          cc = alloca ((2 * n + 1) * sizeof (unsigned long));
+          if ((uintptr_t) cc % 16)
+            cc ++;
+        }
+      gf2x_mul_tc3x_internal ((__m128i*) cc, (__m128i*) aa,
+                              (__m128i*) bb, n >> 1, (__m128i*) stk);
+      if (cc != c)
+        memcpy (c, cc, 2 * n * sizeof(unsigned long));
+    }
+}
+#endif /* HAVE_KARAX */
 
 /********************************************************************
  * Below this line, experimental code

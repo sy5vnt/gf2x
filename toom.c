@@ -108,12 +108,12 @@ short gf2x_best_utoom(unsigned long n GF2X_MAYBE_UNUSED)
 /*
  The memory sp(n) necessary for Toom3WMul satisfies
  sp(n) <== (n lt 8) ? 19 : 8*(floor(n/3) + 3) + sp(floor(n/3) + 2),
- sp(7) <= 19.
+ sp(7) <= 21.
 
  It is assumed that KarMul is called for n < 8 <= GF2X_MUL_TOOMW_THRESHOLD
  and requires space KarMulMem(n) <= 3*ceil(n/2) + KarMulMem(ceil(n/2)),
- KarMulMem(7) <= 19.  The memory for Toom3Mul and Toom4Mul is no larger
- than that for Toom3WMul.
+ KarMulMem(7) <= 21.  The memory for Toom3Mul and Toom4Mul is no larger
+ than that for Toom3WMul. We use here the simpler bound 5*n+29 (cf toom-gpl.c).
 
  Note: KarMulMem(7) is now 0, but would increase if GF2X_MUL_KARA_THRESHOLD
        were reduced. We have not changed gf2x_ToomSpace as a small overestimate
@@ -130,17 +130,11 @@ short gf2x_best_utoom(unsigned long n GF2X_MAYBE_UNUSED)
 
 long gf2x_toomspace(long n)
 {
-    long sp;
     long low = (GF2X_MUL_KARA_THRESHOLD < GF2X_MUL_TOOMW_THRESHOLD) ?
       GF2X_MUL_KARA_THRESHOLD : GF2X_MUL_TOOMW_THRESHOLD;
     if (n < low)
 	return 0;
-    sp = 19;			// KarMulMem (7) <= 19
-    while (n >= 8) {
-	n = n / 3 + 2;
-	sp += 8 * (n + 1);
-    }
-    return sp;
+    return 5 * n + 29;
 }
 
 /* Returns upper bound on space required by Toom3uMul (c, a, sa, b, stk):

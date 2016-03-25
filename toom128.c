@@ -60,8 +60,9 @@ gf2x_mul_karax_internal (__m128i *c, const __m128i *a,
     __m128i *aa, *bb, *cc;
     long j, d, n2;
 
-    /* since this routine is usually faster than gf2x_mul_kara, we directly
-       call gf2x_mul_basecase() here */
+    /* since this routine is usually faster than gf2x_mul_kara(), it calls
+       itself recursively instead of calling gf2x_mul_toom(), thus we have
+       to stop the recursion by calling gf2x_mul_basecase() */
     if (2 * n - odd < GF2X_MUL_KARA_THRESHOLD)
       {
         gf2x_mul_basecase ((unsigned long*) c, (unsigned long*) a, 2 * n - odd,
