@@ -45,7 +45,7 @@ static long init_extra_arg = ENGINE_EXTRA_ARG_DEFAULT;
 // cputime in millisec.
 static int cputime()
 {
-  return clock () / (CLOCKS_PER_SEC / 1000);
+  return (int) (clock () / ((double) CLOCKS_PER_SEC / 1000.0));
 }
 
 int time_total;
