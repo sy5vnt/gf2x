@@ -549,7 +549,9 @@ void gf2x_mul_tc3(unsigned long *c, const unsigned long *a,
 // but calls to Toom should have size at least 8 so
 // need GF2X_MUL_TOOMU_THRESHOLD >= 33.
 
-#if (GF2X_MUL_TOOMU_THRESHOLD < 33)
+#define MINI_GF2X_MUL_TOOMU_THRESHOLD 33
+
+#if (GF2X_MUL_TOOMU_THRESHOLD < MINI_GF2X_MUL_TOOMU_THRESHOLD)
 #error "GF2X_MUL_TOOMU_THRESHOLD should be at least 33"
 #endif
 
@@ -576,7 +578,8 @@ void gf2x_mul_tc3(unsigned long *c, const unsigned long *a,
 void gf2x_mul_tc3u(unsigned long * c, const unsigned long * a, long sa,
 	      const unsigned long * b, unsigned long * stk)
 {
-    ASSERT(sa >= GF2X_MUL_TOOMU_THRESHOLD);	// n should be at least 6 for internal
+    ASSERT(sa >= MINI_GF2X_MUL_TOOMU_THRESHOLD);
+    // n should be at least 6 for internal
     // reasons and 17 so calls to Toom
     // have size at least 9, so need
     // sa >= 33.
