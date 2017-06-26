@@ -24,7 +24,8 @@ tar xzf "$wdir/prepare/$PACKAGE_TARNAME-$PACKAGE_VERSION".tar.gz
 cd "$PACKAGE_TARNAME-$PACKAGE_VERSION"
 
 # first do a bastardized build. install it.
-ex toom.c <<EOF
+# some ex binaries insist on having a TERM variable.
+TERM=xterm ex toom.c <<EOF
 /void gf2x_mul_kara
 /{
 a
