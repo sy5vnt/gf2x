@@ -18,7 +18,7 @@ mkdir $wdir/prepare
 cd $wdir/prepare
 $src/configure $configure_extra
 make dist
-. <(egrep '^PACKAGE_(TARNAME|VERSION)=' $src/configure)
+eval `egrep '^PACKAGE_(TARNAME|VERSION)=' $src/configure`
 cd $wdir
 tar xzf "$wdir/prepare/$PACKAGE_TARNAME-$PACKAGE_VERSION".tar.gz
 cd "$PACKAGE_TARNAME-$PACKAGE_VERSION"
