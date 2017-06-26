@@ -38,12 +38,14 @@ make
 make install
 
 # now rebuild the good source, and try to see whether the included
-# binaries pass.
+# binaries pass. Make sure we rebuild the whole thing !
 cd $wdir
 tar xzf "$wdir/prepare/$PACKAGE_TARNAME-$PACKAGE_VERSION".tar.gz
 cd "$PACKAGE_TARNAME-$PACKAGE_VERSION"
+make distclean
+$src/configure --prefix=$wdir/inst $configure_extra
 make
-make tune-toom TOOM_TUNING_LIMIT=64
+make tune-toom TOOM_TUNING_LIMIT=20
 
 if [ "$DEBUG_SCRIPTS" ] ; then
     echo "data left in $install_dir"
