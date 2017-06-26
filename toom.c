@@ -199,7 +199,7 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
       {
         fprintf (stderr, "Unhandled case %d in gf2x_mul_toom\n",
                  gf2x_best_toom(n));
-        exit (1);
+        abort();
       }
     }
 #else /* GPL_CODE_PRESENT */
