@@ -46,7 +46,10 @@ cd "$PACKAGE_TARNAME-$PACKAGE_VERSION"
 make distclean
 $src/configure --prefix=$wdir/inst $configure_extra
 make
-make tune-toom TOOM_TUNING_LIMIT=20
+# it's a bit unfortunate as far as check times are concerned, but we need
+# to do testing at least that far in order to have a valid threshold at
+# the end of the day.
+make tune-toom TOOM_TUNING_LIMIT=64
 
 if [ "$DEBUG_SCRIPTS" ] ; then
     echo "data left in $install_dir"
