@@ -74,7 +74,7 @@ nobase_nodist_include_HEADERS=	\
 		gf2x/gf2x_mul9.h
 
 
-libgf2x_la_LDFLAGS=-version-info @gf2x_lib_version@
+libgf2x_la_LDFLAGS=-version-info @gf2x_lib_version@ -no-undefined
 
 SUBDIRS=lowlevel src . fft tests $(MAYBE_APPS)
 
