@@ -93,6 +93,7 @@ AC_ARG_ENABLE([fft-interface],
 AM_CONDITIONAL([ENABLE_FFT_INTERFACE],[test "x$enable_fft_interface" = xyes])
 
 AC_PROG_CC
+AC_PROG_CPP
 AC_PROG_CXX
 AC_COMPILE_WARNINGS
 AC_PROG_CC_C99
