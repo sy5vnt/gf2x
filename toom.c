@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "gf2x.h"
 #include "gf2x/gf2x-impl.h"
