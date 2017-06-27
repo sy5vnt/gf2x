@@ -763,12 +763,13 @@ check_mul9cl_SOURCES=check_small_size.c
 endif
 # -- end generated code --
 
+# LD_LIBRARY_PATH_RPATH is freebsd-specific. See #21378
 ######################################################################
 EXTRA_PROGRAMS+=$(LOWLEVEL)
 tune-lowlevel: $(LOWLEVEL)
 	cd $(top_builddir) ; $(MAKE)
 	MAKE="$(MAKE)" abs_srcdir=$(abs_srcdir)	\
-	perl $(srcdir)/tune-lowlevel.pl $(LOWLEVEL)
+	env LD_LIBRARY_PATH_RPATH=1 perl $(srcdir)/tune-lowlevel.pl $(LOWLEVEL)
 EXTRA_DIST+=tune-lowlevel.pl
 
 ######################################################################
@@ -785,8 +786,9 @@ tunetoom_LDADD=libtiming.la ../libgf2x.la -lm
 TOOM_TUNING_LIMIT=2048
 
 if GPL_CODE_PRESENT
+# LD_LIBRARY_PATH_RPATH is freebsd-specific. See #21378
 tunetoom.res: tunetoom$(EXEEXT)
-	./tunetoom $(TOOM_TUNING_LIMIT) -o tunetoom.res
+	env LD_LIBRARY_PATH_RPATH=1 ./tunetoom $(TOOM_TUNING_LIMIT) -o tunetoom.res
 
 tune-toom: tunetoom.res modify-thresholds$(EXEEXT)
 	cd $(top_builddir) ; $(MAKE)
@@ -811,8 +813,9 @@ tunefft_LDADD=libtiming.la ../libgf2x.la
 FFT_TUNING_LIMIT=8000000
 FFT_TUNING_SCALE=1.02
 
+# LD_LIBRARY_PATH_RPATH is freebsd-specific. See #21378
 tunefft.res: tunefft$(EXEEXT)
-	./tunefft -s $(FFT_TUNING_SCALE) $(FFT_TUNING_LIMIT) -o tunefft.res
+	env LD_LIBRARY_PATH_RPATH=1 ./tunefft -s $(FFT_TUNING_SCALE) $(FFT_TUNING_LIMIT) -o tunefft.res
 
 tune-fft: tunefft.res modify-thresholds$(EXEEXT)
 	cd $(top_builddir) ; $(MAKE)
