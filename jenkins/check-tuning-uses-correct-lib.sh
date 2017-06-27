@@ -52,5 +52,5 @@ make
 make tune-toom TOOM_TUNING_LIMIT=64
 
 if [ "$DEBUG_SCRIPTS" ] ; then
-    echo "data left in $install_dir"
+    echo "data left in $wdir"
 fi
