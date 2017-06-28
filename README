@@ -211,6 +211,20 @@ Cautious users follow steps 1 to 5 below. Urged users follow only 1 and 5.
    ways of making this work, your easiest bet is to stick to the static
    library approach.
 
+Notes for specific systems:
+===========================
+
+- it might be that the default CC and CFLAGS used by the configure script do
+  not match those of the version of GMP used by --with-gmp=$DIR In that case,
+  grep CC and CFLAGS in $DIR/include/gmp.h, and run configure with the
+  corresponding values:
+
+  $ ./configure --with-gmp=$DIR CC=... CFLAGS=...
+
+- under AIX the following might be required to build the gf2x binaries:
+
+  $ export OBJECT_MODE=64
+
 Caution regarding installation:
 ===============================
 
