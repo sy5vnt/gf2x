@@ -221,6 +221,11 @@ Notes for specific systems:
 
   $ ./configure --with-gmp=$DIR CC=... CFLAGS=...
 
+- on some systems (for example MIPS) it is also required to explicitly give
+  the ABI and LDFLAGS, for example on gcc22.fsffrance.org:
+
+  $ ./configure --with-gmp=$DIR CFLAGS="-O2 -mabi=n32" ABI=32 LDFLAGS="-Wl,-rpath,$DIR/lib"
+
 - under AIX the following might be required to build the gf2x binaries:
 
   $ export OBJECT_MODE=64
