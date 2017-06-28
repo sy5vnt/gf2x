@@ -30,6 +30,8 @@ AUTOMAKE_OPTIONS=subdir-objects
 # note that most automatic targets have their own CPPFLAGS, which
 # override this one.
 AM_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir)
+AM_LDFLAGS = -no-install
+
 EXTRA_PROGRAMS=
 TESTS =
 check_PROGRAMS=
@@ -763,13 +765,12 @@ check_mul9cl_SOURCES=check_small_size.c
 endif
 # -- end generated code --
 
-# LD_LIBRARY_PATH_RPATH is freebsd-specific. See #21378
 ######################################################################
 EXTRA_PROGRAMS+=$(LOWLEVEL)
 tune-lowlevel: $(LOWLEVEL)
 	cd $(top_builddir) ; $(MAKE)
 	MAKE="$(MAKE)" abs_srcdir=$(abs_srcdir)	\
-	env LD_LIBRARY_PATH_RPATH=1 perl $(srcdir)/tune-lowlevel.pl $(LOWLEVEL)
+	perl $(srcdir)/tune-lowlevel.pl $(LOWLEVEL)
 EXTRA_DIST+=tune-lowlevel.pl
 
 ######################################################################
@@ -786,9 +787,8 @@ tunetoom_LDADD=libtiming.la ../libgf2x.la -lm
 TOOM_TUNING_LIMIT=2048
 
 if GPL_CODE_PRESENT
-# LD_LIBRARY_PATH_RPATH is freebsd-specific. See #21378
 tunetoom.res: tunetoom$(EXEEXT)
-	env LD_LIBRARY_PATH_RPATH=1 ./tunetoom $(TOOM_TUNING_LIMIT) -o tunetoom.res
+	./tunetoom $(TOOM_TUNING_LIMIT) -o tunetoom.res
 
 tune-toom: tunetoom.res modify-thresholds$(EXEEXT)
 	cd $(top_builddir) ; $(MAKE)
@@ -813,9 +813,8 @@ tunefft_LDADD=libtiming.la ../libgf2x.la
 FFT_TUNING_LIMIT=8000000
 FFT_TUNING_SCALE=1.02
 
-# LD_LIBRARY_PATH_RPATH is freebsd-specific. See #21378
 tunefft.res: tunefft$(EXEEXT)
-	env LD_LIBRARY_PATH_RPATH=1 ./tunefft -s $(FFT_TUNING_SCALE) $(FFT_TUNING_LIMIT) -o tunefft.res
+	./tunefft -s $(FFT_TUNING_SCALE) $(FFT_TUNING_LIMIT) -o tunefft.res
 
 tune-fft: tunefft.res modify-thresholds$(EXEEXT)
 	cd $(top_builddir) ; $(MAKE)

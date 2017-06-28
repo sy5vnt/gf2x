@@ -27,10 +27,6 @@
 
 echo "## $0 $@"
 
-# freebsd-specific. See #21378
-LD_LIBRARY_PATH_RPATH=1
-export LD_LIBRARY_PATH_RPATH
-
 # $builddir can be overridden with -b
 # defaulting to the location of $0 would be wrong in the out-of-source
 # case, so we always use -b in Makefile.am. However, for quick testing, a
