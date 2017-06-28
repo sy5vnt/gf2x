@@ -39,10 +39,9 @@ must be specified to gf2x's configure script as follows:
 
 
 
-
-
-
-# The text below is outdated (dates back to gf2x 1.0 at best).
+# The text below is somewhat outdated, and was originally written for
+# gf2x 1.0 at best, and was marginally updated since. It is still
+# "reasonably accurate", but must be followed with caution.
 
 ------------------------------------------------------------------------
 Summary:
