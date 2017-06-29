@@ -8,15 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef  GF2X_HAVE_GMP_H
 #include <gmp.h>
-#elif defined(GF2X_HAVE_MPIR_H)
-#include <mpir.h>
-#else
-#error "make sure gf2x-config-export.h is included before gf2x-cantor-fft.h or mpfq/<anything>.h"
-#endif
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,14 +49,12 @@ LEXGE3(__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL,X,Y,Z
 
 #ifndef GMP_VERSION_ATMOST
 #ifndef __GNU_MP_VERSION
-#define GMP_VERSION_ATMOST(X,Y,Z) 0
+#define GMP_VERSION_ATMOST(X,Y,Z) 1
 #else
 #define GMP_VERSION_ATMOST(X,Y,Z)     \
 LEXLE3(__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL,X,Y,Z)
 #endif
 #endif
-
-
 
 #ifndef GNUC_VERSION
 #ifndef __GNUC__
@@ -92,7 +82,6 @@ LEXGE3(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__,X,Y,Z)
 LEXLE3(__GNUC__,__GNUC_MINOR__,__GNUC_PATCHLEVEL__,X,Y,Z)
 #endif
 #endif
-
 
 /* typedef unsigned long ulong; */
 

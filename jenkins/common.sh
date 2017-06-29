@@ -46,9 +46,3 @@ export DISABLE_MARCH_NATIVE_TEST=yes
 if ! [ "$DISABLE_FFT" ] ; then
     configure_extra="$configure_extra --enable-fft-interface"
 fi
-
-if [ -d "$HOME/Packages/gmp-6.0.0" ] ; then
-    configure_extra="$configure_extra --with-gmp=$HOME/Packages/gmp-6.0.0"
-elif [ -f "/usr/local/include/gmp.h" ] ; then
-    configure_extra="$configure_extra --with-gmp=/usr/local"
-fi
