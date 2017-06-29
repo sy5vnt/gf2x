@@ -206,17 +206,11 @@ Cautious users follow steps 1 to 5 below. Urged users follow only 1 and 5.
 Notes for specific systems:
 ===========================
 
-- it might be that the default CC and CFLAGS used by the configure script do
-  not match those of the version of GMP used by --with-gmp=$DIR In that case,
-  grep CC and CFLAGS in $DIR/include/gmp.h, and run configure with the
-  corresponding values:
-
-  $ ./configure --with-gmp=$DIR CC=... CFLAGS=...
-
-- on some systems (for example MIPS) it is also required to explicitly give
-  the ABI and LDFLAGS, for example on gcc22.fsffrance.org:
-
-  $ ./configure --with-gmp=$DIR CFLAGS="-O2 -mabi=n32" ABI=32 LDFLAGS="-Wl,-rpath,$DIR/lib"
+- ABI selection is  sometimes tricky. Be sure that you select the proper
+  combination of ABI= and CFLAGS= parameters. You must also make sure
+  that those correspond to the CFLAGS that were used by any other binary
+  object you're linking gf2x with. That applies, in particular, to the
+  GMP library if you intend to compile the files in apps/
 
 - under AIX the following might be required to build the gf2x binaries:
 
