@@ -265,7 +265,7 @@ index 2e570c7..fabce42 100644
  
  /* *Mpfq::gf2n::squaring::code_for_sqr_ur */
 diff --git a/fft/mpfq/mpfq.h b/fft/mpfq/mpfq.h
-index 4ba2b9f..99800af 100644
+index 4ba2b9f..7256116 100644
 --- a/fft/mpfq/mpfq.h
 +++ b/fft/mpfq/mpfq.h
 @@ -8,7 +8,9 @@
@@ -279,7 +279,7 @@ index 4ba2b9f..99800af 100644
  
  #ifdef __cplusplus
  extern "C" {
-@@ -19,19 +21,19 @@ extern "C" {
+@@ -19,43 +21,23 @@ extern "C" {
  /*** Constants for field_specify ***/
  
  #define MPFQ_DONE 0             /* At the end of the variadic option functions */
@@ -298,11 +298,34 @@ index 4ba2b9f..99800af 100644
                                   * uses it. */
  
 -#define BUILD_BITMASK(x) ((x) == GMP_LIMB_BITS ? ((mp_limb_t) - 1) : (~ - ((mp_limb_t) 1 << (x))))
-+#define BUILD_BITMASK(x) ((x) == GF2X_WORDSIZE ? ((mp_limb_t) - 1) : (~ - ((mp_limb_t) 1 << (x))))
- 
+-
  #define LEXGE2(X,Y,A,B) (X>A || (X == A && Y >= B))
  #define LEXGE3(X,Y,Z,A,B,C) (X>A || (X == A && LEXGE2(Y,Z,B,C)))
-@@ -138,24 +140,24 @@ static inline int mpfq_clzl(unsigned long x)
+ #define LEXLE2(X,Y,A,B) LEXGE2(A,B,X,Y)
+ #define LEXLE3(X,Y,Z,A,B,C) LEXGE3(A,B,C,X,Y,Z)
+ 
+-#ifndef GMP_VERSION_ATLEAST
+-#ifndef __GNU_MP_VERSION
+-#define GMP_VERSION_ATLEAST(X,Y,Z) 0
+-#else
+-#define GMP_VERSION_ATLEAST(X,Y,Z)     \
+-LEXGE3(__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL,X,Y,Z)
+-#endif
+-#endif
+-
+-#ifndef GMP_VERSION_ATMOST
+-#ifndef __GNU_MP_VERSION
+-#define GMP_VERSION_ATMOST(X,Y,Z) 1
+-#else
+-#define GMP_VERSION_ATMOST(X,Y,Z)     \
+-LEXLE3(__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL,X,Y,Z)
+-#endif
+-#endif
+-
+ #ifndef GNUC_VERSION
+ #ifndef __GNUC__
+ #define GNUC_VERSION(X,Y,Z) 0
+@@ -138,24 +120,24 @@ static inline int mpfq_clzl(unsigned long x)
          static const int t[4] = { 2, 1, 0, 0 };
          int a = 0;
          int res;
@@ -331,7 +354,7 @@ index 4ba2b9f..99800af 100644
  	x ^= (x >> 32);
  #endif
  	x ^= (x >> 16);
-@@ -186,7 +188,7 @@ static inline int mpfq_parityl(unsigned long x)
+@@ -186,7 +168,7 @@ static inline int mpfq_parityl(unsigned long x)
  static inline int mpfq_clzlx(unsigned long * x, int n)
  {
  	int r = 0;
@@ -340,7 +363,7 @@ index 4ba2b9f..99800af 100644
  	if (n == 0) return r;
  	r += mpfq_clzl(x[n-1]);
  	return r;
-@@ -195,7 +197,7 @@ static inline int mpfq_clzlx(unsigned long * x, int n)
+@@ -195,7 +177,7 @@ static inline int mpfq_clzlx(unsigned long * x, int n)
  static inline int mpfq_ctzlx(unsigned long * x, int n)
  {
  	int r = 0;
@@ -349,7 +372,7 @@ index 4ba2b9f..99800af 100644
  	if (n == 0) return r;
  	r += mpfq_ctzl(*x);
  	return r;
-@@ -242,6 +244,8 @@ static inline void malloc_failed() {
+@@ -242,6 +224,8 @@ static inline void malloc_failed() {
  }
  
  
@@ -358,7 +381,7 @@ index 4ba2b9f..99800af 100644
  /* Given the fact that copies are always very small, we're probably
   * better off giving the compiler the opportunity to optimize all this
   * away.
-@@ -270,6 +274,7 @@ static inline void mpfq_zero(mp_limb_t * dst, mp_size_t n) {
+@@ -270,6 +254,7 @@ static inline void mpfq_zero(mp_limb_t * dst, mp_size_t n) {
      for( ; n-- ; ) *dst++ = 0;
  }
  

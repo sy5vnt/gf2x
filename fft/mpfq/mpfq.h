@@ -33,30 +33,10 @@ extern "C" {
                                  * mpfq_vbase_oo_field_init_byfeatures
                                  * uses it. */
 
-#define BUILD_BITMASK(x) ((x) == GF2X_WORDSIZE ? ((mp_limb_t) - 1) : (~ - ((mp_limb_t) 1 << (x))))
-
 #define LEXGE2(X,Y,A,B) (X>A || (X == A && Y >= B))
 #define LEXGE3(X,Y,Z,A,B,C) (X>A || (X == A && LEXGE2(Y,Z,B,C)))
 #define LEXLE2(X,Y,A,B) LEXGE2(A,B,X,Y)
 #define LEXLE3(X,Y,Z,A,B,C) LEXGE3(A,B,C,X,Y,Z)
-
-#ifndef GMP_VERSION_ATLEAST
-#ifndef __GNU_MP_VERSION
-#define GMP_VERSION_ATLEAST(X,Y,Z) 0
-#else
-#define GMP_VERSION_ATLEAST(X,Y,Z)     \
-LEXGE3(__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL,X,Y,Z)
-#endif
-#endif
-
-#ifndef GMP_VERSION_ATMOST
-#ifndef __GNU_MP_VERSION
-#define GMP_VERSION_ATMOST(X,Y,Z) 1
-#else
-#define GMP_VERSION_ATMOST(X,Y,Z)     \
-LEXLE3(__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL,X,Y,Z)
-#endif
-#endif
 
 #ifndef GNUC_VERSION
 #ifndef __GNUC__
