@@ -54,7 +54,8 @@ EXTRA_DIST=	\
 	mpfq/x86_64/mpfq_2_128.c		\
 	mpfq/x86_64/mpfq_2_128.h		\
 	mpfq/x86_64/mpfq_2_64.c			\
-	mpfq/x86_64/mpfq_2_64.h
+	mpfq/x86_64/mpfq_2_64.h			\
+	fft_adapter.hpp
 
 # ternary fft is included by default in gf2x.
 check_LTLIBRARIES += libternary.la
