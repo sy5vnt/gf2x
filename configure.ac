@@ -24,7 +24,7 @@
 #  Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 
-AC_INIT([gf2x], [1.2])
+AC_INIT([gf2x], [1.3])
 
 if test "x$CFLAGS" != x ; then
  has_CFLAGS_from_env=yes
