@@ -6,8 +6,7 @@ export LANG=C
 for f in autoconf automake libtool ; do
     if [ -d $HOME/Packages/$f ] ; then
         export PATH=$HOME/Packages/$f/bin:$PATH
-    fi
-done
+        if [ $f = libtool ] ; then
 # Note: for libtool, we also have to add its aclocal search path to the
 # automake aclocal search path (which is
 # [automake_prefix]/share/aclocal/dirlist); this is done on all ci nodes.
@@ -17,6 +16,13 @@ done
 #  ls -d /usr/share/aclocal >> ~/Packages/automake-1.15/share/aclocal/dirlist
 #
 # although, almost by definition, your mileage may vary.
+
+            # a convenient way to do that is ACLOCAL_PATH
+            ACLOCAL_PATH=$HOME/Packages/$f/share/aclocal:$ACLOCAL_PATH
+            export ACLOCAL_PATH
+        fi
+    fi
+done
 
 
 # openbsd has wrappers which strictly require the AUTOCONF_VERSION and
