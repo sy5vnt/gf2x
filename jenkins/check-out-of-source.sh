@@ -3,7 +3,7 @@ autoreconf -i
 src="$PWD"
 TMP=`mktemp -d /tmp/${BUILD_TAG}-XXXXXXX`
 cleanup() { rm -rf "$TMP" ; }
-trap EXIT cleanup
+trap cleanup EXIT
 cd "$TMP"
 if ! ($src/configure $configure_extra && make && make check) ; then
    echo "FAILED"
