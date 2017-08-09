@@ -1,3 +1,5 @@
+set -ex
+
 unset `locale | cut -d= -f1`
 export LANG=C
 
