@@ -4,7 +4,7 @@ unset `locale | cut -d= -f1`
 export LANG=C
 
 for f in autoconf automake libtool ; do
-    if [ -d $HOME/Packages/$m ] ; then
+    if [ -d $HOME/Packages/$f ] ; then
         export PATH=$HOME/Packages/$f/bin:$PATH
     fi
 done
