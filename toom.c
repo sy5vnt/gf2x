@@ -95,6 +95,12 @@ short gf2x_best_utoom(unsigned long n GF2X_MAYBE_UNUSED)
     /* This would be a tuning bug */
     ASSERT (n <= GF2X_TOOM_TUNING_LIMIT);
 
+    if (best_utab[n-1] < 0) {
+      {
+        fprintf (stderr, "Unhandled case gf2x_best_utoom(%d)=%d\n",
+                 n, best_utab[n-1]);
+        abort();
+      }
     return best_utab[n - 1];	// Return table entry
 #else /* GPL_CODE_PRESENT */
     return GF2X_SELECT_UNB_DFLT;
@@ -198,8 +204,8 @@ void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
 	break;
     default:
       {
-        fprintf (stderr, "Unhandled case %d in gf2x_mul_toom\n",
-                 gf2x_best_toom(n));
+        fprintf (stderr, "Unhandled case gf2x_best_toom(%d)=%d in gf2x_mul_toom\n",
+                 n, gf2x_best_toom(n));
         abort();
       }
     }
