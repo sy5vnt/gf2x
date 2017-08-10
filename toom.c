@@ -95,9 +95,9 @@ short gf2x_best_utoom(unsigned long n GF2X_MAYBE_UNUSED)
     /* This would be a tuning bug */
     ASSERT (n <= GF2X_TOOM_TUNING_LIMIT);
 
-    if (best_utab[n-1] < 0) {
+    if (best_utab[n-1] < 0)
       {
-        fprintf (stderr, "Unhandled case gf2x_best_utoom(%d)=%d\n",
+        fprintf (stderr, "Unhandled case gf2x_best_utoom(%lu)=%d\n",
                  n, best_utab[n-1]);
         abort();
       }
