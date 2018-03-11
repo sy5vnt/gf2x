@@ -47,15 +47,20 @@ endif
 
 
 lib_LTLIBRARIES=libgf2x.la $(FFT_LIBS)
+
+if HAVE_HIDDEN_VISIBILITY_ATTRIBUTE
+VH_FLAG=-fvisibility=hidden -DGF2X_EXPORTED="__attribute__((visibility(\"default\")))"
+endif
+
 if ENABLE_FFT_INTERFACE
 # default which gets shipped
-libgf2x_fft_la_CFLAGS=$(AM_CFLAGS) -DCANTOR_BASE_FIELD_SIZE=128
+libgf2x_fft_la_CFLAGS=$(AM_CFLAGS) $(VH_FLAG) -DCANTOR_BASE_FIELD_SIZE=128
 libgf2x_fft_la_SOURCES=$(FFT_SOURCES)
 libgf2x_fft_la_LIBADD= $(top_builddir)/libgf2x.la
 libgf2x_fft_la_LDFLAGS=-version-info @gf2x_fft_lib_version@ -no-undefined
 endif
 libgf2x_la_SOURCES=gf2x.c toom.c toom128.c toom-gpl.c $(FFT_SOURCES_ALWAYS)
-
+libgf2x_la_CFLAGS=$(AM_CFLAGS) $(VH_FLAG)
 
 
 

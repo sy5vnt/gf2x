@@ -141,7 +141,7 @@ short gf2x_best_utoom(unsigned long n GF2X_MAYBE_UNUSED)
 #error "GF2X_MUL_TOOMW_THRESHOLD assumed to be at least 8"
 #endif
 
-long gf2x_toomspace(long n)
+long GF2X_EXPORTED gf2x_toomspace(long n)
 {
     long low = (GF2X_MUL_KARA_THRESHOLD < GF2X_MUL_TOOMW_THRESHOLD) ?
       GF2X_MUL_KARA_THRESHOLD : GF2X_MUL_TOOMW_THRESHOLD;
@@ -157,7 +157,7 @@ long gf2x_toomspace(long n)
 /* Returns upper bound on space required by Toom3uMul (c, a, sa, b, stk):
    2*sa + 32 + gf2x_toomspace(sa/4 + 4) */
 
-long gf2x_toomuspace(long sa)
+long GF2X_EXPORTED gf2x_toomuspace(long sa)
 {
     if (sa < GF2X_MUL_TOOMU_THRESHOLD)
 	return 0;
@@ -169,7 +169,7 @@ long gf2x_toomuspace(long sa)
      Output c must not overlap inputs a, b.
      The output c is a*b (where a, b and c are in GF(2)[x]).
      RPB, 20070510 */
-void gf2x_mul_toom(unsigned long *c, const unsigned long *a,
+void GF2X_EXPORTED gf2x_mul_toom(unsigned long *c, const unsigned long *a,
 			    const unsigned long *b, long n,
 			    unsigned long *stk)
 {

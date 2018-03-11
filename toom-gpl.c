@@ -575,7 +575,7 @@ void gf2x_mul_tc3(unsigned long *c, const unsigned long *a,
 */
 
 
-void gf2x_mul_tc3u(unsigned long * c, const unsigned long * a, long sa,
+void GF2X_EXPORTED gf2x_mul_tc3u(unsigned long * c, const unsigned long * a, long sa,
 	      const unsigned long * b, unsigned long * stk)
 {
     ASSERT(sa >= MINI_GF2X_MUL_TOOMU_THRESHOLD);
