@@ -69,11 +69,24 @@ int version_1_2_or_later() {
     /* gf2x 1.3 or later define this */
     return 0;
 #else
-    /* This will fail to compile with gf2x versions up to 1.1 */
+    /* This will fail to link for gf2x versions prior to 1.2 */
     extern int gf2x_ternary_fft_compatible;
     return gf2x_ternary_fft_compatible == 0;
 #endif
 }
+#endif
+#ifdef CHECK8
+/* This is a slightly more verbose version of the above, if you fear the
+ * linker may be averse to dirty casts.  */
+#ifndef GF2X_VERSION_MAJOR
+extern "C" {
+struct gf2x_ternary_fft_info_s;
+typedef const struct gf2x_ternary_fft_info_s * gf2x_ternary_fft_info_srcptr;
+int gf2x_ternary_fft_compatible(gf2x_ternary_fft_info_srcptr o1, gf2x_ternary_fft_info_srcptr o2); 
+}
+#endif
+/* This will fail to link for versions prior to v1.2. */
+void fun() { gf2x_ternary_fft_compatible(0, 0); }
 #endif
 
 int main() {
