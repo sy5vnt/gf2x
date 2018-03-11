@@ -95,7 +95,9 @@ AC_SUBST([MAYBE_APPS])
 AC_ARG_ENABLE([fft-interface],
               [AS_HELP_STRING([--enable-fft-interface],
                 [compile with the optional fft interface (default is no)])],
-                [],[])
+                [
+                 AC_DEFINE([GF2X_HAS_FFT_INTERFACE_SUPPORT],[1],[This is defined if gf2x was configured with --enable-fft-interface])
+                 ],[])
 AM_CONDITIONAL([ENABLE_FFT_INTERFACE],[test "x$enable_fft_interface" = xyes])
 
 AC_PROG_CC
@@ -271,9 +273,10 @@ if grep -q "released under the GPL" "$srcdir/toom-gpl.c" ; then
 else
  echo "File $srcdir/toom-gpl.c is a placeholder, using an LGPL-licensed gf2x"
  AC_DEFINE([GPL_CODE_PRESENT],0,[Have LGPL code (no GPL taint)])
+ AC_DEFINE([GF2X_IS_LGPL_VARIANT],[1],[This is defined if gf2x was compiled from an LGPL tarball])
 fi
 
-AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h])
+AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h gf2x.h])
 
 #if test -d "$srcdir/gf2x-fft" ; then
 # AC_MSG_NOTICE([Enabling optional gf2x-fft])
@@ -286,7 +289,7 @@ AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h])
 #AC_SUBST([MAYBE_GF2X_FFT])
 
 AC_CONFIG_FILES([version.sh Makefile tests/Makefile lowlevel/Makefile
-                 src/Makefile fft/Makefile apps/Makefile gf2x.h])
+                 src/Makefile fft/Makefile apps/Makefile gf2x.h.in])
 
 AC_OUTPUT
 

@@ -30,12 +30,23 @@
 #ifndef GF2X_H_
 #define GF2X_H_
 
+/* This section of the header file is modified by ./configure */
 #define GF2X_VERSION_MAJOR      @GF2X_VERSION_MAJOR@
 #define GF2X_VERSION_MINOR      @GF2X_VERSION_MINOR@
 #define GF2X_VERSION_PATCHLEVEL      @GF2X_VERSION_PATCHLEVEL@
-/* 10300 is gf2x-1.3.0
+/* For example, 10300 is gf2x-1.3.0
  * Versions before gf2x-1.3.0 had no version code */
 #define GF2X_VERSION (((GF2X_VERSION_MAJOR) * 10000) + ((GF2X_VERSION_MINOR) * 100) + (GF2X_VERSION_PATCHLEVEL))
+
+/* This is defined if gf2x was configured with --enable-fft-interface */
+/* If it was, then the header file gf2x/gf2x-fft.h may be included */
+#undef  GF2X_HAS_FFT_INTERFACE_SUPPORT
+
+/* This is defined if gf2x was compiled from an LGPL tarball */
+#undef  GF2X_IS_LGPL_VARIANT
+
+/* End of the section that is modified by ./configure */
+
 
 #ifdef __cplusplus
 extern "C" {
