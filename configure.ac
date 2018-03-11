@@ -24,7 +24,13 @@
 #  Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 #  02110-1301, USA.
 
-AC_INIT([gf2x], [1.3])
+AC_INIT([gf2x], [1.3.0])
+AC_SUBST([GF2X_VERSION_MAJOR],
+[regexp(AC_PACKAGE_VERSION,[\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)],[\1])])
+AC_SUBST([GF2X_VERSION_MINOR],
+[regexp(AC_PACKAGE_VERSION,[\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)],[\2])])
+AC_SUBST([GF2X_VERSION_PATCHLEVEL],
+[regexp(AC_PACKAGE_VERSION,[\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)],[\3])])
 
 if test "x$CFLAGS" != x ; then
  has_CFLAGS_from_env=yes
@@ -280,7 +286,7 @@ AC_CONFIG_HEADERS([gf2x/gf2x-config.h gf2x/gf2x-config-export.h])
 #AC_SUBST([MAYBE_GF2X_FFT])
 
 AC_CONFIG_FILES([version.sh Makefile tests/Makefile lowlevel/Makefile
-                 src/Makefile fft/Makefile apps/Makefile])
+                 src/Makefile fft/Makefile apps/Makefile gf2x.h])
 
 AC_OUTPUT
 
