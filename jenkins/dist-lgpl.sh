@@ -2,9 +2,11 @@
 autoreconf -i
 src="$PWD"
 TMP=`mktemp -d /tmp/${BUILD_TAG}-XXXXXXX`
+cleanup() { rm -rf "$TMP" ; }
+trap cleanup EXIT
+
 if ! (cd "$TMP" ; $src/configure $configure_extra && make untaint && make dist) ; then
    echo "FAILED"
-   rm -rf "$TMP"
    exit 1
 fi
 version=$(grep AC_INIT configure.ac | perl -ne '/(\d+(?:\.\d+)+)/ && print "$1\n";')
@@ -14,8 +16,6 @@ cd gf2x-$version
 if ! (./configure $configure_extra && make && make check) ; then
    echo "FAILED"
    cd "$src"
-   rm -rf "$TMP"
    exit 1
 fi
 cd "$src"
-rm -rf "$TMP"

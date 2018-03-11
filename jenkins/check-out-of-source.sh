@@ -8,7 +8,6 @@ cd "$TMP"
 if ! ($src/configure $configure_extra && make && make check) ; then
    echo "FAILED"
    cd "$src"
-   rm -rf "$TMP"
    exit 1
 fi
 cd "$src"
