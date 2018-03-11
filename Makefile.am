@@ -28,9 +28,12 @@ AUTOMAKE_OPTIONS=subdir-objects
 ACLOCAL_AMFLAGS=-I config --install
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
 
-FFT_SOURCES=fft/gf2x-ternary-fft.c
+FFT_SOURCES=
+FFT_SOURCES_ALWAYS=fft/gf2x-ternary-fft.c
+FFT_LIBS=
 if ENABLE_FFT_INTERFACE
 AM_CPPFLAGS += -I$(srcdir)/mpfq
+FFT_LIBS+=libgf2x-fft.la
 FFT_SOURCES+=fft/gf2x-fake-fft.c
 FFT_SOURCES+=fft/gf2x-cantor-fft.c
 AM_CPPFLAGS += -I$(top_srcdir)/fft/mpfq
@@ -43,12 +46,15 @@ gf2x_include_HEADERS=	\
 endif
 
 
-lib_LTLIBRARIES=libgf2x.la
+lib_LTLIBRARIES=libgf2x.la $(FFT_LIBS)
 if ENABLE_FFT_INTERFACE
 # default which gets shipped
-libgf2x_la_CFLAGS=$(AM_CFLAGS) -DCANTOR_BASE_FIELD_SIZE=128
+libgf2x_fft_la_CFLAGS=$(AM_CFLAGS) -DCANTOR_BASE_FIELD_SIZE=128
+libgf2x_fft_la_SOURCES=$(FFT_SOURCES)
+libgf2x_fft_la_LIBADD= $(top_builddir)/libgf2x.la
+libgf2x_fft_la_LDFLAGS=-version-info @gf2x_fft_lib_version@ -no-undefined
 endif
-libgf2x_la_SOURCES=gf2x.c toom.c toom128.c toom-gpl.c $(FFT_SOURCES)
+libgf2x_la_SOURCES=gf2x.c toom.c toom128.c toom-gpl.c $(FFT_SOURCES_ALWAYS)
 
 
 
