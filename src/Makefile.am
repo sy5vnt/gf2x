@@ -782,7 +782,7 @@ modify_thresholds_SOURCES=modify-thresholds.c replace.c
 ######################################################################
 EXTRA_PROGRAMS+=tunetoom$(EXEEXT)
 tunetoom_SOURCES=tunetoom.c tuning-common.c
-tunetoom_LDADD=libtiming.la ../libgf2x-local.la -lm
+tunetoom_LDADD=libtiming.la ../libgf2x-local.a -lm
 
 TOOM_TUNING_LIMIT=2048
 
@@ -808,7 +808,7 @@ endif
 ######################################################################
 EXTRA_PROGRAMS+=tunefft$(EXEEXT)
 tunefft_SOURCES=tunefft.c tuning-common.c
-tunefft_LDADD=libtiming.la ../libgf2x-local.la
+tunefft_LDADD=libtiming.la ../libgf2x-local.a
 
 FFT_TUNING_LIMIT=8000000
 FFT_TUNING_SCALE=1.02
