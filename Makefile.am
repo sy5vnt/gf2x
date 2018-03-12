@@ -47,6 +47,7 @@ endif
 
 
 lib_LTLIBRARIES=libgf2x.la $(FFT_LIBS)
+noinst_LIBRARIES=libgf2x-local.a
 
 if HAVE_HIDDEN_VISIBILITY_ATTRIBUTE
 VH_FLAG=-fvisibility=hidden -DGF2X_EXPORTED="__attribute__((visibility(\"default\")))"
@@ -61,6 +62,9 @@ libgf2x_fft_la_LDFLAGS=-version-info @gf2x_fft_lib_version@ -no-undefined
 endif
 libgf2x_la_SOURCES=gf2x.c toom.c toom128.c toom-gpl.c $(FFT_SOURCES_ALWAYS)
 libgf2x_la_CFLAGS=$(AM_CFLAGS) $(VH_FLAG)
+
+libgf2x_local_a_SOURCES=$(libgf2x_la_SOURCES)
+libgf2x_local_a_CFLAGS=$(AM_CFLAGS)
 
 
 
