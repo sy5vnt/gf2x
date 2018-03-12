@@ -70,12 +70,12 @@ libgf2x_local_a_CFLAGS=$(AM_CFLAGS)
 
 
 nobase_include_HEADERS=gf2x.h	\
-		gf2x/gf2x-impl.h		\
 		gf2x/gf2x-impl-export.h		\
 		gf2x/gf2x-small.h
 
 # All these are generated.
 nobase_nodist_include_HEADERS=	\
+		gf2x/gf2x-impl.h		\
 		gf2x/gf2x-config.h		\
 		gf2x/gf2x-config-export.h	\
 		gf2x/gf2x-thresholds.h		\

@@ -27,6 +27,13 @@
 ACLOCAL_AMFLAGS=-I config --install
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) -I$(srcdir)/mpfq
 
+
+# The standard gf2x-fft library (installed by --enable-fft-interface) has
+#
+#  gf2x_ternary_fft
+#  gf2x_fake_fft
+#  gf2x_cantor_fft with -DCANTOR_BASE_FIELD_SIZE=128
+#
 # We want to stress-test the libcantor_la implementation with the following
 # extra features (compile-time flags)
 
@@ -40,6 +47,8 @@ C128nt=$(C128) -DWITHOUT_CANTOR_TRUNCATION
 C128gm=$(C128) -DCANTOR_GM
 C128gmt=$(C128gm) -DCANTOR_GM_TRUNCATE
 
+TESTS =
+check_PROGRAMS=
 check_LTLIBRARIES=
 
 EXTRA_DIST=	\
@@ -98,4 +107,8 @@ check_LTLIBRARIES += libcantor128gmt.la
 libcantor128gmt_la_SOURCES=gf2x-cantor-fft.c
 libcantor128gmt_la_CFLAGS= $(AM_CFLAGS) $(C128gmt)
 
+check_PROGRAMS += gf2x_fft_check
+gf2x_fft_check_CFLAGS=$(AM_CFLAGS)
+gf2x_fft_check_LDADD=../libgf2x-fft.la ../libgf2x.la
+TESTS += gf2x_fft_check
 endif

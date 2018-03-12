@@ -107,11 +107,8 @@ TERNARY=-DENGINE_TERNARY
 TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 
 # The list of tests is auto-generated with perl, and edited afterwards.
-# The edits are:
-#  - link check_ternaryns with libternary (since this is the same
-#  library, really).
+# perl -i ./generate-fft-tests.pl Makefile.am
 #
-# perl -i generate-fft-tests.pl Makefile.am | sed '/^check_ternaryns_LDADD/ s/libternaryns/libternary/' > Makefile.am.tmp && \mv Makefile.am.tmp Makefile.am
 # -- begin pattern --
 # check_PROGRAMS+=check_ARG0
 # check_ARG0_SOURCES=$(general_fftcheck_sources)
@@ -145,6 +142,9 @@ TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 #  cantor128gmt $(C128gmt)
 # endif
 # -- end arguments --
+# -- begin sed --
+# /^check_ternaryns_LDADD/ && s/libternaryns/libternary/;
+# -- end sed --
 # -- begin generated code --
 check_PROGRAMS+=check_ternary
 check_ternary_SOURCES=$(general_fftcheck_sources)
