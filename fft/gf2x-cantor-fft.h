@@ -78,21 +78,25 @@ typedef const struct gf2x_cantor_fft_info_struct * gf2x_cantor_fft_info_srcptr;
 #error  "Define CANTOR_BASE_FIELD_SIZE to 64 or 128"
 #endif
 
+/* define mpfq_2_XXX_elt, but do not include mpfq as it is not part of
+ * the set of exported headers.
+ */
 #if CANTOR_BASE_FIELD_SIZE == 128
 #if GF2X_WORDSIZE == 64
-#include "mpfq/x86_64/mpfq_2_128.h"
+typedef unsigned long mpfq_2_128_elt[2];
 #else
-#include "mpfq/i386/mpfq_2_128.h"
+typedef unsigned long mpfq_2_128_elt[4];
 #endif
 typedef mpfq_2_128_elt gf2x_cantor_fft_base_field_elt;
 #else
 #if GF2X_WORDSIZE == 64
-#include "mpfq/x86_64/mpfq_2_64.h"
+typedef unsigned long mpfq_2_64_elt[1];
 #else
-#include "mpfq/i386/mpfq_2_64.h"
+typedef unsigned long mpfq_2_64_elt[2];
 #endif
 typedef mpfq_2_64_elt gf2x_cantor_fft_base_field_elt;
 #endif
+typedef gf2x_cantor_fft_base_field_elt gf2x_cantor_fft_t;
 typedef gf2x_cantor_fft_base_field_elt * gf2x_cantor_fft_ptr;
 typedef const gf2x_cantor_fft_base_field_elt * gf2x_cantor_fft_srcptr;
 

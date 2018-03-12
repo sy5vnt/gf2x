@@ -45,6 +45,22 @@
 
 #include "gf2x-cantor-fft.h"
 
+/* Actually including mpfq is reserved for the c file. The header has
+ * merely defined the main typedefs */
+#if CANTOR_BASE_FIELD_SIZE == 128
+#if GF2X_WORDSIZE == 64
+#include "mpfq/x86_64/mpfq_2_128.h"
+#else
+#include "mpfq/i386/mpfq_2_128.h"
+#endif
+#else
+#if GF2X_WORDSIZE == 64
+#include "mpfq/x86_64/mpfq_2_64.h"
+#else
+#include "mpfq/i386/mpfq_2_64.h"
+#endif
+#endif
+
 /* The following flags affect the behaviour of the program */
 
 #define xxxCANTOR_GM            /* Use Gao-Mateer recursion */

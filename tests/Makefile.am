@@ -110,7 +110,8 @@ TERNARY_NS=-DENGINE_TERNARY -DARTIFICIAL_NON_SPLIT_VERSION
 # The edits are:
 #  - link check_ternaryns with libternary (since this is the same
 #  library, really).
-#  - add bench_ternary (introduced 7b9a9b45)
+#
+# perl -i generate-fft-tests.pl Makefile.am | sed '/^check_ternaryns_LDADD/ s/libternaryns/libternary/' > Makefile.am.tmp && \mv Makefile.am.tmp Makefile.am
 # -- begin pattern --
 # check_PROGRAMS+=check_ARG0
 # check_ARG0_SOURCES=$(general_fftcheck_sources)
@@ -149,10 +150,6 @@ check_PROGRAMS+=check_ternary
 check_ternary_SOURCES=$(general_fftcheck_sources)
 check_ternary_CFLAGS=$(AM_CFLAGS) $(TERNARY)
 check_ternary_LDADD=$(top_builddir)/fft/libternary.la
-check_PROGRAMS+=bench_ternary
-bench_ternary_SOURCES=bench.c check-and-bench-common.c test-tools.c
-bench_ternary_CFLAGS=$(AM_CFLAGS) $(TERNARY)
-bench_ternary_LDADD=$(top_builddir)/fft/libternary.la
 SYNTHESIZED_TESTS+=   \
     check_ternary_1000_1_c28bc2e3.fft            \
     check_ternary_1000_2_77db95cc.fft            \
@@ -322,6 +319,11 @@ SYNTHESIZED_TESTS+=   \
 endif
 endif
 # -- end generated code --
+check_PROGRAMS+=bench_ternary
+bench_ternary_SOURCES=bench.c check-and-bench-common.c test-tools.c
+bench_ternary_CFLAGS=$(AM_CFLAGS) $(TERNARY)
+bench_ternary_LDADD=$(top_builddir)/fft/libternary.la
+
 
 TEST_EXTENSIONS += .fft
 # We'll run the *.fft tests above as:

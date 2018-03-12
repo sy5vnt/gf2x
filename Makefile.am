@@ -42,7 +42,8 @@ gf2x_include_HEADERS=	\
 	fft/gf2x-fft.h			\
 	fft/gf2x-fake-fft.h		\
 	fft/gf2x-cantor-fft.h		\
-	fft/gf2x-ternary-fft.h
+	fft/gf2x-ternary-fft.h		\
+	fft/gf2x-fft-adapter.hpp
 endif
 
 

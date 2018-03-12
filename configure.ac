@@ -47,8 +47,13 @@ AC_LANG([C])
 
 AC_FUNC_ALLOCA
 
-AC_SUBST([gf2x_lib_version], [2:0:0])
-AC_SUBST([gf2x_fft_lib_version], [2:0:0])
+# We prefer to both version below in sync.
+# 1:0:0 up to gf2x-1.1
+# 1:2:0 gf2x-1.2 -- that was a mistake
+# 2:0:0 gf2x-1.2.x branch
+# 3:0:0 gf2x-1.3 branch
+AC_SUBST([gf2x_lib_version], [3:0:0])
+AC_SUBST([gf2x_fft_lib_version], [3:0:0])
 
 AM_INIT_AUTOMAKE([1.13])
 
