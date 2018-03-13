@@ -51,12 +51,7 @@ TESTS =
 check_PROGRAMS=
 check_LTLIBRARIES=
 
-# The "gf2x" symlink is here so that the fft headers, which eventually go
-# to $includedir/gf2x, can be properly included also if -I just points to
-# the source tree.
-# Yes, it's ugly
 EXTRA_DIST=	\
-	gf2x	\
 	mpfq/README.mpfq			\
 	mpfq/i386/mpfq_2_128.c			\
 	mpfq/i386/mpfq_2_128.h			\
@@ -113,7 +108,7 @@ libcantor128gmt_la_SOURCES=gf2x-cantor-fft.c
 libcantor128gmt_la_CFLAGS= $(AM_CFLAGS) $(C128gmt)
 
 check_PROGRAMS += gf2x_fft_check
-gf2x_fft_check_CFLAGS=$(AM_CFLAGS)
+gf2x_fft_check_CFLAGS=$(AM_CFLAGS) -DGF2X_SOURCE_TREE
 gf2x_fft_check_LDADD=../libgf2x-fft.la ../libgf2x.la
 TESTS += gf2x_fft_check
 endif

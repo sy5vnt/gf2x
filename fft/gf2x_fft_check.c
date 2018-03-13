@@ -38,7 +38,12 @@
 #endif
 
 #include "gf2x.h"
+
+#ifdef GF2X_SOURCE_TREE
+#include "fft/gf2x-fft.h"
+#else
 #include "gf2x/gf2x-fft.h"
+#endif
 
 /* Handy, and does not require libm */
 #ifndef iceildiv
