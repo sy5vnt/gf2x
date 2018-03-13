@@ -621,7 +621,6 @@ static void recompose(unsigned long * c, size_t cn, unsigned long **C, size_t K,
 	    /* we have already set bit k of c[j] up to bit k1 of c[j1]
 	       (excluded), i.e., words c[j] up to c[j1 - (k1 == 0)] */
 	    z = j1 + (k1 != 0) - j;	/* number of overlapping words */
-            if (z > W(2*Np)) abort();
 	    /* first treat the high (non overlapping) words of C[i], i.e.,
 	       {C[i] + z, W(2*Np) - z} */
 	    if (j + W(2 * Np) < cn) {
@@ -638,6 +637,12 @@ static void recompose(unsigned long * c, size_t cn, unsigned long **C, size_t K,
 		Lsh(c + j + z, C[i] + z, cn - j - z, k);
 	    }
 	    /* then deal with the low bits of C[i], overlapping with C[i-1] */
+            /* Note that z may be larger than the full width of C, for
+             * very small cases. If this happens, then of course we don't
+             * need to read that many bits from C[i]
+             */
+            if (z > W(2*Np)) z--;
+            ASSERT(z <= W(2*Np));
 	    if (j + z < cn)
 		c[j + z] ^= AddLsh(c + j, C[i], z, k);
 	    else if (j < cn)
