@@ -360,16 +360,24 @@ static void Lshift(unsigned long *a, unsigned long *b, uint64_t k, size_t N)
 	if (R(N))
 	    a[I(N)] &= MASK(R(N));
 	/* now we have a = H0:H1 */
-	if (R(N) > 0)
-	    s1 = a[I(N)];
 	// ASSERT(I(N) >= 0);
-	s2 = Lsh(a + I(N), a, I(N), R(N));
-	if (R(N) > 0) {
-	    a[I(N)] ^= s1;	/* restore high R(N) bits */
-	    a[2 * I(N)] = s2 ^ (s1 << R(N));
-	    if (2 * R(N) > WLEN)
-		a[2 * I(N) + 1] = s1 >> (WLEN - R(N));
-	}
+        if (I(N)) {
+            if (R(N) > 0)
+                s1 = a[I(N)];
+            s2 = Lsh(a + I(N), a, I(N), R(N));
+            if (R(N) > 0) {
+                a[I(N)] ^= s1;	/* restore high R(N) bits if they were
+                                   overwritten by Lsh above.  */
+                a[2 * I(N)] = s2 ^ (s1 << R(N));
+                if (2 * R(N) > WLEN)
+                    a[2 * I(N) + 1] = s1 >> (WLEN - R(N));
+            }
+        } else {
+            if (2 * R(N) > WLEN) {
+                a[1] = a[0] >> (WLEN - R(N));
+            }
+            a[0] ^= a[0] << R(N);
+        }
 	/* now we have a = H0:H1:H0:H1 */
 	AddRsh(a, b + I(N + l), W(2 * N) - I(N + l), R(N + l));
 	/* now we have a = H0+H2:H1:H0:H1 */
@@ -613,6 +621,7 @@ static void recompose(unsigned long * c, size_t cn, unsigned long **C, size_t K,
 	    /* we have already set bit k of c[j] up to bit k1 of c[j1]
 	       (excluded), i.e., words c[j] up to c[j1 - (k1 == 0)] */
 	    z = j1 + (k1 != 0) - j;	/* number of overlapping words */
+            if (z > W(2*Np)) abort();
 	    /* first treat the high (non overlapping) words of C[i], i.e.,
 	       {C[i] + z, W(2*Np) - z} */
 	    if (j + W(2 * Np) < cn) {
