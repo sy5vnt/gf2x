@@ -73,7 +73,9 @@ nobase_include_HEADERS=gf2x.h	\
 		gf2x/gf2x-impl-export.h		\
 		gf2x/gf2x-small.h
 
-EXTRA_DIST=gf2x/gf2x-impl.h
+# gf2x/gf2x-impl.h is distributed but not installed. Hence it goes to
+# EXTRA_DIST, and is specified further down
+
 
 # All these are generated.
 nobase_nodist_include_HEADERS=	\
@@ -109,6 +111,7 @@ DISTCLEANFILES=gf2x/gf2x-thresholds.h	\
 	       gf2x/gf2x_mul9.h
 
 EXTRA_DIST=
+EXTRA_DIST+=gf2x/gf2x-impl.h
 EXTRA_DIST+=version.sh.in
 EXTRA_DIST+=BUGS
 EXTRA_DIST+=already_tuned
