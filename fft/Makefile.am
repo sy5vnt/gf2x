@@ -51,7 +51,12 @@ TESTS =
 check_PROGRAMS=
 check_LTLIBRARIES=
 
+# The "gf2x" symlink is here so that the fft headers, which eventually go
+# to $includedir/gf2x, can be properly included also if -I just points to
+# the source tree.
+# Yes, it's ugly
 EXTRA_DIST=	\
+	gf2x	\
 	mpfq/README.mpfq			\
 	mpfq/i386/mpfq_2_128.c			\
 	mpfq/i386/mpfq_2_128.h			\
